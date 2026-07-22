@@ -23,20 +23,28 @@ export default function OrderPage() {
 
       <div className="mt-10 border-2 border-black">
         <div className="flex items-center justify-between border-b-2 border-black bg-black px-6 py-4 text-white">
-          <span className="font-display text-xl uppercase tracking-tight">Takeout Ordering</span>
-          <span className="text-xs uppercase tracking-wide text-white/60">Provider pending</span>
+          <span className="font-display text-xl uppercase tracking-tight">Order on Toast</span>
+          <span className="text-xs uppercase tracking-wide text-white/60">Live widget pending</span>
         </div>
         <div className="flex min-h-[320px] flex-col items-center justify-center gap-6 p-10 text-center">
           <p className="max-w-sm text-sm text-black/60">
-            Online ordering will be embedded here once the takeout provider is
-            confirmed. In the meantime, call ahead to place your order.
+            This is where the live Toast online ordering widget will be embedded
+            once the restaurant&apos;s Toast ordering page is connected.
           </p>
           <a
-            href={restaurant.phoneHref}
+            href={restaurant.toastOrderUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="border-2 border-black bg-black px-8 py-4 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-black"
           >
-            Call {restaurant.phone}
+            Order on Toast
           </a>
+          <p className="text-xs uppercase tracking-wide text-black/40">
+            Or call ahead —{" "}
+            <a href={restaurant.phoneHref} className="font-semibold hover:opacity-50">
+              {restaurant.phone}
+            </a>
+          </p>
         </div>
       </div>
 

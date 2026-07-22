@@ -11,6 +11,7 @@ export const restaurant = {
   instagram: "https://www.instagram.com/passione_emporioon5th",
   instagramHandle: "@passione_emporioon5th",
   openTableUrl: "https://www.opentable.com/",
+  toastOrderUrl: "https://www.toasttab.com/",
   founder: "Fabrizio Cercatore",
   founderQuote: "Food made with passione, shared with familia.",
 } as const;
