@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PhotoPlaceholder } from "@/components/photo-placeholder";
+import { SitePhoto } from "@/components/site-photo";
 import { WoodFiredBadge } from "@/components/wood-fired-badge";
 import { restaurant } from "@/lib/restaurant";
 
@@ -13,7 +13,13 @@ export default function Home() {
             href="/about"
             className="group relative row-span-3 min-h-[420px] overflow-hidden border-2 border-black md:min-h-[560px]"
           >
-            <PhotoPlaceholder label="Dough toss — hero photo" className="h-full w-full" />
+            <SitePhoto
+              src="/images/pizza-oven.jpg"
+              alt="A wood-fired Margherita pizza fresh from the oven at Passione Emporio"
+              className="h-full w-full"
+              sizes="(min-width: 768px) 60vw, 100vw"
+              priority
+            />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-8">
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
                 {restaurant.location}
@@ -33,7 +39,12 @@ export default function Home() {
             href="/menu"
             className="group relative min-h-[130px] overflow-hidden border-2 border-black"
           >
-            <PhotoPlaceholder label="Wood-fired pizza" className="h-full w-full" />
+            <SitePhoto
+              src="/images/pasta-trio.jpg"
+              alt="An overhead view of handmade pasta, ravioli, and seafood dishes at Passione Emporio"
+              className="h-full w-full"
+              sizes="33vw"
+            />
             <div className="absolute inset-0 flex items-end justify-between p-5">
               <span className="font-display text-2xl font-extrabold uppercase text-white">
                 Menu
@@ -48,7 +59,12 @@ export default function Home() {
             href="/reserve"
             className="group relative min-h-[130px] overflow-hidden border-2 border-black"
           >
-            <PhotoPlaceholder label="Dining room" className="h-full w-full" />
+            <SitePhoto
+              src="/images/dining-scene.jpg"
+              alt="A seafood pasta dish and Aperol spritz in the Passione Emporio dining room"
+              className="h-full w-full"
+              sizes="33vw"
+            />
             <div className="absolute inset-0 flex items-end justify-between p-5">
               <span className="font-display text-2xl font-extrabold uppercase text-white">
                 Reserve
@@ -63,7 +79,12 @@ export default function Home() {
             href="/order"
             className="group relative min-h-[130px] overflow-hidden border-2 border-black"
           >
-            <PhotoPlaceholder label="Takeout / to-go" className="h-full w-full" />
+            <SitePhoto
+              src="/images/seafood-pasta-bowl.jpg"
+              alt="A bowl of seafood pasta with mussels, clams, and shrimp"
+              className="h-full w-full"
+              sizes="33vw"
+            />
             <div className="absolute inset-0 flex items-end justify-between p-5">
               <span className="font-display text-2xl font-extrabold uppercase text-white">
                 Takeout
@@ -91,21 +112,24 @@ export default function Home() {
             {
               title: "Handmade Pasta",
               copy: "Tagliatelle, gnocchi, and pappardelle made in-house with organic American grains.",
-              label: "Fresh pasta",
+              src: "/images/pasta-table-view.jpg",
+              alt: "Handmade pasta dishes served at Passione Emporio",
             },
             {
               title: "Wood-Fired Pizza",
               copy: "Fourteen 12\" pies on organic dough, from a classic Margherita to the truffle-kissed Fiori.",
-              label: "Wood-fired oven",
+              src: "/images/pizza-crust-flour.jpg",
+              alt: "Organic pizza dough dusted with flour",
             },
             {
               title: "Italian Wine & Beer",
               copy: "A curated Italian wine list alongside Dolomiti, Menabrea, and Baladin on tap and in bottle.",
-              label: "Wine bottles",
+              src: "/images/wine-bottles.jpg",
+              alt: "A row of Italian red wine bottles",
             },
           ].map((f) => (
             <div key={f.title} className="bg-white p-8">
-              <PhotoPlaceholder label={f.label} className="aspect-[4/3] w-full" />
+              <SitePhoto src={f.src} alt={f.alt} className="aspect-[4/3] w-full" sizes="(min-width: 768px) 33vw, 100vw" />
               <h2 className="mt-6 font-display text-2xl uppercase tracking-tight">
                 {f.title}
               </h2>
@@ -126,8 +150,13 @@ export default function Home() {
           </Link>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-          {["Charcuterie board", "Seafood pasta nera", "Aperol spritz", "Margherita, wood oven"].map((label) => (
-            <PhotoPlaceholder key={label} label={label} className="aspect-[4/3]" />
+          {[
+            { src: "/images/charcuterie-board.jpg", alt: "A charcuterie board with prosciutto, salami, and cheese" },
+            { src: "/images/charcuterie-board-2.jpg", alt: "A charcuterie board with cured meats and cheese" },
+            { src: "/images/dining-scene.jpg", alt: "A seafood pasta dish and Aperol spritz in the dining room" },
+            { src: "/images/charcuterie-board-3.jpg", alt: "A charcuterie board with prosciutto and cheese" },
+          ].map((p) => (
+            <SitePhoto key={p.src} src={p.src} alt={p.alt} className="aspect-[4/3]" sizes="(min-width: 768px) 25vw, 50vw" />
           ))}
         </div>
       </section>

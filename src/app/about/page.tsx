@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PhotoPlaceholder } from "@/components/photo-placeholder";
+import { SitePhoto } from "@/components/site-photo";
 import { WoodFiredBadge } from "@/components/wood-fired-badge";
 import { restaurant } from "@/lib/restaurant";
 
@@ -20,7 +20,12 @@ export default function AboutPage() {
         </h1>
 
         <div className="mt-10 grid gap-10 md:grid-cols-2 md:items-center">
-          <PhotoPlaceholder label="Founder, laughing while tossing dough" className="aspect-[4/3] w-full" />
+          <SitePhoto
+            src="/images/pasta-table-view.jpg"
+            alt="A table set with pasta, seafood, and wine at Passione Emporio"
+            className="aspect-[4/3] w-full"
+            sizes="(min-width: 768px) 50vw, 100vw"
+          />
           <div>
             <p className="text-black/70">
               Tucked into a corner of Berkeley, {restaurant.fullName} started with a
@@ -60,8 +65,13 @@ export default function AboutPage() {
 
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-          {["Wood-fired oven", "Hand-rolled pasta", "Charcuterie board", "Wine cellar"].map((label) => (
-            <PhotoPlaceholder key={label} label={label} className="aspect-[4/3]" />
+          {[
+            { src: "/images/pizza-oven.jpg", alt: "The wood-fired pizza oven at Passione Emporio" },
+            { src: "/images/pizza-crust-flour.jpg", alt: "Organic pizza dough dusted with flour" },
+            { src: "/images/charcuterie-board.jpg", alt: "A charcuterie board with prosciutto, salami, and cheese" },
+            { src: "/images/wine-bottles.jpg", alt: "A row of Italian red wine bottles" },
+          ].map((p) => (
+            <SitePhoto key={p.src} src={p.src} alt={p.alt} className="aspect-[4/3]" sizes="(min-width: 768px) 25vw, 50vw" />
           ))}
         </div>
       </section>
