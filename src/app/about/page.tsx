@@ -21,8 +21,8 @@ export default function AboutPage() {
 
         <div className="mt-10 grid gap-10 md:grid-cols-2 md:items-center">
           <SitePhoto
-            src="/images/pasta-table-view.jpg"
-            alt="A table set with pasta, seafood, and wine at Passione Emporio"
+            src="/images/founder-tossing-dough.jpg"
+            alt="Passione Emporio's founder tossing fresh pizza dough"
             className="aspect-[4/3] w-full"
             sizes="(min-width: 768px) 50vw, 100vw"
           />
