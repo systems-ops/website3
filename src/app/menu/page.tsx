@@ -9,24 +9,24 @@ export const metadata: Metadata = {
 
 function MenuSectionBlock({ section }: { section: MenuSection }) {
   return (
-    <div id={section.id} className="scroll-mt-24 border-t-2 border-black py-10 first:border-t-0 first:pt-0">
-      <h2 className="font-display text-3xl uppercase tracking-tight">{section.title}</h2>
+    <div id={section.id} className="scroll-mt-24 border-t border-espresso/15 py-10 first:border-t-0 first:pt-0">
+      <h2 className="font-display text-3xl italic text-espresso">{section.title}</h2>
       {section.note && (
-        <p className="mt-2 max-w-2xl text-xs uppercase tracking-wide text-black/50">
+        <p className="mt-2 max-w-2xl text-xs uppercase tracking-wide text-espresso/50">
           {section.note}
         </p>
       )}
       <ul className="mt-6 grid gap-x-10 gap-y-5 md:grid-cols-2">
         {section.items.map((item) => (
-          <li key={item.name} className="flex items-baseline justify-between gap-4 border-b border-black/10 pb-3">
+          <li key={item.name} className="flex items-baseline justify-between gap-4 border-b border-espresso/10 pb-3">
             <div>
-              <p className="font-semibold uppercase tracking-wide">{item.name}</p>
+              <p className="font-semibold text-espresso">{item.name}</p>
               {item.description && (
-                <p className="mt-1 text-sm text-black/60">{item.description}</p>
+                <p className="mt-1 text-sm text-espresso/60">{item.description}</p>
               )}
             </div>
             {item.price && (
-              <span className="shrink-0 font-display text-lg">{item.price}</span>
+              <span className="shrink-0 font-display italic text-lg text-terracotta">{item.price}</span>
             )}
           </li>
         ))}
@@ -40,16 +40,16 @@ export default function MenuPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
-      <p className="text-sm font-bold uppercase tracking-[0.3em] text-black/60">
+      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-terracotta">
         A Corner of Italy
       </p>
-      <h1 className="mt-3 font-display text-6xl uppercase leading-[0.9] md:text-7xl">
+      <h1 className="mt-3 font-display text-6xl italic leading-[0.95] text-espresso md:text-7xl">
         Menu
       </h1>
 
-      <nav className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-y-2 border-black py-4 text-sm font-bold uppercase tracking-wide">
+      <nav className="mt-8 flex flex-wrap gap-x-6 gap-y-2 rounded-2xl bg-cream-dark/60 px-6 py-4 text-sm font-semibold text-espresso/80">
         {allSections.map((s) => (
-          <a key={s.id} href={`#${s.id}`} className="hover:opacity-50">
+          <a key={s.id} href={`#${s.id}`} className="hover:text-terracotta">
             {s.title}
           </a>
         ))}
@@ -61,9 +61,9 @@ export default function MenuPage() {
         ))}
       </div>
 
-      <div className="mt-10 border-t-4 border-black pt-6">
-        <p className="text-sm font-bold uppercase tracking-[0.3em] text-black/60">Bevi</p>
-        <h2 className="mt-2 font-display text-5xl uppercase tracking-tight">Vino &amp; Birra</h2>
+      <div className="mt-10 rounded-2xl bg-olive px-6 py-6 text-cream">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cream/70">Bevi</p>
+        <h2 className="mt-2 font-display text-5xl italic">Vino &amp; Birra</h2>
       </div>
 
       <div className="mt-4">
@@ -72,7 +72,7 @@ export default function MenuPage() {
         ))}
       </div>
 
-      <p className="mt-10 max-w-2xl text-xs uppercase tracking-wide text-black/50">
+      <p className="mt-10 max-w-2xl text-xs uppercase tracking-wide text-espresso/50">
         Consumer Advisory: Consumption of undercooked meat, poultry, eggs, or seafood may
         increase the risk of food-borne illnesses. Alert your server if you have special
         dietary requirements. A 3% credit card processing fee applies — cash & debit not
@@ -82,13 +82,13 @@ export default function MenuPage() {
       <div className="mt-10 flex flex-wrap gap-4">
         <Link
           href="/reserve"
-          className="border-2 border-black bg-black px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-black"
+          className="rounded-full bg-terracotta px-7 py-3 text-sm font-semibold text-cream transition hover:bg-terracotta-dark"
         >
           Reserve a Table
         </Link>
         <Link
           href="/order"
-          className="border-2 border-black px-6 py-3 text-sm font-bold uppercase tracking-wide transition hover:bg-black hover:text-white"
+          className="rounded-full border border-espresso/20 px-7 py-3 text-sm font-semibold text-espresso transition hover:border-terracotta hover:text-terracotta"
         >
           Order Takeout
         </Link>

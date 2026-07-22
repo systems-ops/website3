@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Big_Shoulders, Inter } from "next/font/google";
+import { Playfair_Display, Work_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
-const display = Big_Shoulders({
+const display = Playfair_Display({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
+  weight: ["500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
 });
 
-const inter = Inter({
+const sans = Work_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
 });
@@ -27,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${display.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-white text-black antialiased">
+    <html lang="en" className={`${display.variable} ${sans.variable} h-full`}>
+      <body className="min-h-full flex flex-col bg-cream text-espresso antialiased">
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

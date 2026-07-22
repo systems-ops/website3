@@ -12,28 +12,28 @@ export default function GiftCardsPage() {
     <div className="mx-auto max-w-6xl px-6 py-16">
       <div className="grid gap-10 md:grid-cols-2 md:items-center">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-black/60">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-terracotta">
             Share the Passione
           </p>
-          <h1 className="mt-3 font-display text-6xl uppercase leading-[0.9] md:text-7xl">
+          <h1 className="mt-3 font-display text-6xl italic leading-[0.95] text-espresso md:text-7xl">
             Gift Cards
           </h1>
-          <p className="mt-6 max-w-md text-black/70">
+          <p className="mt-6 max-w-md text-espresso/70">
             Handmade pasta, wood-fired pizza, and honest Italian hospitality — for
             anyone on your list. Gift cards can be used for dine-in, takeout, and
             special events at {restaurant.fullName}.
           </p>
           <a
             href={restaurant.phoneHref}
-            className="mt-8 inline-block border-2 border-black bg-black px-8 py-4 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-white hover:text-black"
+            className="mt-8 inline-block rounded-full bg-terracotta px-8 py-4 text-sm font-semibold text-cream transition hover:bg-terracotta-dark"
           >
             Purchase a Gift Card
           </a>
-          <p className="mt-3 text-xs uppercase tracking-wide text-black/50">
+          <p className="mt-3 text-xs uppercase tracking-wide text-espresso/50">
             Call or visit in person — {restaurant.phone}
           </p>
         </div>
-        <PhotoPlaceholder label="Gift card" className="aspect-[4/3] w-full" />
+        <PhotoPlaceholder label="Gift card" className="aspect-[4/3] w-full rounded-3xl shadow-md" />
       </div>
     </div>
   );

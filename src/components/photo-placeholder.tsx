@@ -7,9 +7,9 @@ export function PhotoPlaceholder({
 }) {
   return (
     <div
-      className={`grain relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-black/90 via-black/70 to-black/90 ${className}`}
+      className={`grain relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-terracotta/20 via-cream-dark to-olive/20 ${className}`}
     >
-      <span className="px-4 text-center font-display text-sm font-bold uppercase tracking-[0.2em] text-white/40">
+      <span className="px-4 text-center font-display text-sm italic text-espresso/50">
         {label}
       </span>
     </div>
