@@ -1,0 +1,182 @@
+// Kitchen Compliance Log App — data model
+// See design_handoff_kitchen_log/README.md for the source spec this implements.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// --- Reference data -------------------------------------------------------
+
+model Location {
+  id   String @id @default(cuid())
+  name String @unique
+
+  logEntries              LogEntry[]
+  certificateRequirements CertificateRequirement[]
+
+  @@map("locations")
+}
+
+/// The digitized paper forms (FR-08-A, FR-08, FR-11, FR-47-A, FR-02, ...).
+/// `kind` is "temps" or "check". `unit` is "F" or "C" (temps forms only).
+/// SQLite has no enum support, so these are validated as strings in the app layer.
+model LogDefinition {
+  id       String  @id // slug, e.g. "fridge"
+  name     String
+  formCode String
+  kind     String
+  unit     String?
+  /// Ordered array of time-of-day slot labels, e.g. ["Morning","Midday","Afternoon"]. Temps forms only.
+  slots    Json?
+  revision Int     @default(1)
+  active   Boolean @default(true)
+
+  units                   LogUnit[]
+  items                   LogItem[]
+  entries                 LogEntry[]
+  correctiveActionOptions CorrectiveActionOption[]
+  certificateRequirements CertificateRequirement[]
+
+  @@map("log_definitions")
+}
+
+/// One row per thing measured on a "temps" form (e.g. "Walk-in fridge").
+model LogUnit {
+  id              String @id @default(cuid())
+  logDefinitionId String
+  logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
+  name            String
+  low             Float
+  high            Float
+  sortOrder       Int
+  /// Overrides the form's unit suffix for this specific unit (e.g. seconds instead of degrees).
+  unitOverride    String?
+
+  readings Reading[]
+
+  @@index([logDefinitionId])
+  @@map("log_units")
+}
+
+/// One row per checklist line on a "check" form.
+model LogItem {
+  id              String @id @default(cuid())
+  logDefinitionId String
+  logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
+  label           String
+  sortOrder       Int
+
+  itemChecks ItemCheck[]
+
+  @@index([logDefinitionId])
+  @@map("log_items")
+}
+
+/// Preset corrective-action options offered when a temps reading is out of spec.
+/// logDefinitionId = null is the fallback set used by any log without its own presets.
+model CorrectiveActionOption {
+  id              String         @id @default(cuid())
+  logDefinitionId String?
+  logDefinition   LogDefinition? @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
+  text            String
+  sortOrder       Int
+
+  @@index([logDefinitionId])
+  @@map("corrective_action_options")
+}
+
+model Certificate {
+  id   String @id @default(cuid())
+  name String @unique
+
+  requirements CertificateRequirement[]
+
+  @@map("certificates")
+}
+
+/// Defines which logs a certificate requires, at what frequency, so certificate
+/// status ("Fridge temperatures: 14 April missing") can be derived instead of hardcoded.
+model CertificateRequirement {
+  id              String        @id @default(cuid())
+  certificateId   String
+  certificate     Certificate   @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  logDefinitionId String
+  logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
+  /// null = applies at every location
+  locationId      String?
+  location        Location?     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  /// e.g. "daily"
+  frequency       String
+
+  @@unique([certificateId, logDefinitionId, locationId])
+  @@map("certificate_requirements")
+}
+
+// --- Submitted records ------------------------------------------------------
+
+/// One row per submitted form. Immutable once created — corrections are new
+/// rows referencing the original via `amendsId`, never an UPDATE.
+model LogEntry {
+  id              String        @id @default(cuid())
+  locationId      String
+  location        Location      @relation(fields: [locationId], references: [id])
+  logDefinitionId String
+  logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id])
+  /// Calendar date the record is for, "YYYY-MM-DD" (kitchen-local, not UTC instant).
+  businessDate    String
+  submittedAt     DateTime      @default(now())
+  /// Id (or name, pending auth) of the cook who submitted this record.
+  submittedBy     String
+  signatureName   String
+
+  amendsId   String?
+  amends     LogEntry?  @relation("Amendments", fields: [amendsId], references: [id])
+  amendments LogEntry[] @relation("Amendments")
+
+  readings   Reading[]
+  itemChecks ItemCheck[]
+
+  @@index([locationId, logDefinitionId, businessDate])
+  @@map("log_entries")
+}
+
+/// One row per submitted cell on a temps form.
+/// The spec range is snapshotted at write time (specLow/specHigh/specUnitOverride)
+/// so later changes to a unit's spec don't rewrite the meaning of past records.
+model Reading {
+  id                String   @id @default(cuid())
+  logEntryId        String
+  logEntry          LogEntry @relation(fields: [logEntryId], references: [id])
+  logUnitId         String
+  logUnit           LogUnit  @relation(fields: [logUnitId], references: [id])
+  slotIndex         Int
+  value             Float
+  outOfSpec         Boolean
+  specLow           Float
+  specHigh          Float
+  specUnitOverride  String?
+  correctiveAction  String?
+
+  @@unique([logEntryId, logUnitId, slotIndex])
+  @@index([logUnitId])
+  @@map("readings")
+}
+
+/// One row per ticked checklist line on a "check" form submission.
+model ItemCheck {
+  id         String   @id @default(cuid())
+  logEntryId String
+  logEntry   LogEntry @relation(fields: [logEntryId], references: [id])
+  logItemId  String
+  logItem    LogItem  @relation(fields: [logItemId], references: [id])
+  checked    Boolean
+
+  @@unique([logEntryId, logItemId])
+  @@index([logItemId])
+  @@map("item_checks")
+}
