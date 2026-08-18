@@ -1,0 +1,306 @@
+"use client";
+
+import { useState } from "react";
+import type { Draft, LogDefinition, LogUnit } from "./types";
+import type { Lang } from "./strings";
+import { strings } from "./strings";
+
+function cellKey(logUnitId: string, slotIndex: number) {
+  return `${logUnitId}|${slotIndex}`;
+}
+
+function specText(unit: LogUnit, unitLabel: string) {
+  const suffix = unit.unitOverride ?? unitLabel;
+  if (unit.unitOverride?.includes("second")) return `Should be ${unit.low} seconds or more`;
+  if (unit.high >= 200) return `Should be ${unit.low}${suffix} or hotter`;
+  if (unit.high === 70) return `Should be ${unit.high}${suffix} or cooler`;
+  return `Should be ${unit.low} to ${unit.high}${suffix}`;
+}
+
+function isBad(unit: LogUnit, raw: string | undefined) {
+  if (raw == null || raw === "") return false;
+  const v = parseFloat(raw.replace("−", "-"));
+  return !isNaN(v) && (v < unit.low || v > unit.high);
+}
+
+function findUnresolved(log: LogDefinition, slots: string[], draft: Draft) {
+  if (log.kind !== "temps") return null;
+  for (const unit of log.units) {
+    for (let s = 0; s < slots.length; s++) {
+      const k = cellKey(unit.id, s);
+      if (isBad(unit, draft.vals[k]) && !draft.ca[k]) {
+        return { unit, slotIndex: s, key: k, value: draft.vals[k] };
+      }
+    }
+  }
+  return null;
+}
+
+export default function EntryFlow({
+  log,
+  locationName,
+  cookName,
+  draft,
+  onChangeDraft,
+  onClose,
+  onSubmit,
+  lang,
+}: {
+  log: LogDefinition;
+  locationName: string;
+  cookName: string;
+  draft: Draft;
+  onChangeDraft: (next: Draft) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+  lang: Lang;
+}) {
+  const t = strings[lang];
+  const [pad, setPad] = useState<{ unit: LogUnit; slotIndex: number } | null>(null);
+  const [buf, setBuf] = useState("");
+
+  const slots = log.slots ?? [];
+  const unitLabel = log.unit ? `°${log.unit}` : "";
+
+  const unresolved = findUnresolved(log, slots, draft);
+
+  let canSubmit = false;
+  let submitNote = "";
+  let filled = true;
+
+  if (log.kind === "temps") {
+    for (const unit of log.units) {
+      for (let s = 0; s < slots.length; s++) {
+        const raw = draft.vals[cellKey(unit.id, s)];
+        if (raw == null || raw === "") filled = false;
+      }
+    }
+    canSubmit = filled && !unresolved;
+    submitNote = !filled
+      ? t.fillEveryBox
+      : unresolved
+        ? t.pickWhatYouDid
+        : t.signsAs(cookName, locationName);
+  } else {
+    const total = log.items.length;
+    const checkedCount = log.items.filter((i) => draft.checks[i.id]).length;
+    canSubmit = checkedCount === total && total > 0;
+    submitNote = canSubmit ? t.signsAs(cookName, locationName) : t.ticked(checkedCount, total);
+  }
+
+  function openPad(unit: LogUnit, slotIndex: number) {
+    const raw = draft.vals[cellKey(unit.id, slotIndex)];
+    setBuf(raw ?? "");
+    setPad({ unit, slotIndex });
+  }
+
+  function pressKey(key: string) {
+    if (key === "⌫") return setBuf((b) => b.slice(0, -1));
+    if (key === "−") return setBuf((b) => (b.startsWith("−") ? b.slice(1) : "−" + b));
+    setBuf((b) => (b + key).slice(0, 5));
+  }
+
+  function savePad() {
+    if (!pad) return;
+    if (buf === "") return setPad(null);
+    const k = cellKey(pad.unit.id, pad.slotIndex);
+    onChangeDraft({ ...draft, vals: { ...draft.vals, [k]: buf } });
+    setPad(null);
+    setBuf("");
+  }
+
+  function pickCorrectiveAction(label: string) {
+    if (!unresolved) return;
+    onChangeDraft({ ...draft, ca: { ...draft.ca, [unresolved.key]: label } });
+  }
+
+  function toggleItem(itemId: string) {
+    onChangeDraft({ ...draft, checks: { ...draft.checks, [itemId]: !draft.checks[itemId] } });
+  }
+
+  return (
+    <div
+      className="kitchen-app"
+      style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}
+    >
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+        <button
+          onClick={onClose}
+          style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
+        >
+          <svg width="10" height="17" viewBox="0 0 12 20">
+            <path d="M10 2L2 10l8 8" stroke="#3f5f80" strokeWidth="2" fill="none" strokeLinecap="round" />
+          </svg>
+          {t.back}
+        </button>
+        <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>{log.name}</span>
+        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{log.kind === "temps" ? t.tapAndType : t.tickEach}</span>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {unresolved && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14, border: "1px solid var(--color-alert-border)", background: "var(--color-alert-fill)" }}>
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, color: "var(--color-alert-text)" }}>
+              {unresolved.unit.name} read {unresolved.value} — outside the range
+            </span>
+            <span style={{ fontSize: 14.5, color: "rgba(29,31,32,.72)" }}>{t.whatDidYouDo}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {log.correctiveActions.map((label) => (
+                <button
+                  key={label}
+                  onClick={() => pickCorrectiveAction(label)}
+                  style={{ minHeight: 54, padding: "8px 14px", background: "transparent", border: "1px solid var(--color-alert-border)", color: "var(--color-alert-text)", cursor: "pointer", textAlign: "left", fontSize: 15.5 }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {log.kind === "temps" &&
+          log.units.map((unit) => {
+            const fixes: string[] = [];
+            return (
+              <div key={unit.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
+                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+                <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, lineHeight: 1.2 }}>{unit.name}</span>
+                  <span style={{ fontSize: 13.5, color: "var(--color-muted)" }}>{specText(unit, unitLabel)}</span>
+                </span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {slots.map((slot, s) => {
+                    const k = cellKey(unit.id, s);
+                    const raw = draft.vals[k];
+                    const bad = isBad(unit, raw);
+                    if (draft.ca[k]) fixes.push(`${slot}: ${draft.ca[k]}`);
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => openPad(unit, s)}
+                        style={{
+                          flex: 1,
+                          minHeight: 78,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 4,
+                          background: "transparent",
+                          border: `1px solid ${bad ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{slot}</span>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-heading)",
+                            fontWeight: 600,
+                            fontSize: 28,
+                            lineHeight: 1,
+                            color: bad ? "var(--color-alert)" : raw ? "var(--color-text)" : "var(--color-disabled)",
+                          }}
+                        >
+                          {raw ?? "—"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {fixes.length > 0 && (
+                  <span style={{ fontSize: 13.5, lineHeight: 1.4, color: "var(--color-alert-text)" }}>{fixes.join("  ·  ")}</span>
+                )}
+              </div>
+            );
+          })}
+
+        {log.kind === "check" &&
+          log.items.map((item) => {
+            const on = !!draft.checks[item.id];
+            return (
+              <button
+                key={item.id}
+                onClick={() => toggleItem(item.id)}
+                style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "10px 14px", background: "transparent", border: "1px solid var(--color-divider)", cursor: "pointer", textAlign: "left" }}
+              >
+                <span
+                  style={{
+                    width: 26,
+                    height: 26,
+                    flex: "none",
+                    border: "1px solid rgba(29,31,32,.45)",
+                    background: on ? "var(--color-accent)" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {on && (
+                    <svg width="15" height="12" viewBox="0 0 12 10">
+                      <path d="M1 5l3.5 3.5L11 1.5" stroke="#f2f2f3" strokeWidth="2" fill="none" strokeLinecap="round" />
+                    </svg>
+                  )}
+                </span>
+                <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{item.label}</span>
+              </button>
+            );
+          })}
+
+        <span style={{ fontSize: 12.5, color: "rgba(29,31,32,.4)", paddingTop: 4 }}>{log.formCode}</span>
+      </div>
+
+      <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)", display: "flex", flexDirection: "column", gap: 8 }}>
+        <button
+          className={canSubmit ? "btn btn-primary" : "btn btn-secondary"}
+          disabled={!canSubmit}
+          onClick={onSubmit}
+          style={{ width: "100%", minHeight: 60, fontSize: 18, letterSpacing: ".02em" }}
+        >
+          {t.submit}
+        </button>
+        <span style={{ fontSize: 13.5, textAlign: "center", color: "var(--color-muted)" }}>{submitNote}</span>
+      </div>
+
+      {pad && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 80 }}>
+          <div style={{ background: "var(--color-bg)", padding: "16px 14px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 12, padding: "0 6px" }}>
+              <span style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, lineHeight: 1.15 }}>{pad.unit.name}</span>
+                <span style={{ fontSize: 13.5, color: "var(--color-muted)" }}>
+                  {slots[pad.slotIndex]} · {specText(pad.unit, unitLabel).replace("Should be ", "")}
+                </span>
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontWeight: 600,
+                  fontSize: 46,
+                  lineHeight: 0.95,
+                  color: isBad(pad.unit, buf) ? "var(--color-alert)" : "var(--color-text)",
+                }}
+              >
+                {buf === "" ? "—" : buf}
+              </span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "−", "0", "⌫"].map((k) => (
+                <button key={k} className="btn btn-secondary" onClick={() => pressKey(k)} style={{ minHeight: 60, fontSize: 24 }}>
+                  {k}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-secondary" onClick={() => setPad(null)} style={{ flex: 1, minHeight: 56, fontSize: 16 }}>
+                {t.cancel}
+              </button>
+              <button className="btn btn-primary" onClick={savePad} style={{ flex: 2, minHeight: 56, fontSize: 16 }}>
+                {t.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

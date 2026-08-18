@@ -1,0 +1,123 @@
+/* Industry design tokens, ported from design_handoff_kitchen_log/industry.css.
+   Scoped under .kitchen-app so it never leaks into the marketing site. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap");
+
+.kitchen-app {
+  --color-bg: #f2f2f3;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-accent-700: #416180;
+  --color-accent-900: #1d2d3d;
+  --color-divider: rgba(29, 31, 32, 0.16);
+  --color-alert: #8f4a4a;
+  --color-alert-text: #7d3f3f;
+  --color-alert-fill: rgba(143, 74, 74, 0.06);
+  --color-alert-border: rgba(143, 74, 74, 0.5);
+  --color-muted: rgba(29, 31, 32, 0.55);
+  --color-disabled: rgba(29, 31, 32, 0.28);
+  --color-hover: rgba(29, 31, 32, 0.04);
+
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, sans-serif;
+
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+}
+
+.kitchen-app,
+.kitchen-app * {
+  box-sizing: border-box;
+}
+
+.kitchen-app button {
+  font-family: var(--font-body);
+  color: inherit;
+}
+
+.kitchen-app :focus {
+  outline: none;
+}
+.kitchen-app :focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Square, transparent, hairline-bordered "blueprint" frame with four corner
+   registration marks — the system's signature component treatment. */
+.kitchen-app .blueprint {
+  position: relative;
+  border: 1px solid var(--color-divider);
+}
+.kitchen-app .corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  color: rgba(29, 31, 32, 0.55);
+}
+.kitchen-app .corner::before,
+.kitchen-app .corner::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.kitchen-app .corner::before {
+  left: 5px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+.kitchen-app .corner::after {
+  top: 5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+.kitchen-app .corner.tl {
+  top: -6px;
+  left: -6px;
+}
+.kitchen-app .corner.tr {
+  top: -6px;
+  right: -6px;
+}
+.kitchen-app .corner.bl {
+  bottom: -6px;
+  left: -6px;
+}
+.kitchen-app .corner.br {
+  bottom: -6px;
+  right: -6px;
+}
+
+.kitchen-app .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  border-radius: 0;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+}
+.kitchen-app .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.kitchen-app .btn-primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+}
+.kitchen-app .btn-primary:hover {
+  background: var(--color-accent-700);
+}
+.kitchen-app .btn-secondary:hover {
+  background: var(--color-hover);
+}
