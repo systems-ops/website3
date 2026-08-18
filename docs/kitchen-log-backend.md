@@ -7,12 +7,11 @@ PWA both live in this repo.
 
 ## Stack
 
-- **DB**: SQLite via Prisma ORM 7 (driver adapter: `@prisma/adapter-better-sqlite3`),
-  for zero-config local development. Swapping to Postgres later means changing
-  `datasource.provider` in `prisma/schema.prisma` to `"postgresql"`, swapping
-  the adapter in `src/lib/prisma.ts` to `@prisma/adapter-pg`, and setting
-  `DATABASE_URL` — the schema itself has no SQLite-specific modeling beyond
-  storing `slots` as JSON (SQLite has no native array/enum support).
+- **DB**: Postgres via Prisma ORM 7 (driver adapter: `@prisma/adapter-pg`).
+  Deployed on Vercel Postgres; any Postgres works locally too (`DATABASE_URL`
+  in `.env`). Started on SQLite during initial development, then switched
+  once real deployment was in scope — SQLite has no persistent disk on
+  Vercel's serverless functions, so it was never viable past local dev.
 - **API**: Next.js Route Handlers under `src/app/api/`.
 - **Frontend**: a client-rendered PWA at `/kitchen` (`src/app/kitchen/`), a
   separate Next.js root layout from the marketing site (see "Route
@@ -26,13 +25,43 @@ PWA both live in this repo.
 
 ```bash
 npm install
-npm run db:migrate   # applies prisma/migrations, creates prisma/dev.db
+# set DATABASE_URL in .env to a Postgres connection string (local or hosted)
+npm run db:migrate   # applies prisma/migrations
 npm run db:seed       # loads locations, forms, units/items, corrective actions, certificates, demo cooks
 npm run dev
 # then open http://localhost:3000/kitchen
 ```
 
 Demo cook PINs (printed by `db:seed`): Jo=1234, Rosa=2345, Luca=3456, Ben=4567.
+
+## Deployment (Vercel + Vercel Postgres)
+
+Internal tool for kitchen tablets — nothing here needs to be public. The plan:
+
+1. **Hosting**: Vercel project linked to this GitHub repo, deploying from
+   `main`. Both the marketing site and `/kitchen` ship from the same
+   deployment (they're one Next.js app).
+2. **Database**: Vercel Postgres, attached to the project via the dashboard's
+   **Storage** tab (Create Database → Postgres → Connect to Project). This is
+   the one step Vercel doesn't expose over an API — do it once in the
+   dashboard and it auto-injects the connection env vars into the project.
+   Whatever the injected variable is named (check the Storage tab after
+   connecting — usually `POSTGRES_URL` or `DATABASE_URL`), set the project's
+   `DATABASE_URL` env var to that value if it isn't already named that.
+3. Once `DATABASE_URL` is set on the Vercel project, run
+   `npx prisma migrate deploy` against it (from a machine with that
+   `DATABASE_URL`, e.g. `vercel env pull` then run locally) to create the
+   schema, then `npx prisma db seed` to load the reference data.
+4. **Access control**: cook accounts (PIN login) already gate actual use.
+   On top of that, Vercel's **Password Protection** (Project Settings →
+   Deployment Protection) adds a single shared password in front of the
+   whole app with no code — enabled for this project. Deliberately not
+   IP-restricted to a location's wifi: the design requires the app to keep
+   working when kitchen wifi drops, so locking by network would fight that.
+5. **Tablets**: open the URL in Safari/Chrome, "Add to Home Screen" — it's
+   already a PWA (`public/kitchen-manifest.webmanifest`,
+   `public/kitchen-sw.js`), so it installs and launches full-screen like a
+   native app.
 
 ## Route structure
 
