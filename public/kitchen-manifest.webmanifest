@@ -1,0 +1,15 @@
+{
+  "name": "Kitchen Log — Passione Brands",
+  "short_name": "Kitchen Log",
+  "description": "Daily food-safety checks for Passione Brands kitchens.",
+  "start_url": "/kitchen",
+  "scope": "/kitchen",
+  "display": "standalone",
+  "background_color": "#f2f2f3",
+  "theme_color": "#f2f2f3",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/kitchen-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/kitchen-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

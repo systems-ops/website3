@@ -1,9 +1,9 @@
-# Kitchen Compliance Log — backend
+# Kitchen Compliance Log
 
-Backend for the Kitchen Compliance Log App (digitizing paper food-safety
-forms FR-08-A, FR-08, FR-11, FR-47-A, FR-02 for Passione Brands' kitchens).
-Implements the data model and API described in the design handoff
-(`Kitchen Compliance Log App` prototype + README).
+Digitizes paper food-safety forms FR-08-A, FR-08, FR-11, FR-47-A, FR-02 for
+Passione Brands' kitchens, per the design handoff (`Kitchen Compliance Log
+App` prototype + README). Backend (data model + API) and a working frontend
+PWA both live in this repo.
 
 ## Stack
 
@@ -14,15 +14,35 @@ Implements the data model and API described in the design handoff
   `DATABASE_URL` — the schema itself has no SQLite-specific modeling beyond
   storing `slots` as JSON (SQLite has no native array/enum support).
 - **API**: Next.js Route Handlers under `src/app/api/`.
+- **Frontend**: a client-rendered PWA at `/kitchen` (`src/app/kitchen/`), a
+  separate Next.js root layout from the marketing site (see "Route
+  structure" below) so it can be full-screen and installable independent of
+  the restaurant pages.
+- **Auth**: PIN-based cook sessions (`src/lib/pin.ts`, `src/lib/session.ts`)
+  — a fast switch-user pattern for a shared kitchen tablet, not
+  email/password. Session cookie, 12h TTL.
 
 ## Setup
 
 ```bash
 npm install
 npm run db:migrate   # applies prisma/migrations, creates prisma/dev.db
-npm run db:seed       # loads locations, forms, units/items, corrective actions, certificates
+npm run db:seed       # loads locations, forms, units/items, corrective actions, certificates, demo cooks
 npm run dev
+# then open http://localhost:3000/kitchen
 ```
+
+Demo cook PINs (printed by `db:seed`): Jo=1234, Rosa=2345, Luca=3456, Ben=4567.
+
+## Route structure
+
+The marketing site (`about`, `contact`, `menu`, `order`, `reserve`, `gift-cards`,
+the homepage) was moved under `src/app/(marketing)/` so it could keep its
+own root layout (`SiteHeader`/`SiteFooter`) while `src/app/kitchen/layout.tsx`
+defines an independent root layout for the kitchen app — Next.js's
+[multiple root layouts](https://nextjs.org/docs/app/api-reference/file-conventions/layout#root-layout)
+pattern via route groups. This is a pure reorganization; no marketing page
+URLs changed.
 
 ## Data model (`prisma/schema.prisma`)
 
@@ -52,23 +72,54 @@ original — never an `UPDATE` — so the audit trail is provable.
 | GET | `/api/log-definitions` | Forms with units/items/corrective actions |
 | GET | `/api/today?locationId=&date=` | Today tab: to-do vs done split |
 | GET | `/api/log-entries?locationId=&logDefinitionId=&month=\|date=` | Records tab: history |
-| POST | `/api/log-entries` | Submit a new record (one per location/form/day) |
+| POST | `/api/log-entries` | Submit a new record (one per location/form/day) — requires a session |
 | GET | `/api/log-entries/:id` | Single record with readings/checks/amendments |
-| POST | `/api/log-entries/:id/amend` | Correct a signed record (creates a new row) |
+| POST | `/api/log-entries/:id/amend` | Correct a signed record (creates a new row) — requires a session |
 | GET | `/api/certificates?locationId=&days=30` | Derived certificate gap status |
+| GET | `/api/auth/cooks?locationId=` | Cooks scoped to a kitchen (names only, for the PIN picker) |
+| POST | `/api/auth/login` | `{ cookId, locationId, pin }` → sets session cookie |
+| POST | `/api/auth/logout` | Clears session |
+| GET | `/api/auth/me` | Current cook, or `{ cook: null }` |
 
 `POST /api/log-entries` and the `/amend` endpoint enforce the same gating
 rules as the design: every cell must be filled (temps) or every item ticked
 (checklists), and any out-of-spec reading needs a corrective action before
-the submission is accepted.
+the submission is accepted. `submittedBy`/`signatureName` are derived from
+the session, not client input, and a cook must be scoped to a location
+(`cook_locations`) to submit for it.
+
+## Frontend (`src/app/kitchen/`)
+
+- `KitchenApp.tsx` — top-level state: auth, selected location, tab
+  (Today/Records), open entry flow, toast, offline/pending tracking.
+- `LoginScreen.tsx` — kitchen picker → cook picker → PIN pad.
+- `TodayTab.tsx` / `RecordsTab.tsx` / `EntryFlow.tsx` / `EntryDetail.tsx` —
+  the four main screens from the design (Today, Records with certificates +
+  month calendar, the entry flow with keypad and corrective-action gate, and
+  a read-only view of an already-signed record).
+- `offline.ts` — IndexedDB-backed draft persistence (so in-progress form
+  state survives an app kill mid-shift) and an outbox of signed-but-not-yet-
+  synced submissions. `KitchenApp` queues to the outbox on a network failure
+  and flushes it on the browser's `online` event; entries are append-only so
+  there's nothing to reconcile on reconnect.
+- `kitchen-sw.js` (in `public/`) + `RegisterServiceWorker.tsx` — caches the
+  app shell (JS/CSS/fonts) for installability and offline launch. It never
+  caches `/api/*` — serving stale data offline for a compliance log would be
+  actively misleading; the outbox above is what makes offline *submission*
+  actually work.
+- `strings.ts` — a small EN/ES dictionary for app chrome (buttons, labels,
+  statuses). Log/unit/item names come from the database and aren't
+  translated — scoped in per the design doc's note that the kitchens are
+  bilingual, not meant as full i18n coverage.
 
 ## Known gaps (not built here)
 
-Per the design handoff's "not built, and needed for production" list:
-authentication (per-cook PIN accounts), an offline write queue, manager
-review, CSV/PDF export for auditors, photo attachment on corrective actions,
-Spanish localization, and the remaining ~13 paper forms. The certificate
-requirements seeded in `prisma/seed.ts` (which logs each of Organic/FDA/Milk
-and dairy/SQF actually requires) are a placeholder inferred from the one
-example in the design doc ("Milk and dairy: Fridge temperatures") — confirm
-the real requirements with the client before relying on the derived status.
+Manager review, CSV/PDF export for auditors, photo attachment on corrective
+actions, and the remaining ~13 paper forms (see the top-level project
+conversation for what's known about those). The certificate requirements
+seeded in `prisma/seed.ts` (which logs each of Organic/FDA/Milk and dairy/SQF
+actually requires) are a placeholder inferred from the one example in the
+design doc ("Milk and dairy: Fridge temperatures") — confirm the real
+requirements with the client before relying on the derived status. Demo cook
+PINs are seeded in plaintext in `prisma/seed.ts` for local development only —
+replace with a real provisioning flow before any real deployment.

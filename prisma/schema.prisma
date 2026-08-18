@@ -18,8 +18,45 @@ model Location {
 
   logEntries              LogEntry[]
   certificateRequirements CertificateRequirement[]
+  cooks                   CookLocation[]
 
   @@map("locations")
+}
+
+/// A cook who can sign entries. Auth is a fast PIN switch on a shared kitchen
+/// tablet, not email/password — see CookLocation for which kitchens a cook
+/// can sign for.
+model Cook {
+  id      String  @id @default(cuid())
+  name    String
+  pinHash String
+  active  Boolean @default(true)
+
+  locations CookLocation[]
+  sessions  Session[]
+
+  @@map("cooks")
+}
+
+model CookLocation {
+  cookId     String
+  cook       Cook     @relation(fields: [cookId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([cookId, locationId])
+  @@map("cook_locations")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  cookId    String
+  cook      Cook     @relation(fields: [cookId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([cookId])
+  @@map("sessions")
 }
 
 /// The digitized paper forms (FR-08-A, FR-08, FR-11, FR-47-A, FR-02, ...).

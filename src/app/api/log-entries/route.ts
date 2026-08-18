@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { createLogEntrySchema } from "@/lib/log-entry-schemas";
 import { buildLogEntryCreateData } from "@/lib/log-entries";
+import { getCurrentCook } from "@/lib/session";
 
 // GET /api/log-entries?locationId=&logDefinitionId=&month=YYYY-MM&date=YYYY-MM-DD
 // Powers the Records tab: month calendar and single-day detail.
@@ -50,7 +51,14 @@ export async function GET(req: NextRequest) {
 // for corrections.
 export async function POST(req: NextRequest) {
   try {
+    const cook = await getCurrentCook();
+    if (!cook) throw new ApiError(401, "Sign in first");
+
     const body = createLogEntrySchema.parse(await req.json());
+
+    if (!cook.locations.some((l) => l.locationId === body.locationId)) {
+      throw new ApiError(403, "Not scoped to this kitchen");
+    }
 
     const [location, definition] = await Promise.all([
       prisma.location.findUnique({ where: { id: body.locationId } }),
@@ -81,8 +89,8 @@ export async function POST(req: NextRequest) {
         location: { connect: { id: body.locationId } },
         logDefinition: { connect: { id: body.logDefinitionId } },
         businessDate: body.businessDate,
-        submittedBy: body.submittedBy,
-        signatureName: body.signatureName,
+        submittedBy: cook.id,
+        signatureName: cook.name,
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
       },

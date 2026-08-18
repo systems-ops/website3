@@ -16,8 +16,6 @@ export const createLogEntrySchema = z.object({
   locationId: z.string(),
   logDefinitionId: z.string(),
   businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
-  submittedBy: z.string().trim().min(1),
-  signatureName: z.string().trim().min(1),
   readings: z.array(readingInputSchema).optional(),
   itemChecks: z.array(itemCheckInputSchema).optional(),
 });

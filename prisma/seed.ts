@@ -1,5 +1,6 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { hashPin } from "../src/lib/pin";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
@@ -131,6 +132,16 @@ const CERTIFICATES = [
   },
 ];
 
+// Demo cooks + PINs (matches NAMES in the prototype). Scoped to every
+// location for demo purposes — a real rollout would scope each cook to the
+// kitchen(s) they actually work at.
+const COOKS = [
+  { name: "Jo", pin: "1234" },
+  { name: "Rosa", pin: "2345" },
+  { name: "Luca", pin: "3456" },
+  { name: "Ben", pin: "4567" },
+];
+
 async function main() {
   for (const name of SITES) {
     await prisma.location.upsert({
@@ -248,6 +259,23 @@ async function main() {
       }
     }
   }
+
+  const allLocations = await prisma.location.findMany();
+  for (const c of COOKS) {
+    const cook = await prisma.cook.upsert({
+      where: { id: c.name.toLowerCase() },
+      update: {},
+      create: { id: c.name.toLowerCase(), name: c.name, pinHash: hashPin(c.pin) },
+    });
+    for (const loc of allLocations) {
+      await prisma.cookLocation.upsert({
+        where: { cookId_locationId: { cookId: cook.id, locationId: loc.id } },
+        update: {},
+        create: { cookId: cook.id, locationId: loc.id },
+      });
+    }
+  }
+  console.log("Demo cook PINs:", COOKS.map((c) => `${c.name}=${c.pin}`).join(", "));
 
   console.log("Seed complete.");
 }
