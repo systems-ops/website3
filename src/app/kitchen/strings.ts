@@ -33,7 +33,6 @@ export const strings = {
     cancel: "Cancel",
     save: "Save",
     signIn: "Sign in",
-    whoAreYou: "Who's working?",
     enterPin: "Enter your PIN",
     wrongPin: "Wrong PIN — try again",
     savedAndSigned: (name: string) => `${name} saved and signed.`,
@@ -41,6 +40,10 @@ export const strings = {
     syncing: "Syncing…",
     offline: "Offline",
     signOut: "Sign out",
+    exportData: "EXPORT DATA",
+    exportCsv: "Download CSV",
+    exportPdf: "Download PDF",
+    exportThisMonth: (name: string) => `${name}, this month`,
   },
   es: {
     change: "Cambiar",
@@ -69,7 +72,6 @@ export const strings = {
     cancel: "Cancelar",
     save: "Guardar",
     signIn: "Iniciar sesión",
-    whoAreYou: "¿Quién está trabajando?",
     enterPin: "Ingresa tu PIN",
     wrongPin: "PIN incorrecto — intenta de nuevo",
     savedAndSigned: (name: string) => `${name} guardado y firmado.`,
@@ -77,6 +79,10 @@ export const strings = {
     syncing: "Sincronizando…",
     offline: "Sin conexión",
     signOut: "Cerrar sesión",
+    exportData: "EXPORTAR DATOS",
+    exportCsv: "Descargar CSV",
+    exportPdf: "Descargar PDF",
+    exportThisMonth: (name: string) => `${name}, este mes`,
   },
 };
 

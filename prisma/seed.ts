@@ -132,14 +132,22 @@ const CERTIFICATES = [
   },
 ];
 
-// Demo cooks + PINs (matches NAMES in the prototype). Scoped to every
-// location for demo purposes — a real rollout would scope each cook to the
-// kitchen(s) they actually work at.
+// Shared PINs, not tied to a named person — anyone on shift uses whichever
+// PIN they've been given. The PIN's label (not the digits) gets recorded as
+// the signature on anything they submit, so records stay attributable
+// without the app needing to know who's actually on staff at any time.
+// Scoped to every location.
 const COOKS = [
-  { name: "Jo", pin: "1234" },
-  { name: "Rosa", pin: "2345" },
-  { name: "Luca", pin: "3456" },
-  { name: "Ben", pin: "4567" },
+  { name: "PIN 1", pin: "4821" },
+  { name: "PIN 2", pin: "3097" },
+  { name: "PIN 3", pin: "6154" },
+  { name: "PIN 4", pin: "2938" },
+  { name: "PIN 5", pin: "7462" },
+  { name: "PIN 6", pin: "1785" },
+  { name: "PIN 7", pin: "9203" },
+  { name: "PIN 8", pin: "5641" },
+  { name: "PIN 9", pin: "8370" },
+  { name: "PIN 10", pin: "2916" },
 ];
 
 async function main() {
@@ -260,12 +268,20 @@ async function main() {
     }
   }
 
+  // Replace any earlier named demo accounts (Jo/Rosa/Luca/Ben) with the
+  // generic PIN pool — safe to delete outright since submittedBy on past
+  // log_entries is a plain audit string, not a foreign key.
+  await prisma.cook.deleteMany({
+    where: { id: { in: ["jo", "rosa", "luca", "ben"] } },
+  });
+
   const allLocations = await prisma.location.findMany();
-  for (const c of COOKS) {
+  for (const [i, c] of COOKS.entries()) {
+    const id = `pin-${i + 1}`;
     const cook = await prisma.cook.upsert({
-      where: { id: c.name.toLowerCase() },
-      update: {},
-      create: { id: c.name.toLowerCase(), name: c.name, pinHash: hashPin(c.pin) },
+      where: { id },
+      update: { pinHash: hashPin(c.pin) },
+      create: { id, name: c.name, pinHash: hashPin(c.pin) },
     });
     for (const loc of allLocations) {
       await prisma.cookLocation.upsert({
@@ -275,7 +291,7 @@ async function main() {
       });
     }
   }
-  console.log("Demo cook PINs:", COOKS.map((c) => `${c.name}=${c.pin}`).join(", "));
+  console.log("PINs:", COOKS.map((c) => `${c.name}=${c.pin}`).join(", "));
 
   console.log("Seed complete.");
 }

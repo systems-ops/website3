@@ -83,6 +83,14 @@ export default function RecordsTab({
   const monthLabel = `${MONTH_NAMES[m]} ${y}`;
   const selectedEntry = selectedDay ? entriesByDay.get(selectedDay) : undefined;
 
+  function exportUrl(format: "csv" | "pdf") {
+    const from = `${key}-01`;
+    const to = `${key}-${String(nDays).padStart(2, "0")}`;
+    const p = new URLSearchParams({ locationId, from, to, format });
+    if (effectiveHLogId) p.set("logDefinitionId", effectiveHLogId);
+    return `/api/export?${p.toString()}`;
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 26, paddingTop: 20 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -169,6 +177,29 @@ export default function RecordsTab({
             <span style={{ width: 11, height: 11, border: "1px solid rgba(29,31,32,.3)" }} />
             {t.nothingYet}
           </span>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.exportData}</span>
+          <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>
+            {t.exportThisMonth(hLog?.name ?? "")}
+          </span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a
+              className="btn btn-secondary"
+              style={{ flex: 1, textAlign: "center", minHeight: 48, lineHeight: "48px" }}
+              href={exportUrl("csv")}
+            >
+              {t.exportCsv}
+            </a>
+            <a
+              className="btn btn-secondary"
+              style={{ flex: 1, textAlign: "center", minHeight: 48, lineHeight: "48px" }}
+              href={exportUrl("pdf")}
+            >
+              {t.exportPdf}
+            </a>
+          </div>
         </div>
 
         <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 14px" }}>
