@@ -61,13 +61,10 @@ export const submitLogEntry = (payload: SubmitPayload) =>
     body: JSON.stringify(payload),
   });
 
-export const fetchCooks = (locationId: string) =>
-  api<{ cooks: { id: string; name: string }[] }>(`/api/auth/cooks?locationId=${locationId}`);
-
-export const login = (cookId: string, locationId: string, pin: string) =>
+export const login = (locationId: string, pin: string) =>
   api<{ cook: Cook }>("/api/auth/login", {
     method: "POST",
-    body: JSON.stringify({ cookId, locationId, pin }),
+    body: JSON.stringify({ locationId, pin }),
   });
 
 export const logout = () => api<{ ok: true }>("/api/auth/logout", { method: "POST" });
