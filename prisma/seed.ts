@@ -86,6 +86,75 @@ const LOGS = [
       "Lot codes written down",
     ],
   },
+  {
+    id: "hygiene",
+    name: "Hygiene inspection",
+    formCode: "Form FR-65-A",
+    kind: "check",
+    items: [
+      "Wash all surfaces",
+      "Wash all tables",
+      "Wash all mixing bowls",
+      "Wash all scales",
+      "Wash baking tins",
+      "Wash white trays",
+      "Wash metal baking racks",
+      "Sanitize all utensils",
+      "Clean dough mixer",
+      "Clean dough divider",
+      "Clean rounder",
+      "Clean former",
+      "Sweep floors",
+      "Mop all floors",
+      "Dispose of waste",
+      "Clean production drains",
+      "Clean employee break room",
+      "Clean employee restroom",
+    ],
+  },
+  {
+    id: "exterior",
+    name: "Exterior cleaning",
+    formCode: "Form FR-66-A",
+    kind: "check",
+    items: [
+      "Sweep doorways",
+      "Remove trash from planter boxes and sidewalks",
+      "Remove cobwebs from the doorways",
+      "Wipe exterior glass on entrance doors",
+      "Sweep exterior for cigarette butts and empty ashtrays",
+      "Clean and sweep around the trash yard bins",
+      "Use soapy water to remove obvious stains from the sidewalk",
+      "Remove dust around doorways and ledges",
+      "Clean and maintain loading and unloading areas",
+      "Dispose of waste in correct bins",
+    ],
+  },
+  {
+    id: "restroom",
+    name: "Restroom cleaning",
+    formCode: "Form FR-60-A",
+    kind: "check",
+    items: [
+      "Floor mopped",
+      "Mirror cleaned",
+      "Toilet paper stocked",
+      "Paper towels stocked",
+      "Toilet cleaned",
+      "Sink cleaned",
+      "Soap filled",
+      "Walls wiped",
+    ],
+  },
+  {
+    id: "chlorine",
+    name: "Chlorine solution testing",
+    formCode: "Form FR-63-A",
+    kind: "temps",
+    unit: null,
+    slots: ["Test"],
+    units: [{ name: "Sanitizer solution", low: 90, high: 110, unitOverride: " PPM" }],
+  },
 ];
 
 const CORRECTIVE_ACTIONS: Record<string, string[]> = {
@@ -106,6 +175,12 @@ const CORRECTIVE_ACTIONS: Record<string, string[]> = {
     "Added more ice packs",
     "Called maintenance",
     "Refused the delivery",
+  ],
+  chlorine: [
+    "Added more sanitizer concentrate",
+    "Diluted with more water",
+    "Remade the solution",
+    "Told the manager",
   ],
   // Fallback set (logDefinitionId = null), used by any log without its own presets.
   _: [
@@ -128,6 +203,10 @@ const CERTIFICATES = [
       { logId: "fridge", frequency: "daily" },
       { logId: "freezer", frequency: "daily" },
       { logId: "clean", frequency: "daily" },
+      { logId: "hygiene", frequency: "daily" },
+      { logId: "exterior", frequency: "daily" },
+      { logId: "restroom", frequency: "daily" },
+      { logId: "chlorine", frequency: "daily" },
     ],
   },
 ];
@@ -185,10 +264,12 @@ async function main() {
         const existing = await prisma.logUnit.findFirst({
           where: { logDefinitionId: log.id, name: unit.name },
         });
+        const unitOverride: string | null =
+          "unitOverride" in unit && typeof unit.unitOverride === "string" ? unit.unitOverride : null;
         if (existing) {
           await prisma.logUnit.update({
             where: { id: existing.id },
-            data: { low: unit.low, high: unit.high, sortOrder: i },
+            data: { low: unit.low, high: unit.high, sortOrder: i, unitOverride },
           });
         } else {
           await prisma.logUnit.create({
@@ -198,6 +279,7 @@ async function main() {
               low: unit.low,
               high: unit.high,
               sortOrder: i,
+              unitOverride,
             },
           });
         }
