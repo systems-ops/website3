@@ -12,11 +12,13 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/log-entries/[id
         logDefinition: true,
         readings: { include: { logUnit: true }, orderBy: { slotIndex: "asc" } },
         itemChecks: { include: { logItem: true } },
+        calibrationRows: { orderBy: { rowIndex: "asc" } },
         amends: true,
         amendments: {
           include: {
             readings: { include: { logUnit: true } },
             itemChecks: { include: { logItem: true } },
+            calibrationRows: { orderBy: { rowIndex: "asc" } },
           },
         },
       },

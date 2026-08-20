@@ -59,6 +59,33 @@ model Session {
   @@map("sessions")
 }
 
+/// A named manager/office account — distinct from the shared kitchen Cook
+/// PINs, for the small set of forms that require a specific individual's
+/// sign-off (e.g. CEO or SQF Practitioner approval) rather than "whoever's
+/// on shift". Company-wide, not scoped to a location.
+model Manager {
+  id      String  @id @default(cuid())
+  name    String
+  role    String
+  pinHash String
+  active  Boolean @default(true)
+
+  sessions ManagerSession[]
+
+  @@map("managers")
+}
+
+model ManagerSession {
+  id        String   @id @default(cuid())
+  managerId String
+  manager   Manager  @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([managerId])
+  @@map("manager_sessions")
+}
+
 /// The digitized paper forms (FR-08-A, FR-08, FR-11, FR-47-A, FR-02, ...).
 /// `kind` is "temps" or "check". `unit` is "F" or "C" (temps forms only).
 /// SQLite has no enum support, so these are validated as strings in the app layer.
@@ -175,8 +202,9 @@ model LogEntry {
   amends     LogEntry?  @relation("Amendments", fields: [amendsId], references: [id])
   amendments LogEntry[] @relation("Amendments")
 
-  readings   Reading[]
-  itemChecks ItemCheck[]
+  readings         Reading[]
+  itemChecks       ItemCheck[]
+  calibrationRows  CalibrationRow[]
 
   @@index([locationId, logDefinitionId, businessDate])
   @@map("log_entries")
@@ -202,6 +230,25 @@ model Reading {
   @@unique([logEntryId, logUnitId, slotIndex])
   @@index([logUnitId])
   @@map("readings")
+}
+
+/// One row per thermometer tested on a "calibration" form submission
+/// (e.g. FR-51-A). Unlike "temps" units, the thermometer being tested is
+/// identified ad hoc per submission (a tag/ID typed in), not a predefined
+/// LogUnit, so calibration rows aren't tied to a fixed reference list.
+model CalibrationRow {
+  id                 String   @id @default(cuid())
+  logEntryId         String
+  logEntry           LogEntry @relation(fields: [logEntryId], references: [id])
+  rowIndex           Int
+  testTermId         String
+  referenceReading   Float
+  testReading        Float
+  adjustmentRequired Boolean
+  comments           String?
+
+  @@unique([logEntryId, rowIndex])
+  @@map("calibration_rows")
 }
 
 /// One row per ticked checklist line on a "check" form submission.

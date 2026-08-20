@@ -206,12 +206,24 @@ export default function KitchenApp() {
               })
             ),
           }
-        : {
-            locationId,
-            logDefinitionId: flowLogId,
-            businessDate,
-            itemChecks: log.items.map((item) => ({ logItemId: item.id, checked: !!draft.checks[item.id] })),
-          };
+        : log.kind === "calibration"
+          ? {
+              locationId,
+              logDefinitionId: flowLogId,
+              businessDate,
+              calibrationRows: draft.calibrationRows.map((r) => ({
+                testTermId: r.testTermId,
+                referenceReading: parseFloat(r.referenceReading.replace("−", "-")),
+                testReading: parseFloat(r.testReading.replace("−", "-")),
+                ...(r.comments ? { comments: r.comments } : {}),
+              })),
+            }
+          : {
+              locationId,
+              logDefinitionId: flowLogId,
+              businessDate,
+              itemChecks: log.items.map((item) => ({ logItemId: item.id, checked: !!draft.checks[item.id] })),
+            };
 
     const key = draftKey(locationId, flowLogId, businessDate);
 
