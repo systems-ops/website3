@@ -47,7 +47,9 @@ export async function GET(req: NextRequest) {
           ? `${def.units.length} to check`
           : def.kind === "calibration"
             ? "Log each thermometer tested"
-            : `${def.items.length} things to tick`;
+            : def.kind === "receiving"
+              ? "Log the delivery"
+              : `${def.items.length} things to tick`;
 
       if (entry) {
         done.push({

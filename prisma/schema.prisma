@@ -70,7 +70,8 @@ model Manager {
   pinHash String
   active  Boolean @default(true)
 
-  sessions ManagerSession[]
+  sessions         ManagerSession[]
+  receivingReviews ReceivingReview[]
 
   @@map("managers")
 }
@@ -205,6 +206,8 @@ model LogEntry {
   readings         Reading[]
   itemChecks       ItemCheck[]
   calibrationRows  CalibrationRow[]
+  receivingDetail  ReceivingDetail?
+  receivingReview  ReceivingReview?
 
   @@index([locationId, logDefinitionId, businessDate])
   @@map("log_entries")
@@ -263,4 +266,85 @@ model ItemCheck {
   @@unique([logEntryId, logItemId])
   @@index([logItemId])
   @@map("item_checks")
+}
+
+/// The intake portion of a Receiving Log submission (FR-40) — filled in by
+/// whoever's checking in the delivery. The management sign-off/testing
+/// portion of that same paper form is deliberately split out into
+/// ReceivingReview: it happens later, by a specific named manager, not at
+/// intake time, so it can't be part of the same immutable creation.
+model ReceivingDetail {
+  id              String   @id @default(cuid())
+  logEntryId      String   @unique
+  logEntry        LogEntry @relation(fields: [logEntryId], references: [id])
+  invoiceNumber   String
+  distributorName String
+
+  wfcfoApproved  Boolean
+  wfcfoExplain   String?
+  nonGmoApproved Boolean
+  nonGmoExplain  String?
+
+  truckConditionGood    Boolean
+  truckConditionExplain String?
+  truckTempCompliant    Boolean
+  truckTempF            Float?
+
+  palletConditionGood Boolean
+  plasticWrapGood     Boolean
+
+  productsToStandard        Boolean
+  productsToStandardExplain String?
+  labelsCurrent             Boolean
+  labelsCurrentExplain      String?
+
+  lines ReceivingLine[]
+
+  @@map("receiving_details")
+}
+
+/// One row per product on a Receiving Log submission's product table.
+model ReceivingLine {
+  id                String          @id @default(cuid())
+  receivingDetailId String
+  receivingDetail   ReceivingDetail @relation(fields: [receivingDetailId], references: [id])
+  rowIndex          Int
+  productName       String
+  productId         String?
+  productCount      String?
+  lotNumber         String?
+  allergenProduct   Boolean
+  labeledOrganic    Boolean
+  /// "dry" | "refrig" | "freezer"
+  storageType       String
+
+  @@unique([receivingDetailId, rowIndex])
+  @@map("receiving_lines")
+}
+
+/// The management testing/approval step on a Receiving Log entry — added
+/// after intake, by a named Manager (not a shared cook PIN), and only once
+/// per entry. Modeled as its own record rather than an update to
+/// ReceivingDetail so intake stays immutable the same way every other log
+/// entry does.
+model ReceivingReview {
+  id                String   @id @default(cuid())
+  logEntryId        String   @unique
+  logEntry          LogEntry @relation(fields: [logEntryId], references: [id])
+  managerId         String
+  manager           Manager  @relation(fields: [managerId], references: [id])
+  reviewedAt        DateTime @default(now())
+
+  totalCount        Int?
+  countTested       Int?
+  standardsReviewed String?
+  coaReference      String?
+  approved          Boolean
+  rejectedReason    String?
+  storageLocation   String?
+  storageCcps       String?
+  comments          String?
+  releasedForUse    Boolean
+
+  @@map("receiving_reviews")
 }

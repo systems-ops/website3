@@ -8,6 +8,7 @@ import {
   fetchLogDefinitions,
   fetchLogEntry,
   fetchMe,
+  fetchManagerMe,
   fetchToday,
   logout,
   submitLogEntry,
@@ -21,7 +22,7 @@ import {
   removeFromOutbox,
   saveDraft,
 } from "./offline";
-import type { CertificateStatus, Cook, Draft, Location, LogDefinition, LogEntryRecord, TodayResponse } from "./types";
+import type { CertificateStatus, Cook, Draft, Location, LogDefinition, LogEntryRecord, Manager, TodayResponse } from "./types";
 import { emptyDraft } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
@@ -30,6 +31,7 @@ import TodayTab from "./TodayTab";
 import RecordsTab from "./RecordsTab";
 import EntryFlow from "./EntryFlow";
 import EntryDetail from "./EntryDetail";
+import ManagerView from "./ManagerView";
 
 const LOCATION_STORAGE_KEY = "kitchen.locationId";
 const LANG_STORAGE_KEY = "kitchen.lang";
@@ -53,6 +55,7 @@ export default function KitchenApp() {
   const [lang, setLang] = useState<Lang>(initialLang);
   const [booted, setBooted] = useState(false);
   const [cook, setCook] = useState<Cook | null>(null);
+  const [manager, setManager] = useState<Manager | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationId, setLocationId] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogDefinition[]>([]);
@@ -102,10 +105,11 @@ export default function KitchenApp() {
 
   // Boot: locations, session.
   useEffect(() => {
-    Promise.all([fetchLocations(), fetchMe()])
-      .then(([locRes, meRes]) => {
+    Promise.all([fetchLocations(), fetchMe(), fetchManagerMe()])
+      .then(([locRes, meRes, managerRes]) => {
         setLocations(locRes.locations);
         setCook(meRes.cook);
+        setManager(meRes.cook ? null : managerRes.manager);
         const saved = localStorage.getItem(LOCATION_STORAGE_KEY);
         const scoped = meRes.cook?.locationIds ?? locRes.locations.map((l) => l.id);
         const initial = (saved && scoped.includes(saved) ? saved : scoped[0]) ?? locRes.locations[0]?.id ?? null;
@@ -218,12 +222,40 @@ export default function KitchenApp() {
                 ...(r.comments ? { comments: r.comments } : {}),
               })),
             }
-          : {
-              locationId,
-              logDefinitionId: flowLogId,
-              businessDate,
-              itemChecks: log.items.map((item) => ({ logItemId: item.id, checked: !!draft.checks[item.id] })),
-            };
+          : log.kind === "receiving"
+            ? {
+                locationId,
+                logDefinitionId: flowLogId,
+                businessDate,
+                receiving: {
+                  invoiceNumber: draft.receiving.invoiceNumber,
+                  distributorName: draft.receiving.distributorName,
+                  wfcfo: draft.receiving.wfcfo,
+                  nonGmo: draft.receiving.nonGmo,
+                  truckCondition: draft.receiving.truckCondition,
+                  truckTempCompliant: draft.receiving.truckTempCompliant,
+                  ...(draft.receiving.truckTempF ? { truckTempF: parseFloat(draft.receiving.truckTempF) } : {}),
+                  palletConditionGood: draft.receiving.palletConditionGood,
+                  plasticWrapGood: draft.receiving.plasticWrapGood,
+                  productsToStandard: draft.receiving.productsToStandard,
+                  labelsCurrent: draft.receiving.labelsCurrent,
+                  lines: draft.receiving.lines.map((l) => ({
+                    productName: l.productName,
+                    ...(l.productId ? { productId: l.productId } : {}),
+                    ...(l.productCount ? { productCount: l.productCount } : {}),
+                    ...(l.lotNumber ? { lotNumber: l.lotNumber } : {}),
+                    allergenProduct: l.allergenProduct,
+                    labeledOrganic: l.labeledOrganic,
+                    storageType: l.storageType,
+                  })),
+                },
+              }
+            : {
+                locationId,
+                logDefinitionId: flowLogId,
+                businessDate,
+                itemChecks: log.items.map((item) => ({ logItemId: item.id, checked: !!draft.checks[item.id] })),
+              };
 
     const key = draftKey(locationId, flowLogId, businessDate);
 
@@ -279,6 +311,17 @@ export default function KitchenApp() {
 
   if (!booted) return null;
 
+  if (manager) {
+    return (
+      <ManagerView
+        manager={manager}
+        locations={locations}
+        lang={lang}
+        onSignOut={() => setManager(null)}
+      />
+    );
+  }
+
   if (!cook) {
     return (
       <LoginScreen
@@ -288,6 +331,7 @@ export default function KitchenApp() {
           setCook(signedInCook);
           setLocationId(signedInLocationId);
         }}
+        onManagerSignedIn={(signedInManager) => setManager(signedInManager)}
       />
     );
   }

@@ -161,6 +161,12 @@ const LOGS = [
     formCode: "Form FR-51-A",
     kind: "calibration",
   },
+  {
+    id: "receiving-log",
+    name: "Receiving log",
+    formCode: "Form FR-40",
+    kind: "receiving",
+  },
 ];
 
 const CORRECTIVE_ACTIONS: Record<string, string[]> = {
@@ -197,7 +203,13 @@ const CORRECTIVE_ACTIONS: Record<string, string[]> = {
 };
 
 const CERTIFICATES = [
-  { name: "Organic", requires: [{ logId: "delivery", frequency: "daily" }] },
+  {
+    name: "Organic",
+    requires: [
+      { logId: "delivery", frequency: "daily" },
+      { logId: "receiving-log", frequency: "daily" },
+    ],
+  },
   { name: "FDA", requires: [{ logId: "clean", frequency: "daily" }] },
   {
     name: "Milk and dairy",
@@ -214,6 +226,7 @@ const CERTIFICATES = [
       { logId: "restroom", frequency: "daily" },
       { logId: "chlorine", frequency: "daily" },
       { logId: "thermometer-calibration", frequency: "daily" },
+      { logId: "receiving-log", frequency: "daily" },
     ],
   },
 ];

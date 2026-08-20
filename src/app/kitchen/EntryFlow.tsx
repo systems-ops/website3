@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CalibrationDraftRow, Draft, LogDefinition, LogUnit } from "./types";
+import type { ApprovalField, CalibrationDraftRow, Draft, LogDefinition, LogUnit, ReceivingDraft, ReceivingLineDraft, StorageType } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
@@ -18,6 +18,12 @@ function calibrationRowComplete(row: CalibrationDraftRow): boolean {
   if (!row.testTermId.trim() || row.referenceReading === "" || row.testReading === "") return false;
   return !calibrationOutOfTolerance(row) || row.comments.trim() !== "";
 }
+
+function approvalOk(field: ApprovalField): boolean {
+  return field.approved || !!field.explain?.trim();
+}
+
+const STORAGE_TYPES: StorageType[] = ["dry", "refrig", "freezer"];
 
 function cellKey(logUnitId: string, slotIndex: number) {
   return `${logUnitId}|${slotIndex}`;
@@ -100,6 +106,12 @@ export default function EntryFlow({
     const allComplete = rows.length > 0 && rows.every(calibrationRowComplete);
     canSubmit = allComplete;
     submitNote = rows.length === 0 ? t.addAtLeastOne : !allComplete ? t.fillEveryRow : t.signsAs(cookName, locationName);
+  } else if (log.kind === "receiving") {
+    const r = draft.receiving;
+    const approvalsOk = [r.wfcfo, r.nonGmo, r.truckCondition, r.productsToStandard, r.labelsCurrent].every(approvalOk);
+    const linesOk = r.lines.length > 0 && r.lines.every((l) => l.productName.trim() !== "");
+    canSubmit = !!r.invoiceNumber.trim() && !!r.distributorName.trim() && approvalsOk && linesOk;
+    submitNote = canSubmit ? t.signsAs(cookName, locationName) : t.fillReceivingRequired;
   } else {
     const total = log.items.length;
     const checkedCount = log.items.filter((i) => draft.checks[i.id]).length;
@@ -123,6 +135,64 @@ export default function EntryFlow({
 
   function removeCalibrationRow(index: number) {
     onChangeDraft({ ...draft, calibrationRows: draft.calibrationRows.filter((_, i) => i !== index) });
+  }
+
+  function updateReceiving(patch: Partial<ReceivingDraft>) {
+    onChangeDraft({ ...draft, receiving: { ...draft.receiving, ...patch } });
+  }
+
+  function addReceivingLine() {
+    updateReceiving({
+      lines: [
+        ...draft.receiving.lines,
+        { productName: "", productId: "", productCount: "", lotNumber: "", allergenProduct: false, labeledOrganic: false, storageType: "dry" },
+      ],
+    });
+  }
+
+  function updateReceivingLine(index: number, patch: Partial<ReceivingLineDraft>) {
+    updateReceiving({ lines: draft.receiving.lines.map((l, i) => (i === index ? { ...l, ...patch } : l)) });
+  }
+
+  function removeReceivingLine(index: number) {
+    updateReceiving({ lines: draft.receiving.lines.filter((_, i) => i !== index) });
+  }
+
+  function renderBoolToggle(label: string, value: boolean, onChange: (v: boolean) => void) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+        <span style={{ fontSize: 15.5, flex: 1 }}>{label}</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          {([true, false] as const).map((v) => (
+            <button
+              key={String(v)}
+              onClick={() => onChange(v)}
+              className={value === v ? "btn btn-primary" : "btn btn-secondary"}
+              style={{ minHeight: 40, minWidth: 56, fontSize: 14 }}
+            >
+              {v ? t.yes : t.no}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderApproval(label: string, field: ApprovalField, onChange: (f: ApprovalField) => void) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {renderBoolToggle(label, field.approved, (approved) => onChange({ approved, explain: field.explain }))}
+        {!field.approved && (
+          <input
+            type="text"
+            value={field.explain ?? ""}
+            onChange={(e) => onChange({ approved: field.approved, explain: e.target.value })}
+            placeholder={t.explainWhy}
+            style={{ minHeight: 44, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-alert-border)", background: "transparent" }}
+          />
+        )}
+      </div>
+    );
   }
 
   function openPad(unit: LogUnit, slotIndex: number) {
@@ -172,7 +242,13 @@ export default function EntryFlow({
         </button>
         <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>{log.name}</span>
         <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
-          {log.kind === "temps" ? t.tapAndType : log.kind === "calibration" ? t.addThermometer : t.tickEach}
+          {log.kind === "temps"
+            ? t.tapAndType
+            : log.kind === "calibration"
+              ? t.addThermometer
+              : log.kind === "receiving"
+                ? t.products
+                : t.tickEach}
         </span>
       </div>
 
@@ -376,6 +452,109 @@ export default function EntryFlow({
             })}
             <button className="btn btn-secondary" onClick={addCalibrationRow} style={{ minHeight: 54, fontSize: 15.5 }}>
               {t.addThermometer}
+            </button>
+          </>
+        )}
+
+        {log.kind === "receiving" && (
+          <>
+            <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14 }}>
+              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+              <input
+                type="text"
+                value={draft.receiving.invoiceNumber}
+                onChange={(e) => updateReceiving({ invoiceNumber: e.target.value })}
+                placeholder={t.invoiceNumber}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "transparent" }}
+              />
+              <input
+                type="text"
+                value={draft.receiving.distributorName}
+                onChange={(e) => updateReceiving({ distributorName: e.target.value })}
+                placeholder={t.distributorName}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "transparent" }}
+              />
+              {renderApproval(t.wfcfoApproved, draft.receiving.wfcfo, (f) => updateReceiving({ wfcfo: f }))}
+              {renderApproval(t.nonGmoApproved, draft.receiving.nonGmo, (f) => updateReceiving({ nonGmo: f }))}
+              {renderApproval(t.truckConditionGood, draft.receiving.truckCondition, (f) => updateReceiving({ truckCondition: f }))}
+              {renderBoolToggle(t.truckTempCompliant, draft.receiving.truckTempCompliant, (v) => updateReceiving({ truckTempCompliant: v }))}
+              <input
+                type="number"
+                inputMode="decimal"
+                value={draft.receiving.truckTempF}
+                onChange={(e) => updateReceiving({ truckTempF: e.target.value })}
+                placeholder={t.truckTempF}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "transparent" }}
+              />
+              {renderBoolToggle(t.palletConditionGood, draft.receiving.palletConditionGood, (v) => updateReceiving({ palletConditionGood: v }))}
+              {renderBoolToggle(t.plasticWrapGood, draft.receiving.plasticWrapGood, (v) => updateReceiving({ plasticWrapGood: v }))}
+              {renderApproval(t.productsToStandard, draft.receiving.productsToStandard, (f) => updateReceiving({ productsToStandard: f }))}
+              {renderApproval(t.labelsCurrent, draft.receiving.labelsCurrent, (f) => updateReceiving({ labelsCurrent: f }))}
+            </div>
+
+            <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.products}</span>
+            {draft.receiving.lines.map((line, i) => (
+              <div key={i} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
+                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="text"
+                    value={line.productName}
+                    onChange={(e) => updateReceivingLine(i, { productName: e.target.value })}
+                    placeholder={t.productName}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 16, fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--color-divider)", background: "transparent" }}
+                  />
+                  <button
+                    onClick={() => removeReceivingLine(i)}
+                    style={{ background: "transparent", border: 0, color: "var(--color-alert-text)", fontSize: 13.5, cursor: "pointer", padding: "8px 4px" }}
+                  >
+                    {t.removeRow}
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    value={line.productId}
+                    onChange={(e) => updateReceivingLine(i, { productId: e.target.value })}
+                    placeholder={t.productId}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                  />
+                  <input
+                    type="text"
+                    value={line.productCount}
+                    onChange={(e) => updateReceivingLine(i, { productCount: e.target.value })}
+                    placeholder={t.productCount}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                  />
+                  <input
+                    type="text"
+                    value={line.lotNumber}
+                    onChange={(e) => updateReceivingLine(i, { lotNumber: e.target.value })}
+                    placeholder={t.lotNumber}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                  />
+                </div>
+                {renderBoolToggle(t.allergenProduct, line.allergenProduct, (v) => updateReceivingLine(i, { allergenProduct: v }))}
+                {renderBoolToggle(t.labeledOrganic, line.labeledOrganic, (v) => updateReceivingLine(i, { labeledOrganic: v }))}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 15.5, flex: 1 }}>{t.storage}</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {STORAGE_TYPES.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updateReceivingLine(i, { storageType: s })}
+                        className={line.storageType === s ? "btn btn-primary" : "btn btn-secondary"}
+                        style={{ minHeight: 40, minWidth: 56, fontSize: 13 }}
+                      >
+                        {s === "dry" ? t.dry : s === "refrig" ? t.refrig : t.freezer}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button className="btn btn-secondary" onClick={addReceivingLine} style={{ minHeight: 54, fontSize: 15.5 }}>
+              {t.addProduct}
             </button>
           </>
         )}

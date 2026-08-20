@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ApiRequestError, login } from "./api-client";
-import type { Cook, Location } from "./types";
+import { ApiRequestError, login, managerLogin } from "./api-client";
+import type { Cook, Location, Manager } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
@@ -12,12 +12,15 @@ export default function LoginScreen({
   locations,
   lang,
   onSignedIn,
+  onManagerSignedIn,
 }: {
   locations: Location[];
   lang: Lang;
   onSignedIn: (cook: Cook, locationId: string) => void;
+  onManagerSignedIn: (manager: Manager) => void;
 }) {
   const t = strings[lang];
+  const [mode, setMode] = useState<"cook" | "manager">("cook");
   const [locationId, setLocationId] = useState<string | null>(locations[0]?.id ?? null);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
@@ -29,13 +32,25 @@ export default function LoginScreen({
     setError("");
   }
 
+  function switchMode(next: "cook" | "manager") {
+    setMode(next);
+    setPin("");
+    setError("");
+  }
+
   async function submitPin(nextPin: string) {
-    if (!locationId || nextPin.length < 4) return;
+    if (nextPin.length < 4) return;
+    if (mode === "cook" && !locationId) return;
     setBusy(true);
     setError("");
     try {
-      const { cook } = await login(locationId, nextPin);
-      onSignedIn(cook, locationId);
+      if (mode === "manager") {
+        const { manager } = await managerLogin(nextPin);
+        onManagerSignedIn(manager);
+      } else {
+        const { cook } = await login(locationId!, nextPin);
+        onSignedIn(cook, locationId!);
+      }
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : t.wrongPin);
       setPin("");
@@ -68,6 +83,7 @@ export default function LoginScreen({
         {t.signIn}
       </span>
 
+      {mode === "cook" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>
           {t.chooseKitchen}
@@ -105,6 +121,7 @@ export default function LoginScreen({
           ))}
         </div>
       </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
         <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.enterPin}</span>
@@ -130,7 +147,7 @@ export default function LoginScreen({
             <button
               key={i}
               className="btn btn-secondary"
-              disabled={k === "" || busy || !locationId}
+              disabled={k === "" || busy || (mode === "cook" && !locationId)}
               onClick={() => press(k)}
               style={{ minHeight: 60, fontSize: 24, visibility: k === "" ? "hidden" : "visible" }}
             >
@@ -138,6 +155,12 @@ export default function LoginScreen({
             </button>
           ))}
         </div>
+        <button
+          onClick={() => switchMode(mode === "cook" ? "manager" : "cook")}
+          style={{ background: "transparent", border: 0, color: "var(--color-accent-700)", fontSize: 13.5, cursor: "pointer", textAlign: "center", padding: "6px 0 0" }}
+        >
+          {mode === "cook" ? t.managerSignIn : t.backToKitchenSignIn}
+        </button>
       </div>
     </div>
   );

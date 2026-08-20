@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { amendLogEntrySchema } from "@/lib/log-entry-schemas";
 import { buildLogEntryCreateData } from "@/lib/log-entries";
-import { getCurrentCook } from "@/lib/session";
+import { getCurrentSigner } from "@/lib/signer";
 
 // POST /api/log-entries/:id/amend
 // Records are immutable once signed — this creates a *new* row referencing
@@ -14,8 +14,8 @@ export async function POST(
   ctx: RouteContext<"/api/log-entries/[id]/amend">
 ) {
   try {
-    const cook = await getCurrentCook();
-    if (!cook) throw new ApiError(401, "Sign in first");
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
 
     const { id } = await ctx.params;
     const body = amendLogEntrySchema.parse(await req.json());
@@ -23,7 +23,7 @@ export async function POST(
     const original = await prisma.logEntry.findUnique({ where: { id } });
     if (!original) throw new ApiError(404, "Log entry not found");
 
-    if (!cook.locations.some((l) => l.locationId === original.locationId)) {
+    if (signer.kind === "cook" && !signer.locationIds.includes(original.locationId)) {
       throw new ApiError(403, "Not scoped to this kitchen");
     }
 
@@ -34,17 +34,19 @@ export async function POST(
         location: { connect: { id: original.locationId } },
         logDefinition: { connect: { id: original.logDefinitionId } },
         businessDate: original.businessDate,
-        submittedBy: cook.id,
-        signatureName: cook.name,
+        submittedBy: signer.id,
+        signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
         amends: { connect: { id: original.id } },
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
         ...(childData.calibrationRows ? { calibrationRows: { create: childData.calibrationRows } } : {}),
+        ...(childData.receivingDetail ? { receivingDetail: { create: childData.receivingDetail } } : {}),
       },
       include: {
         readings: { include: { logUnit: true } },
         itemChecks: { include: { logItem: true } },
         calibrationRows: { orderBy: { rowIndex: "asc" } },
+        receivingDetail: { include: { lines: { orderBy: { rowIndex: "asc" } } } },
       },
     });
 

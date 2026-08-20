@@ -1,0 +1,243 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { fetchLogEntriesByMonth, managerLogout, submitReceivingReview } from "./api-client";
+import type { ReceivingReviewPayload } from "./api-client";
+import type { Location, LogEntryRecord, Manager } from "./types";
+import type { Lang } from "./strings";
+import { strings } from "./strings";
+
+const RECEIVING_LOG_ID = "receiving-log";
+
+function currentMonthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function emptyReview(): ReceivingReviewPayload {
+  return { approved: true, releasedForUse: true };
+}
+
+export default function ManagerView({
+  manager,
+  locations,
+  lang,
+  onSignOut,
+}: {
+  manager: Manager;
+  locations: Location[];
+  lang: Lang;
+  onSignOut: () => void;
+}) {
+  const t = strings[lang];
+  const [locationId, setLocationId] = useState<string | null>(locations[0]?.id ?? null);
+  const [sitesOpen, setSitesOpen] = useState(false);
+  const [entries, setEntries] = useState<LogEntryRecord[]>([]);
+  const [selected, setSelected] = useState<LogEntryRecord | null>(null);
+  const [review, setReview] = useState<ReceivingReviewPayload>(emptyReview());
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!locationId) return;
+    fetchLogEntriesByMonth(locationId, RECEIVING_LOG_ID, currentMonthKey())
+      .then((r) => setEntries(r.entries.filter((e) => !e.amendsId)))
+      .catch(() => setEntries([]));
+  }, [locationId]);
+
+  const needsReview = entries.filter((e) => !e.receivingReview);
+  const reviewed = entries.filter((e) => e.receivingReview);
+  const currentLocation = locations.find((l) => l.id === locationId);
+
+  function openReview(entry: LogEntryRecord) {
+    setSelected(entry);
+    setReview(emptyReview());
+  }
+
+  async function submit() {
+    if (!selected || !locationId) return;
+    setBusy(true);
+    try {
+      await submitReceivingReview(selected.id, review);
+      const { entries: fresh } = await fetchLogEntriesByMonth(locationId, RECEIVING_LOG_ID, currentMonthKey());
+      setEntries(fresh.filter((e) => !e.amendsId));
+      setSelected(null);
+    } catch {
+      // leave the form open so the manager can retry
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <button
+            onClick={() => setSitesOpen(true)}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: 0, background: "transparent", border: 0, cursor: "pointer", textAlign: "left" }}
+          >
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24, lineHeight: 1.1 }}>{currentLocation?.name}</span>
+            <span style={{ fontSize: 13, color: "var(--color-accent-700)" }}>{t.change}</span>
+          </button>
+          <button
+            onClick={async () => {
+              await managerLogout().catch(() => {});
+              onSignOut();
+            }}
+            style={{ background: "transparent", border: 0, color: "var(--color-accent-700)", fontSize: 13, cursor: "pointer" }}
+          >
+            {t.signOut}
+          </button>
+        </div>
+        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
+          {manager.name} · {manager.role}
+        </span>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.needsReview}</span>
+          {needsReview.length === 0 && (
+            <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.noReceivingLogsThisMonth}</span>
+          )}
+          {needsReview.map((e) => (
+            <button
+              key={e.id}
+              className="blueprint"
+              onClick={() => openReview(e)}
+              style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
+            >
+              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+              <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>
+                  {e.receivingDetail?.distributorName ?? e.businessDate}
+                </span>
+                <span style={{ fontSize: 13, color: "var(--color-muted)" }}>{e.businessDate} · {e.signatureName}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {reviewed.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.reviewed}</span>
+            {reviewed.map((e) => (
+              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 56, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+                <span style={{ width: 14, height: 14, flex: "none", background: e.receivingReview?.approved ? "var(--color-accent)" : "var(--color-alert)" }} />
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, flex: 1, color: "var(--color-muted)" }}>
+                  {e.receivingDetail?.distributorName ?? e.businessDate}
+                </span>
+                <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{t.reviewedBy(e.receivingReview?.manager.name ?? "")}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {sitesOpen && (
+        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.5)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
+            <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.chooseKitchen}</span>
+            {locations.map((loc) => (
+              <button
+                key={loc.id}
+                onClick={() => {
+                  setLocationId(loc.id);
+                  setSitesOpen(false);
+                }}
+                style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 66, padding: "10px 14px", background: "transparent", border: "1px solid var(--color-divider)", cursor: "pointer", textAlign: "left" }}
+              >
+                <span style={{ width: 14, height: 14, flex: "none", background: loc.id === locationId ? "var(--color-accent)" : "transparent", border: "1px solid var(--color-accent)" }} />
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 20, flex: 1 }}>{loc.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selected && (
+        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+            <button
+              onClick={() => setSelected(null)}
+              style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
+            >
+              {t.back}
+            </button>
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24 }}>{t.signOffReview}</span>
+            <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
+              {selected.receivingDetail?.distributorName} · {selected.businessDate}
+            </span>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+              <span style={{ fontSize: 15.5, flex: 1 }}>{t.approve}</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {([true, false] as const).map((v) => (
+                  <button
+                    key={String(v)}
+                    onClick={() => setReview((r) => ({ ...r, approved: v }))}
+                    className={review.approved === v ? "btn btn-primary" : "btn btn-secondary"}
+                    style={{ minHeight: 44, minWidth: 70, fontSize: 14 }}
+                  >
+                    {v ? t.approve : t.reject}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {!review.approved && (
+              <input
+                type="text"
+                value={review.rejectedReason ?? ""}
+                onChange={(e) => setReview((r) => ({ ...r, rejectedReason: e.target.value }))}
+                placeholder={t.explainWhy}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-alert-border)", background: "transparent" }}
+              />
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+              <span style={{ fontSize: 15.5, flex: 1 }}>{t.releasedForUse}</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {([true, false] as const).map((v) => (
+                  <button
+                    key={String(v)}
+                    onClick={() => setReview((r) => ({ ...r, releasedForUse: v }))}
+                    className={review.releasedForUse === v ? "btn btn-primary" : "btn btn-secondary"}
+                    style={{ minHeight: 44, minWidth: 56, fontSize: 14 }}
+                  >
+                    {v ? t.yes : t.no}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input
+              type="text"
+              value={review.storageLocation ?? ""}
+              onChange={(e) => setReview((r) => ({ ...r, storageLocation: e.target.value }))}
+              placeholder={t.storage}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <input
+              type="text"
+              value={review.comments ?? ""}
+              onChange={(e) => setReview((r) => ({ ...r, comments: e.target.value }))}
+              placeholder={t.calibrationComment}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+          </div>
+
+          <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)" }}>
+            <button
+              className="btn btn-primary"
+              disabled={busy}
+              onClick={submit}
+              style={{ width: "100%", minHeight: 60, fontSize: 18 }}
+            >
+              {t.submitReview}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
