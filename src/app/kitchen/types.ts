@@ -11,7 +11,7 @@ export type LogUnit = {
 
 export type LogItem = { id: string; label: string; sortOrder: number };
 
-export type LogKind = "temps" | "check" | "calibration";
+export type LogKind = "temps" | "check" | "calibration" | "receiving";
 
 export type LogDefinition = {
   id: string;
@@ -76,6 +76,57 @@ export type CalibrationRowRecord = {
   comments: string | null;
 };
 
+export type ApprovalField = { approved: boolean; explain?: string };
+export type StorageType = "dry" | "refrig" | "freezer";
+
+export type ReceivingLineRecord = {
+  id: string;
+  rowIndex: number;
+  productName: string;
+  productId: string | null;
+  productCount: string | null;
+  lotNumber: string | null;
+  allergenProduct: boolean;
+  labeledOrganic: boolean;
+  storageType: StorageType;
+};
+
+export type ReceivingDetailRecord = {
+  invoiceNumber: string;
+  distributorName: string;
+  wfcfoApproved: boolean;
+  wfcfoExplain: string | null;
+  nonGmoApproved: boolean;
+  nonGmoExplain: string | null;
+  truckConditionGood: boolean;
+  truckConditionExplain: string | null;
+  truckTempCompliant: boolean;
+  truckTempF: number | null;
+  palletConditionGood: boolean;
+  plasticWrapGood: boolean;
+  productsToStandard: boolean;
+  productsToStandardExplain: string | null;
+  labelsCurrent: boolean;
+  labelsCurrentExplain: string | null;
+  lines: ReceivingLineRecord[];
+};
+
+export type ReceivingReviewRecord = {
+  id: string;
+  manager: Manager;
+  reviewedAt: string;
+  totalCount: number | null;
+  countTested: number | null;
+  standardsReviewed: string | null;
+  coaReference: string | null;
+  approved: boolean;
+  rejectedReason: string | null;
+  storageLocation: string | null;
+  storageCcps: string | null;
+  comments: string | null;
+  releasedForUse: boolean;
+};
+
 export type LogEntryRecord = {
   id: string;
   locationId: string;
@@ -88,6 +139,8 @@ export type LogEntryRecord = {
   readings: ReadingRecord[];
   itemChecks: ItemCheckRecord[];
   calibrationRows: CalibrationRowRecord[];
+  receivingDetail: ReceivingDetailRecord | null;
+  receivingReview: ReceivingReviewRecord | null;
   logDefinition?: LogDefinition;
 };
 
@@ -104,6 +157,46 @@ export type CalibrationDraftRow = {
   comments: string;
 };
 
+export type ReceivingLineDraft = {
+  productName: string;
+  productId: string;
+  productCount: string;
+  lotNumber: string;
+  allergenProduct: boolean;
+  labeledOrganic: boolean;
+  storageType: StorageType;
+};
+
+export type ReceivingDraft = {
+  invoiceNumber: string;
+  distributorName: string;
+  wfcfo: ApprovalField;
+  nonGmo: ApprovalField;
+  truckCondition: ApprovalField;
+  truckTempCompliant: boolean;
+  truckTempF: string;
+  palletConditionGood: boolean;
+  plasticWrapGood: boolean;
+  productsToStandard: ApprovalField;
+  labelsCurrent: ApprovalField;
+  lines: ReceivingLineDraft[];
+};
+
+export const emptyReceivingDraft = (): ReceivingDraft => ({
+  invoiceNumber: "",
+  distributorName: "",
+  wfcfo: { approved: true },
+  nonGmo: { approved: true },
+  truckCondition: { approved: true },
+  truckTempCompliant: true,
+  truckTempF: "",
+  palletConditionGood: true,
+  plasticWrapGood: true,
+  productsToStandard: { approved: true },
+  labelsCurrent: { approved: true },
+  lines: [],
+});
+
 // Local draft state for an in-progress (unsubmitted) form, keyed by
 // `${locationId}|${logDefinitionId}|${businessDate}`.
 export type Draft = {
@@ -111,6 +204,13 @@ export type Draft = {
   checks: Record<string, boolean>; // key: logItemId -> checked
   ca: Record<string, string>; // key: `${logUnitId}|${slotIndex}` -> corrective action text
   calibrationRows: CalibrationDraftRow[];
+  receiving: ReceivingDraft;
 };
 
-export const emptyDraft = (): Draft => ({ vals: {}, checks: {}, ca: {}, calibrationRows: [] });
+export const emptyDraft = (): Draft => ({
+  vals: {},
+  checks: {},
+  ca: {},
+  calibrationRows: [],
+  receiving: emptyReceivingDraft(),
+});

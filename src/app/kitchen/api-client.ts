@@ -55,6 +55,28 @@ export type SubmitPayload = {
   readings?: { logUnitId: string; slotIndex: number; value: number; correctiveAction?: string }[];
   itemChecks?: { logItemId: string; checked: boolean }[];
   calibrationRows?: { testTermId: string; referenceReading: number; testReading: number; comments?: string }[];
+  receiving?: {
+    invoiceNumber: string;
+    distributorName: string;
+    wfcfo: { approved: boolean; explain?: string };
+    nonGmo: { approved: boolean; explain?: string };
+    truckCondition: { approved: boolean; explain?: string };
+    truckTempCompliant: boolean;
+    truckTempF?: number;
+    palletConditionGood: boolean;
+    plasticWrapGood: boolean;
+    productsToStandard: { approved: boolean; explain?: string };
+    labelsCurrent: { approved: boolean; explain?: string };
+    lines: {
+      productName: string;
+      productId?: string;
+      productCount?: string;
+      lotNumber?: string;
+      allergenProduct: boolean;
+      labeledOrganic: boolean;
+      storageType: "dry" | "refrig" | "freezer";
+    }[];
+  };
 };
 
 export const submitLogEntry = (payload: SubmitPayload) =>
@@ -82,3 +104,22 @@ export const managerLogin = (pin: string) =>
 export const managerLogout = () => api<{ ok: true }>("/api/auth/manager-logout", { method: "POST" });
 
 export const fetchManagerMe = () => api<{ manager: Manager | null }>("/api/auth/manager-me");
+
+export type ReceivingReviewPayload = {
+  totalCount?: number;
+  countTested?: number;
+  standardsReviewed?: string;
+  coaReference?: string;
+  approved: boolean;
+  rejectedReason?: string;
+  storageLocation?: string;
+  storageCcps?: string;
+  comments?: string;
+  releasedForUse: boolean;
+};
+
+export const submitReceivingReview = (entryId: string, payload: ReceivingReviewPayload) =>
+  api(`/api/log-entries/${entryId}/receiving-review`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });

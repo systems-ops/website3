@@ -44,12 +44,16 @@ export async function buildExportRows(params: {
       readings: { include: { logUnit: true }, orderBy: { slotIndex: "asc" } },
       itemChecks: { include: { logItem: true } },
       calibrationRows: { orderBy: { rowIndex: "asc" } },
+      receivingDetail: { include: { lines: { orderBy: { rowIndex: "asc" } } } },
+      receivingReview: true,
       amendments: {
         include: {
           logDefinition: true,
           readings: { include: { logUnit: true }, orderBy: { slotIndex: "asc" } },
           itemChecks: { include: { logItem: true } },
           calibrationRows: { orderBy: { rowIndex: "asc" } },
+          receivingDetail: { include: { lines: { orderBy: { rowIndex: "asc" } } } },
+          receivingReview: true,
         },
       },
     },
@@ -102,6 +106,27 @@ export async function buildExportRows(params: {
             value: `ref ${r.referenceReading} / test ${r.testReading}`,
             outOfSpec: r.adjustmentRequired ? "yes" : "no",
             correctiveAction: r.comments ?? "",
+          });
+        }
+      } else if (entry.logDefinition.kind === "receiving" && entry.receivingDetail) {
+        const review = entry.receivingReview;
+        for (const line of entry.receivingDetail.lines) {
+          rows.push({
+            ...base,
+            item: `${line.productName} (${entry.receivingDetail.distributorName}, inv ${entry.receivingDetail.invoiceNumber})`,
+            slotOrStatus: line.storageType,
+            value: [line.productId, line.productCount, line.lotNumber].filter(Boolean).join(" / "),
+            outOfSpec: review ? (review.approved ? "no" : "yes") : "not yet reviewed",
+            correctiveAction: [
+              entry.receivingDetail.wfcfoExplain,
+              entry.receivingDetail.nonGmoExplain,
+              entry.receivingDetail.truckConditionExplain,
+              entry.receivingDetail.productsToStandardExplain,
+              entry.receivingDetail.labelsCurrentExplain,
+              review?.comments,
+            ]
+              .filter(Boolean)
+              .join("  ·  "),
           });
         }
       } else {

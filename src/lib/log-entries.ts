@@ -16,6 +16,7 @@ type LogEntryChildData = {
   readings?: Prisma.ReadingCreateWithoutLogEntryInput[];
   itemChecks?: Prisma.ItemCheckCreateWithoutLogEntryInput[];
   calibrationRows?: Prisma.CalibrationRowCreateWithoutLogEntryInput[];
+  receivingDetail?: Prisma.ReceivingDetailCreateWithoutLogEntryInput;
 };
 
 // Thermometers are calibrated against a reference thermometer and must read
@@ -43,7 +44,46 @@ export async function buildLogEntryCreateData(
   if (definition.kind === "calibration") {
     return buildCalibrationData(input.calibrationRows ?? []);
   }
+  if (definition.kind === "receiving") {
+    if (!input.receiving) throw new ApiError(400, "Receiving details are required");
+    return buildReceivingData(input.receiving);
+  }
   throw new ApiError(500, `Unknown log kind: ${definition.kind}`);
+}
+
+function buildReceivingData(receiving: NonNullable<CreateLogEntryInput["receiving"]>) {
+  const detail: Prisma.ReceivingDetailCreateWithoutLogEntryInput = {
+    invoiceNumber: receiving.invoiceNumber,
+    distributorName: receiving.distributorName,
+    wfcfoApproved: receiving.wfcfo.approved,
+    wfcfoExplain: receiving.wfcfo.explain ?? null,
+    nonGmoApproved: receiving.nonGmo.approved,
+    nonGmoExplain: receiving.nonGmo.explain ?? null,
+    truckConditionGood: receiving.truckCondition.approved,
+    truckConditionExplain: receiving.truckCondition.explain ?? null,
+    truckTempCompliant: receiving.truckTempCompliant,
+    truckTempF: receiving.truckTempF ?? null,
+    palletConditionGood: receiving.palletConditionGood,
+    plasticWrapGood: receiving.plasticWrapGood,
+    productsToStandard: receiving.productsToStandard.approved,
+    productsToStandardExplain: receiving.productsToStandard.explain ?? null,
+    labelsCurrent: receiving.labelsCurrent.approved,
+    labelsCurrentExplain: receiving.labelsCurrent.explain ?? null,
+    lines: {
+      create: receiving.lines.map((line, i) => ({
+        rowIndex: i,
+        productName: line.productName,
+        productId: line.productId ?? null,
+        productCount: line.productCount ?? null,
+        lotNumber: line.lotNumber ?? null,
+        allergenProduct: line.allergenProduct,
+        labeledOrganic: line.labeledOrganic,
+        storageType: line.storageType,
+      })),
+    },
+  };
+
+  return { receivingDetail: detail };
 }
 
 function buildCalibrationData(rows: NonNullable<CreateLogEntryInput["calibrationRows"]>) {

@@ -108,6 +108,46 @@ export default function EntryDetail({
             </div>
           ))}
 
+        {log.kind === "receiving" && entry.receivingDetail && (
+          <>
+            <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
+              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>
+                {entry.receivingDetail.distributorName} — {t.invoiceNumber} {entry.receivingDetail.invoiceNumber}
+              </span>
+              {[
+                [t.wfcfoApproved, entry.receivingDetail.wfcfoApproved, entry.receivingDetail.wfcfoExplain],
+                [t.nonGmoApproved, entry.receivingDetail.nonGmoApproved, entry.receivingDetail.nonGmoExplain],
+                [t.truckConditionGood, entry.receivingDetail.truckConditionGood, entry.receivingDetail.truckConditionExplain],
+                [t.productsToStandard, entry.receivingDetail.productsToStandard, entry.receivingDetail.productsToStandardExplain],
+                [t.labelsCurrent, entry.receivingDetail.labelsCurrent, entry.receivingDetail.labelsCurrentExplain],
+              ].map(([label, ok, explain], i) => (
+                <span key={i} style={{ fontSize: 14, color: ok ? "var(--color-muted)" : "var(--color-alert-text)" }}>
+                  {label as string} {ok ? t.yes : `${t.no} — ${explain ?? ""}`}
+                </span>
+              ))}
+              {entry.receivingDetail.truckTempF != null && (
+                <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
+                  {t.truckTempF}: {entry.receivingDetail.truckTempF}
+                </span>
+              )}
+            </div>
+            {entry.receivingDetail.lines.map((line) => (
+              <div key={line.id} style={{ display: "flex", flexDirection: "column", gap: 4, padding: "10px 14px", border: "1px solid var(--color-divider)" }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16.5 }}>{line.productName}</span>
+                <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
+                  {[line.productId, line.productCount, line.lotNumber].filter(Boolean).join(" · ")} — {line.storageType}
+                </span>
+              </div>
+            ))}
+            <span style={{ fontSize: 13.5, color: entry.receivingReview ? "var(--color-muted)" : "var(--color-alert-text)" }}>
+              {entry.receivingReview
+                ? `${t.reviewedBy(entry.receivingReview.manager.name)} — ${entry.receivingReview.approved ? t.approve : t.reject}`
+                : t.needsReview}
+            </span>
+          </>
+        )}
+
         <span style={{ fontSize: 12.5, color: "rgba(29,31,32,.4)", paddingTop: 4 }}>{log.formCode}</span>
       </div>
     </div>
