@@ -11,11 +11,13 @@ export type LogUnit = {
 
 export type LogItem = { id: string; label: string; sortOrder: number };
 
+export type LogKind = "temps" | "check" | "calibration";
+
 export type LogDefinition = {
   id: string;
   name: string;
   formCode: string;
-  kind: "temps" | "check";
+  kind: LogKind;
   unit: "F" | "C" | null;
   slots: string[] | null;
   revision: number;
@@ -24,7 +26,7 @@ export type LogDefinition = {
   correctiveActions: string[];
 };
 
-export type TodayTodo = { logDefinitionId: string; name: string; kind: "temps" | "check"; sub: string };
+export type TodayTodo = { logDefinitionId: string; name: string; kind: LogKind; sub: string };
 export type TodayDone = {
   logDefinitionId: string;
   name: string;
@@ -64,6 +66,16 @@ export type ItemCheckRecord = {
   logItem: LogItem;
 };
 
+export type CalibrationRowRecord = {
+  id: string;
+  rowIndex: number;
+  testTermId: string;
+  referenceReading: number;
+  testReading: number;
+  adjustmentRequired: boolean;
+  comments: string | null;
+};
+
 export type LogEntryRecord = {
   id: string;
   locationId: string;
@@ -75,10 +87,22 @@ export type LogEntryRecord = {
   amendsId: string | null;
   readings: ReadingRecord[];
   itemChecks: ItemCheckRecord[];
+  calibrationRows: CalibrationRowRecord[];
   logDefinition?: LogDefinition;
 };
 
 export type Cook = { id: string; name: string; locationIds?: string[] };
+
+export type Manager = { id: string; name: string; role: string };
+
+// A single in-progress row on a "calibration" form (thermometer ID, the two
+// readings, and a comment if they're out of tolerance).
+export type CalibrationDraftRow = {
+  testTermId: string;
+  referenceReading: string;
+  testReading: string;
+  comments: string;
+};
 
 // Local draft state for an in-progress (unsubmitted) form, keyed by
 // `${locationId}|${logDefinitionId}|${businessDate}`.
@@ -86,6 +110,7 @@ export type Draft = {
   vals: Record<string, string>; // key: `${logUnitId}|${slotIndex}` -> raw typed value
   checks: Record<string, boolean>; // key: logItemId -> checked
   ca: Record<string, string>; // key: `${logUnitId}|${slotIndex}` -> corrective action text
+  calibrationRows: CalibrationDraftRow[];
 };
 
-export const emptyDraft = (): Draft => ({ vals: {}, checks: {}, ca: {} });
+export const emptyDraft = (): Draft => ({ vals: {}, checks: {}, ca: {}, calibrationRows: [] });

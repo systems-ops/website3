@@ -83,6 +83,31 @@ export default function EntryDetail({
             );
           })}
 
+        {log.kind === "calibration" &&
+          entry.calibrationRows.map((row) => (
+            <div
+              key={row.id}
+              className="blueprint"
+              style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14, border: row.adjustmentRequired ? "1px solid var(--color-alert-border)" : undefined }}
+            >
+              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>{row.testTermId}</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{t.referenceReading}</span>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 22 }}>{row.referenceReading}</span>
+                </div>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{t.testReading}</span>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 22, color: row.adjustmentRequired ? "var(--color-alert)" : "var(--color-text)" }}>
+                    {row.testReading}
+                  </span>
+                </div>
+              </div>
+              {row.comments && <span style={{ fontSize: 13.5, color: "var(--color-alert-text)" }}>{row.comments}</span>}
+            </div>
+          ))}
+
         <span style={{ fontSize: 12.5, color: "rgba(29,31,32,.4)", paddingTop: 4 }}>{log.formCode}</span>
       </div>
     </div>

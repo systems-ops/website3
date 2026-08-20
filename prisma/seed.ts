@@ -155,6 +155,12 @@ const LOGS = [
     slots: ["Test"],
     units: [{ name: "Sanitizer solution", low: 90, high: 110, unitOverride: " PPM" }],
   },
+  {
+    id: "thermometer-calibration",
+    name: "Thermometer calibration",
+    formCode: "Form FR-51-A",
+    kind: "calibration",
+  },
 ];
 
 const CORRECTIVE_ACTIONS: Record<string, string[]> = {
@@ -207,6 +213,7 @@ const CERTIFICATES = [
       { logId: "exterior", frequency: "daily" },
       { logId: "restroom", frequency: "daily" },
       { logId: "chlorine", frequency: "daily" },
+      { logId: "thermometer-calibration", frequency: "daily" },
     ],
   },
 ];
@@ -227,6 +234,15 @@ const COOKS = [
   { name: "PIN 8", pin: "5641" },
   { name: "PIN 9", pin: "8370" },
   { name: "PIN 10", pin: "2916" },
+];
+
+// Named individual accounts, distinct from the shared kitchen PIN pool —
+// for the handful of forms that require a specific person's sign-off
+// (e.g. CEO or SQF Practitioner approval) rather than "whoever's on shift".
+const MANAGERS = [
+  { name: "Fabrizio", role: "CEO", pin: "5104" },
+  { name: "Tim", role: "Office Manager", pin: "6238" },
+  { name: "Simar", role: "Assistant", pin: "7395" },
 ];
 
 async function main() {
@@ -374,6 +390,16 @@ async function main() {
     }
   }
   console.log("PINs:", COOKS.map((c) => `${c.name}=${c.pin}`).join(", "));
+
+  for (const m of MANAGERS) {
+    const existing = await prisma.manager.findFirst({ where: { name: m.name, role: m.role } });
+    if (existing) {
+      await prisma.manager.update({ where: { id: existing.id }, data: { pinHash: hashPin(m.pin) } });
+    } else {
+      await prisma.manager.create({ data: { name: m.name, role: m.role, pinHash: hashPin(m.pin) } });
+    }
+  }
+  console.log("Manager PINs:", MANAGERS.map((m) => `${m.name} (${m.role})=${m.pin}`).join(", "));
 
   console.log("Seed complete.");
 }

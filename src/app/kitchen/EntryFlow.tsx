@@ -1,9 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import type { Draft, LogDefinition, LogUnit } from "./types";
+import type { CalibrationDraftRow, Draft, LogDefinition, LogUnit } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+
+const CALIBRATION_TOLERANCE = 2;
+
+function calibrationOutOfTolerance(row: CalibrationDraftRow): boolean {
+  const ref = parseFloat(row.referenceReading.replace("−", "-"));
+  const test = parseFloat(row.testReading.replace("−", "-"));
+  if (isNaN(ref) || isNaN(test)) return false;
+  return Math.abs(ref - test) > CALIBRATION_TOLERANCE;
+}
+
+function calibrationRowComplete(row: CalibrationDraftRow): boolean {
+  if (!row.testTermId.trim() || row.referenceReading === "" || row.testReading === "") return false;
+  return !calibrationOutOfTolerance(row) || row.comments.trim() !== "";
+}
 
 function cellKey(logUnitId: string, slotIndex: number) {
   return `${logUnitId}|${slotIndex}`;
@@ -81,11 +95,34 @@ export default function EntryFlow({
       : unresolved
         ? t.pickWhatYouDid
         : t.signsAs(cookName, locationName);
+  } else if (log.kind === "calibration") {
+    const rows = draft.calibrationRows;
+    const allComplete = rows.length > 0 && rows.every(calibrationRowComplete);
+    canSubmit = allComplete;
+    submitNote = rows.length === 0 ? t.addAtLeastOne : !allComplete ? t.fillEveryRow : t.signsAs(cookName, locationName);
   } else {
     const total = log.items.length;
     const checkedCount = log.items.filter((i) => draft.checks[i.id]).length;
     canSubmit = checkedCount === total && total > 0;
     submitNote = canSubmit ? t.signsAs(cookName, locationName) : t.ticked(checkedCount, total);
+  }
+
+  function addCalibrationRow() {
+    onChangeDraft({
+      ...draft,
+      calibrationRows: [...draft.calibrationRows, { testTermId: "", referenceReading: "", testReading: "", comments: "" }],
+    });
+  }
+
+  function updateCalibrationRow(index: number, patch: Partial<CalibrationDraftRow>) {
+    onChangeDraft({
+      ...draft,
+      calibrationRows: draft.calibrationRows.map((r, i) => (i === index ? { ...r, ...patch } : r)),
+    });
+  }
+
+  function removeCalibrationRow(index: number) {
+    onChangeDraft({ ...draft, calibrationRows: draft.calibrationRows.filter((_, i) => i !== index) });
   }
 
   function openPad(unit: LogUnit, slotIndex: number) {
@@ -134,7 +171,9 @@ export default function EntryFlow({
           {t.back}
         </button>
         <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>{log.name}</span>
-        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{log.kind === "temps" ? t.tapAndType : t.tickEach}</span>
+        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
+          {log.kind === "temps" ? t.tapAndType : log.kind === "calibration" ? t.addThermometer : t.tickEach}
+        </span>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
@@ -245,6 +284,101 @@ export default function EntryFlow({
               </button>
             );
           })}
+
+        {log.kind === "calibration" && (
+          <>
+            {draft.calibrationRows.map((row, i) => {
+              const outOfTolerance = calibrationOutOfTolerance(row);
+              return (
+                <div
+                  key={i}
+                  className="blueprint"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                    padding: 14,
+                    border: outOfTolerance ? "1px solid var(--color-alert-border)" : undefined,
+                  }}
+                >
+                  <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="text"
+                      value={row.testTermId}
+                      onChange={(e) => updateCalibrationRow(i, { testTermId: e.target.value })}
+                      placeholder={t.thermometerId}
+                      style={{
+                        flex: 1,
+                        minHeight: 44,
+                        padding: "0 10px",
+                        fontSize: 16,
+                        fontFamily: "var(--font-heading)",
+                        fontWeight: 600,
+                        border: "1px solid var(--color-divider)",
+                        background: "transparent",
+                      }}
+                    />
+                    <button
+                      onClick={() => removeCalibrationRow(i)}
+                      style={{ background: "transparent", border: 0, color: "var(--color-alert-text)", fontSize: 13.5, cursor: "pointer", padding: "8px 4px" }}
+                    >
+                      {t.removeRow}
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{t.referenceReading}</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={row.referenceReading}
+                        onChange={(e) => updateCalibrationRow(i, { referenceReading: e.target.value })}
+                        style={{ minHeight: 52, padding: "0 10px", fontSize: 20, fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--color-divider)", background: "transparent" }}
+                      />
+                    </label>
+                    <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{t.testReading}</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={row.testReading}
+                        onChange={(e) => updateCalibrationRow(i, { testReading: e.target.value })}
+                        style={{
+                          minHeight: 52,
+                          padding: "0 10px",
+                          fontSize: 20,
+                          fontFamily: "var(--font-heading)",
+                          fontWeight: 600,
+                          border: `1px solid ${outOfTolerance ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                          color: outOfTolerance ? "var(--color-alert)" : "var(--color-text)",
+                          background: "transparent",
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {outOfTolerance && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <span style={{ fontSize: 13.5, color: "var(--color-alert-text)" }}>
+                        {t.outOfTolerance(CALIBRATION_TOLERANCE)}
+                      </span>
+                      <input
+                        type="text"
+                        value={row.comments}
+                        onChange={(e) => updateCalibrationRow(i, { comments: e.target.value })}
+                        placeholder={t.calibrationComment}
+                        style={{ minHeight: 44, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-alert-border)", background: "transparent" }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button className="btn btn-secondary" onClick={addCalibrationRow} style={{ minHeight: 54, fontSize: 15.5 }}>
+              {t.addThermometer}
+            </button>
+          </>
+        )}
 
         <span style={{ fontSize: 12.5, color: "rgba(29,31,32,.4)", paddingTop: 4 }}>{log.formCode}</span>
       </div>

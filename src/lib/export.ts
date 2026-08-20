@@ -43,11 +43,13 @@ export async function buildExportRows(params: {
       logDefinition: true,
       readings: { include: { logUnit: true }, orderBy: { slotIndex: "asc" } },
       itemChecks: { include: { logItem: true } },
+      calibrationRows: { orderBy: { rowIndex: "asc" } },
       amendments: {
         include: {
           logDefinition: true,
           readings: { include: { logUnit: true }, orderBy: { slotIndex: "asc" } },
           itemChecks: { include: { logItem: true } },
+          calibrationRows: { orderBy: { rowIndex: "asc" } },
         },
       },
     },
@@ -89,6 +91,17 @@ export async function buildExportRows(params: {
             value: `${r.value}${r.specUnitOverride ?? unitLabel}`,
             outOfSpec: r.outOfSpec ? "yes" : "no",
             correctiveAction: r.correctiveAction ?? "",
+          });
+        }
+      } else if (entry.logDefinition.kind === "calibration") {
+        for (const r of entry.calibrationRows) {
+          rows.push({
+            ...base,
+            item: r.testTermId,
+            slotOrStatus: "",
+            value: `ref ${r.referenceReading} / test ${r.testReading}`,
+            outOfSpec: r.adjustmentRequired ? "yes" : "no",
+            correctiveAction: r.comments ?? "",
           });
         }
       } else {

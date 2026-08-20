@@ -4,6 +4,7 @@ import type {
   Location,
   LogDefinition,
   LogEntryRecord,
+  Manager,
   TodayResponse,
 } from "./types";
 
@@ -53,6 +54,7 @@ export type SubmitPayload = {
   businessDate: string;
   readings?: { logUnitId: string; slotIndex: number; value: number; correctiveAction?: string }[];
   itemChecks?: { logItemId: string; checked: boolean }[];
+  calibrationRows?: { testTermId: string; referenceReading: number; testReading: number; comments?: string }[];
 };
 
 export const submitLogEntry = (payload: SubmitPayload) =>
@@ -70,3 +72,13 @@ export const login = (locationId: string, pin: string) =>
 export const logout = () => api<{ ok: true }>("/api/auth/logout", { method: "POST" });
 
 export const fetchMe = () => api<{ cook: Cook | null }>("/api/auth/me");
+
+export const managerLogin = (pin: string) =>
+  api<{ manager: Manager }>("/api/auth/manager-login", {
+    method: "POST",
+    body: JSON.stringify({ pin }),
+  });
+
+export const managerLogout = () => api<{ ok: true }>("/api/auth/manager-logout", { method: "POST" });
+
+export const fetchManagerMe = () => api<{ manager: Manager | null }>("/api/auth/manager-me");

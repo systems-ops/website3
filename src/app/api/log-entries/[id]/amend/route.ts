@@ -39,10 +39,12 @@ export async function POST(
         amends: { connect: { id: original.id } },
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
+        ...(childData.calibrationRows ? { calibrationRows: { create: childData.calibrationRows } } : {}),
       },
       include: {
         readings: { include: { logUnit: true } },
         itemChecks: { include: { logItem: true } },
+        calibrationRows: { orderBy: { rowIndex: "asc" } },
       },
     });
 

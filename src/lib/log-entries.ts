@@ -15,7 +15,12 @@ type LogDefinitionWithChildren = Prisma.LogDefinitionGetPayload<{
 type LogEntryChildData = {
   readings?: Prisma.ReadingCreateWithoutLogEntryInput[];
   itemChecks?: Prisma.ItemCheckCreateWithoutLogEntryInput[];
+  calibrationRows?: Prisma.CalibrationRowCreateWithoutLogEntryInput[];
 };
+
+// Thermometers are calibrated against a reference thermometer and must read
+// within +/- 2°F of it (per the paper FR-51-A form's own footer note).
+const CALIBRATION_TOLERANCE = 2;
 
 export async function buildLogEntryCreateData(
   input: Omit<CreateLogEntryInput, "locationId" | "logDefinitionId" | "businessDate">,
@@ -35,7 +40,36 @@ export async function buildLogEntryCreateData(
   if (definition.kind === "check") {
     return buildCheckData(definition, input.itemChecks ?? []);
   }
+  if (definition.kind === "calibration") {
+    return buildCalibrationData(input.calibrationRows ?? []);
+  }
   throw new ApiError(500, `Unknown log kind: ${definition.kind}`);
+}
+
+function buildCalibrationData(rows: NonNullable<CreateLogEntryInput["calibrationRows"]>) {
+  if (rows.length === 0) {
+    throw new ApiError(400, "At least one thermometer reading is required");
+  }
+
+  const created: Prisma.CalibrationRowCreateWithoutLogEntryInput[] = rows.map((r, i) => {
+    const adjustmentRequired = Math.abs(r.referenceReading - r.testReading) > CALIBRATION_TOLERANCE;
+    if (adjustmentRequired && !r.comments) {
+      throw new ApiError(
+        400,
+        `Thermometer "${r.testTermId}" is more than ${CALIBRATION_TOLERANCE}° off reference and needs a comment`
+      );
+    }
+    return {
+      rowIndex: i,
+      testTermId: r.testTermId,
+      referenceReading: r.referenceReading,
+      testReading: r.testReading,
+      adjustmentRequired,
+      comments: r.comments ?? null,
+    };
+  });
+
+  return { calibrationRows: created };
 }
 
 function buildTempsData(

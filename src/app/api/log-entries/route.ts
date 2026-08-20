@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
       include: {
         readings: { include: { logUnit: true } },
         itemChecks: { include: { logItem: true } },
+        calibrationRows: { orderBy: { rowIndex: "asc" } },
         amendments: true,
         logDefinition: true,
       },
@@ -93,10 +94,12 @@ export async function POST(req: NextRequest) {
         signatureName: cook.name,
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
+        ...(childData.calibrationRows ? { calibrationRows: { create: childData.calibrationRows } } : {}),
       },
       include: {
         readings: { include: { logUnit: true } },
         itemChecks: { include: { logItem: true } },
+        calibrationRows: { orderBy: { rowIndex: "asc" } },
       },
     });
 
