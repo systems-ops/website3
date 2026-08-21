@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { handleApiError } from "@/lib/api-errors";
+import { ApiError, handleApiError } from "@/lib/api-errors";
+import { getCurrentSigner } from "@/lib/signer";
 
 // Returns the digitized paper forms with their units/checklist items and
 // corrective-action presets, ready for a client to render an entry flow.
 export async function GET() {
   try {
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
+
     const [definitions, fallbackActions] = await Promise.all([
       prisma.logDefinition.findMany({
         where: { active: true },

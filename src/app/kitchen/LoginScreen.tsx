@@ -7,6 +7,7 @@ import type { Lang } from "./strings";
 import { strings } from "./strings";
 
 const PAD_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
+const PIN_LENGTH = 6;
 
 export default function LoginScreen({
   locations,
@@ -39,7 +40,7 @@ export default function LoginScreen({
   }
 
   async function submitPin(nextPin: string) {
-    if (nextPin.length < 4) return;
+    if (nextPin.length < PIN_LENGTH) return;
     if (mode === "cook" && !locationId) return;
     setBusy(true);
     setError("");
@@ -63,9 +64,9 @@ export default function LoginScreen({
     if (busy) return;
     if (key === "⌫") return setPin((p) => p.slice(0, -1));
     if (key === "") return;
-    const next = (pin + key).slice(0, 8);
+    const next = (pin + key).slice(0, PIN_LENGTH);
     setPin(next);
-    if (next.length === 4) submitPin(next);
+    if (next.length === PIN_LENGTH) submitPin(next);
   }
 
   return (
@@ -126,7 +127,7 @@ export default function LoginScreen({
       <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
         <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.enterPin}</span>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: PIN_LENGTH }).map((_, i) => (
             <span
               key={i}
               style={{

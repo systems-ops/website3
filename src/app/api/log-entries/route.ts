@@ -4,11 +4,15 @@ import { ApiError, handleApiError } from "@/lib/api-errors";
 import { createLogEntrySchema } from "@/lib/log-entry-schemas";
 import { buildLogEntryCreateData } from "@/lib/log-entries";
 import { getCurrentSigner } from "@/lib/signer";
+import { classifySubmissionDate } from "@/lib/business-date";
 
 // GET /api/log-entries?locationId=&logDefinitionId=&month=YYYY-MM&date=YYYY-MM-DD
 // Powers the Records tab: month calendar and single-day detail.
 export async function GET(req: NextRequest) {
   try {
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
+
     const params = req.nextUrl.searchParams;
     const locationId = params.get("locationId");
     const logDefinitionId = params.get("logDefinitionId");
@@ -63,6 +67,12 @@ export async function POST(req: NextRequest) {
       throw new ApiError(403, "Not scoped to this kitchen");
     }
 
+    // businessDate is never trusted from the client beyond today or
+    // yesterday-with-a-reason — otherwise any valid PIN could manufacture
+    // a month of missing logs in minutes.
+    const dateCheck = classifySubmissionDate(body.businessDate, body.lateReason);
+    if (!dateCheck.ok) throw new ApiError(400, dateCheck.error);
+
     const [location, definition] = await Promise.all([
       prisma.location.findUnique({ where: { id: body.locationId } }),
       prisma.logDefinition.findUnique({ where: { id: body.logDefinitionId } }),
@@ -70,19 +80,25 @@ export async function POST(req: NextRequest) {
     if (!location) throw new ApiError(404, "Location not found");
     if (!definition) throw new ApiError(404, "Log definition not found");
 
-    const existing = await prisma.logEntry.findFirst({
-      where: {
-        locationId: body.locationId,
-        logDefinitionId: body.logDefinitionId,
-        businessDate: body.businessDate,
-        amendsId: null,
-      },
-    });
-    if (existing) {
-      throw new ApiError(
-        409,
-        "This log was already submitted for that date and location. Use the amend endpoint to correct it."
-      );
+    // Every other log kind is one submission per kitchen/day — that's the
+    // whole point (a single fridge-temp check, one pre-production sweep).
+    // Receiving is different: a kitchen can get several separate truck
+    // deliveries in the same day, each its own real event, so it's exempt.
+    if (definition.kind !== "receiving") {
+      const existing = await prisma.logEntry.findFirst({
+        where: {
+          locationId: body.locationId,
+          logDefinitionId: body.logDefinitionId,
+          businessDate: body.businessDate,
+          amendsId: null,
+        },
+      });
+      if (existing) {
+        throw new ApiError(
+          409,
+          "This log was already submitted for that date and location. Use the amend endpoint to correct it."
+        );
+      }
     }
 
     const childData = await buildLogEntryCreateData(body, body.logDefinitionId);
@@ -94,6 +110,8 @@ export async function POST(req: NextRequest) {
         businessDate: body.businessDate,
         submittedBy: signer.id,
         signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
+        enteredLate: dateCheck.enteredLate,
+        lateReason: dateCheck.lateReason,
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
         ...(childData.calibrationRows ? { calibrationRows: { create: childData.calibrationRows } } : {}),

@@ -73,20 +73,6 @@ const LOGS = [
     ],
   },
   {
-    id: "delivery",
-    name: "Deliveries received",
-    formCode: "Form FR-02 (rev 3)",
-    kind: "check",
-    items: [
-      "Truck temperature written down",
-      "Seal intact and matches the paperwork",
-      "Case count matches the invoice",
-      "Supplier paperwork attached",
-      "Organic certificate still current",
-      "Lot codes written down",
-    ],
-  },
-  {
     id: "hygiene",
     name: "Hygiene inspection",
     formCode: "Form FR-65-A",
@@ -205,10 +191,7 @@ const CORRECTIVE_ACTIONS: Record<string, string[]> = {
 const CERTIFICATES = [
   {
     name: "Organic",
-    requires: [
-      { logId: "delivery", frequency: "daily" },
-      { logId: "receiving-log", frequency: "daily" },
-    ],
+    requires: [{ logId: "receiving-log", frequency: "daily" }],
   },
   { name: "FDA", requires: [{ logId: "clean", frequency: "daily" }] },
   {
@@ -231,31 +214,41 @@ const CERTIFICATES = [
   },
 ];
 
+// PINs are never hardcoded here — anyone with repo access would otherwise
+// have live credentials. Seeding fails loudly if the env vars aren't set
+// rather than silently falling back to a known default.
+function requiredPin(envVar: string): string {
+  const value = process.env[envVar];
+  if (!value) {
+    throw new Error(
+      `Missing required env var ${envVar}. PINs are sourced from the environment, ` +
+        `not this file — see .env.example for the full list, and README.md for how ` +
+        `to generate and rotate them.`
+    );
+  }
+  if (!/^\d{6,8}$/.test(value)) {
+    throw new Error(`${envVar} must be 6-8 digits, got a value of length ${value.length}`);
+  }
+  return value;
+}
+
 // Shared PINs, not tied to a named person — anyone on shift uses whichever
 // PIN they've been given. The PIN's label (not the digits) gets recorded as
 // the signature on anything they submit, so records stay attributable
 // without the app needing to know who's actually on staff at any time.
 // Scoped to every location.
-const COOKS = [
-  { name: "PIN 1", pin: "4821" },
-  { name: "PIN 2", pin: "3097" },
-  { name: "PIN 3", pin: "6154" },
-  { name: "PIN 4", pin: "2938" },
-  { name: "PIN 5", pin: "7462" },
-  { name: "PIN 6", pin: "1785" },
-  { name: "PIN 7", pin: "9203" },
-  { name: "PIN 8", pin: "5641" },
-  { name: "PIN 9", pin: "8370" },
-  { name: "PIN 10", pin: "2916" },
-];
+const COOKS = Array.from({ length: 10 }, (_, i) => ({
+  name: `PIN ${i + 1}`,
+  pin: requiredPin(`COOK_PIN_${i + 1}`),
+}));
 
 // Named individual accounts, distinct from the shared kitchen PIN pool —
 // for the handful of forms that require a specific person's sign-off
 // (e.g. CEO or SQF Practitioner approval) rather than "whoever's on shift".
 const MANAGERS = [
-  { name: "Fabrizio", role: "CEO", pin: "5104" },
-  { name: "Tim", role: "Office Manager", pin: "6238" },
-  { name: "Simar", role: "Assistant", pin: "7395" },
+  { name: "Fabrizio", role: "CEO", pin: requiredPin("MANAGER_PIN_FABRIZIO") },
+  { name: "Tim", role: "Office Manager", pin: requiredPin("MANAGER_PIN_TIM") },
+  { name: "Simar", role: "Assistant", pin: requiredPin("MANAGER_PIN_SIMAR") },
 ];
 
 async function main() {
@@ -334,6 +327,19 @@ async function main() {
     }
   }
 
+  // "Deliveries received" (FR-02) is retired — folded into the Receiving
+  // Log (FR-40, id "receiving-log") above, since both covered the same
+  // event (a truck arriving). Kept in the database rather than deleted
+  // (past submissions still reference it), just deactivated so it stops
+  // showing up as a daily task, with its certificate requirement dropped.
+  await prisma.logDefinition.updateMany({
+    where: { id: "delivery" },
+    data: { active: false },
+  });
+  await prisma.certificateRequirement.deleteMany({
+    where: { logDefinitionId: "delivery" },
+  });
+
   for (const [logId, texts] of Object.entries(CORRECTIVE_ACTIONS)) {
     const logDefinitionId = logId === "_" ? null : logId;
     const already = await prisma.correctiveActionOption.count({
@@ -402,7 +408,6 @@ async function main() {
       });
     }
   }
-  console.log("PINs:", COOKS.map((c) => `${c.name}=${c.pin}`).join(", "));
 
   for (const m of MANAGERS) {
     const existing = await prisma.manager.findFirst({ where: { name: m.name, role: m.role } });
@@ -412,7 +417,14 @@ async function main() {
       await prisma.manager.create({ data: { name: m.name, role: m.role, pinHash: hashPin(m.pin) } });
     }
   }
-  console.log("Manager PINs:", MANAGERS.map((m) => `${m.name} (${m.role})=${m.pin}`).join(", "));
+
+  // PIN values never print by default — a production seed's console output
+  // can end up in deploy logs that more people can see than should have
+  // credentials. Opt in locally when you actually need to read them back.
+  if (process.env.SEED_PRINT_PINS === "true") {
+    console.log("PINs:", COOKS.map((c) => `${c.name}=${c.pin}`).join(", "));
+    console.log("Manager PINs:", MANAGERS.map((m) => `${m.name} (${m.role})=${m.pin}`).join(", "));
+  }
 
   console.log("Seed complete.");
 }

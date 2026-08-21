@@ -4,6 +4,7 @@ import { ApiError, handleApiError } from "@/lib/api-errors";
 import { amendLogEntrySchema } from "@/lib/log-entry-schemas";
 import { buildLogEntryCreateData } from "@/lib/log-entries";
 import { getCurrentSigner } from "@/lib/signer";
+import { todayBusinessDate } from "@/lib/business-date";
 
 // POST /api/log-entries/:id/amend
 // Records are immutable once signed — this creates a *new* row referencing
@@ -27,6 +28,12 @@ export async function POST(
       throw new ApiError(403, "Not scoped to this kitchen");
     }
 
+    // Same-day corrections stay cook-level; amending anything from a
+    // previous day needs a manager's PIN.
+    if (original.businessDate !== todayBusinessDate() && signer.kind !== "manager") {
+      throw new ApiError(403, "Amending a record from a previous day requires a manager");
+    }
+
     const childData = await buildLogEntryCreateData(body, original.logDefinitionId);
 
     const amendment = await prisma.logEntry.create({
@@ -36,6 +43,12 @@ export async function POST(
         businessDate: original.businessDate,
         submittedBy: signer.id,
         signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
+        // The amendment isn't itself a late *submission* — it's a
+        // correction to an already-recorded day. Lateness carries forward
+        // from the original rather than being re-derived.
+        enteredLate: original.enteredLate,
+        lateReason: original.lateReason,
+        amendReason: body.amendReason,
         amends: { connect: { id: original.id } },
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),

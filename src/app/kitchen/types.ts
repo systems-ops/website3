@@ -59,10 +59,13 @@ export type ReadingRecord = {
   logUnit: LogUnit;
 };
 
+export type CheckStatus = "PASS" | "FAIL" | "NA";
+
 export type ItemCheckRecord = {
   id: string;
   logItemId: string;
-  checked: boolean;
+  status: CheckStatus;
+  statusNote: string | null;
   logItem: LogItem;
 };
 
@@ -108,6 +111,10 @@ export type ReceivingDetailRecord = {
   productsToStandardExplain: string | null;
   labelsCurrent: boolean;
   labelsCurrentExplain: string | null;
+  sealIntact: boolean;
+  caseCountMatches: boolean;
+  supplierPaperworkAttached: boolean;
+  organicCertCurrent: boolean;
   lines: ReceivingLineRecord[];
 };
 
@@ -136,11 +143,15 @@ export type LogEntryRecord = {
   submittedBy: string;
   signatureName: string;
   amendsId: string | null;
+  enteredLate: boolean;
+  lateReason: string | null;
+  amendReason: string | null;
   readings: ReadingRecord[];
   itemChecks: ItemCheckRecord[];
   calibrationRows: CalibrationRowRecord[];
   receivingDetail: ReceivingDetailRecord | null;
   receivingReview: ReceivingReviewRecord | null;
+  amendments?: LogEntryRecord[];
   logDefinition?: LogDefinition;
 };
 
@@ -179,6 +190,10 @@ export type ReceivingDraft = {
   plasticWrapGood: boolean;
   productsToStandard: ApprovalField;
   labelsCurrent: ApprovalField;
+  sealIntact: boolean;
+  caseCountMatches: boolean;
+  supplierPaperworkAttached: boolean;
+  organicCertCurrent: boolean;
   lines: ReceivingLineDraft[];
 };
 
@@ -194,6 +209,10 @@ export const emptyReceivingDraft = (): ReceivingDraft => ({
   plasticWrapGood: true,
   productsToStandard: { approved: true },
   labelsCurrent: { approved: true },
+  sealIntact: true,
+  caseCountMatches: true,
+  supplierPaperworkAttached: true,
+  organicCertCurrent: true,
   lines: [],
 });
 
@@ -201,7 +220,8 @@ export const emptyReceivingDraft = (): ReceivingDraft => ({
 // `${locationId}|${logDefinitionId}|${businessDate}`.
 export type Draft = {
   vals: Record<string, string>; // key: `${logUnitId}|${slotIndex}` -> raw typed value
-  checks: Record<string, boolean>; // key: logItemId -> checked
+  checks: Record<string, CheckStatus>; // key: logItemId -> PASS/FAIL/NA (absent = not yet answered)
+  checkNotes: Record<string, string>; // key: logItemId -> corrective action (FAIL) or reason (NA)
   ca: Record<string, string>; // key: `${logUnitId}|${slotIndex}` -> corrective action text
   calibrationRows: CalibrationDraftRow[];
   receiving: ReceivingDraft;
@@ -210,6 +230,7 @@ export type Draft = {
 export const emptyDraft = (): Draft => ({
   vals: {},
   checks: {},
+  checkNotes: {},
   ca: {},
   calibrationRows: [],
   receiving: emptyReceivingDraft(),

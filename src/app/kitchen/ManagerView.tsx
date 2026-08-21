@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchLogEntriesByMonth, managerLogout, submitReceivingReview } from "./api-client";
-import type { ReceivingReviewPayload } from "./api-client";
+import {
+  fetchLogEntriesByMonth,
+  fetchVerifications,
+  managerLogout,
+  submitReceivingReview,
+  submitVerification,
+} from "./api-client";
+import type { ReceivingReviewPayload, WeekSummary } from "./api-client";
 import type { Location, LogEntryRecord, Manager } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
@@ -36,12 +42,25 @@ export default function ManagerView({
   const [selected, setSelected] = useState<LogEntryRecord | null>(null);
   const [review, setReview] = useState<ReceivingReviewPayload>(emptyReview());
   const [busy, setBusy] = useState(false);
+  const [weekSummaries, setWeekSummaries] = useState<WeekSummary[]>([]);
+  const [selectedWeek, setSelectedWeek] = useState<WeekSummary | null>(null);
+  const [verifyComments, setVerifyComments] = useState("");
+  const [verifyBusy, setVerifyBusy] = useState(false);
+
+  function refreshWeeks() {
+    if (!locationId) return;
+    fetchVerifications(locationId, 4)
+      .then((r) => setWeekSummaries(r.weeks))
+      .catch(() => setWeekSummaries([]));
+  }
 
   useEffect(() => {
     if (!locationId) return;
     fetchLogEntriesByMonth(locationId, RECEIVING_LOG_ID, currentMonthKey())
       .then((r) => setEntries(r.entries.filter((e) => !e.amendsId)))
       .catch(() => setEntries([]));
+    refreshWeeks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId]);
 
   const needsReview = entries.filter((e) => !e.receivingReview);
@@ -65,6 +84,25 @@ export default function ManagerView({
       // leave the form open so the manager can retry
     } finally {
       setBusy(false);
+    }
+  }
+
+  function openWeek(week: WeekSummary) {
+    setSelectedWeek(week);
+    setVerifyComments("");
+  }
+
+  async function submitWeekVerification() {
+    if (!selectedWeek || !locationId) return;
+    setVerifyBusy(true);
+    try {
+      await submitVerification(locationId, selectedWeek.weekStart, verifyComments || undefined);
+      refreshWeeks();
+      setSelectedWeek(null);
+    } catch {
+      // leave the form open so the manager can retry
+    } finally {
+      setVerifyBusy(false);
     }
   }
 
@@ -95,6 +133,46 @@ export default function ManagerView({
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.weeklyVerification}</span>
+          {weekSummaries.map((w) => {
+            const hasFlags = w.outOfSpecCount + w.failedCount + w.lateCount + w.rejectedReceivingCount + w.missingByLog.length > 0;
+            return (
+              <button
+                key={w.weekStart}
+                className="blueprint"
+                onClick={() => openWeek(w)}
+                style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
+              >
+                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+                <span
+                  style={{
+                    width: 14,
+                    height: 14,
+                    flex: "none",
+                    background: w.verification ? "var(--color-accent)" : hasFlags ? "var(--color-alert)" : "transparent",
+                    border: w.verification ? undefined : "1px solid var(--color-alert)",
+                  }}
+                />
+                <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>{t.weekOf(w.weekStart)}</span>
+                  <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
+                    {w.verification
+                      ? t.verifiedBy(w.verification.manager.name, w.verification.verifiedAt.slice(0, 10))
+                      : [
+                          w.outOfSpecCount ? t.outOfSpecCount(w.outOfSpecCount) : "",
+                          w.failedCount ? t.failedCount(w.failedCount) : "",
+                          w.lateCount ? t.lateCount(w.lateCount) : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || t.unverifiedWeeks}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.needsReview}</span>
           {needsReview.length === 0 && (
@@ -152,6 +230,63 @@ export default function ManagerView({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {selectedWeek && (
+        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+            <button
+              onClick={() => setSelectedWeek(null)}
+              style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
+            >
+              {t.back}
+            </button>
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24 }}>{t.weekOf(selectedWeek.weekStart)}</span>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 6, padding: 14 }}>
+              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+              <span style={{ fontSize: 14 }}>{t.outOfSpecCount(selectedWeek.outOfSpecCount)}</span>
+              <span style={{ fontSize: 14 }}>{t.failedCount(selectedWeek.failedCount)}</span>
+              <span style={{ fontSize: 14 }}>{t.lateCount(selectedWeek.lateCount)}</span>
+            </div>
+
+            {selectedWeek.missingByLog.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.missingDays}</span>
+                {selectedWeek.missingByLog.map((m) => (
+                  <span key={m.logDefinitionId} style={{ fontSize: 13.5, color: "var(--color-alert-text)" }}>
+                    {m.name}: {m.daysMissing.join(", ")}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {selectedWeek.verification ? (
+              <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
+                {t.verifiedBy(selectedWeek.verification.manager.name, selectedWeek.verification.verifiedAt.slice(0, 10))}
+                {selectedWeek.verification.comments ? ` — ${selectedWeek.verification.comments}` : ""}
+              </span>
+            ) : (
+              <input
+                type="text"
+                value={verifyComments}
+                onChange={(e) => setVerifyComments(e.target.value)}
+                placeholder={t.verificationComments}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              />
+            )}
+          </div>
+
+          {!selectedWeek.verification && (
+            <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)" }}>
+              <button className="btn btn-primary" disabled={verifyBusy} onClick={submitWeekVerification} style={{ width: "100%", minHeight: 60, fontSize: 18 }}>
+                {t.verifyThisWeek}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

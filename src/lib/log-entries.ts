@@ -69,6 +69,10 @@ function buildReceivingData(receiving: NonNullable<CreateLogEntryInput["receivin
     productsToStandardExplain: receiving.productsToStandard.explain ?? null,
     labelsCurrent: receiving.labelsCurrent.approved,
     labelsCurrentExplain: receiving.labelsCurrent.explain ?? null,
+    sealIntact: receiving.sealIntact,
+    caseCountMatches: receiving.caseCountMatches,
+    supplierPaperworkAttached: receiving.supplierPaperworkAttached,
+    organicCertCurrent: receiving.organicCertCurrent,
     lines: {
       create: receiving.lines.map((line, i) => ({
         rowIndex: i,
@@ -182,6 +186,11 @@ function buildCheckData(
   const seen = new Set<string>();
   const created: Prisma.ItemCheckCreateWithoutLogEntryInput[] = [];
 
+  // A checklist must always be able to submit with a FAIL present — a
+  // form that can only ever record 100% pass is unable to tell the truth.
+  // FAIL and NA each require a note (corrective action, or reason it
+  // doesn't apply); that requirement is enforced by itemCheckInputSchema
+  // itself, not repeated here.
   for (const c of itemChecks) {
     if (!itemIds.has(c.logItemId)) {
       throw new ApiError(400, `Unknown logItemId ${c.logItemId} for this form`);
@@ -190,12 +199,10 @@ function buildCheckData(
       throw new ApiError(400, `Duplicate check for item ${c.logItemId}`);
     }
     seen.add(c.logItemId);
-    if (!c.checked) {
-      throw new ApiError(400, "Every checklist item must be ticked before submitting");
-    }
     created.push({
       logItem: { connect: { id: c.logItemId } },
-      checked: c.checked,
+      status: c.status,
+      statusNote: c.statusNote ?? null,
     });
   }
 

@@ -7,10 +7,15 @@ export const readingInputSchema = z.object({
   correctiveAction: z.string().trim().min(1).optional(),
 });
 
-export const itemCheckInputSchema = z.object({
-  logItemId: z.string(),
-  checked: z.boolean(),
-});
+export const itemCheckInputSchema = z
+  .object({
+    logItemId: z.string(),
+    status: z.enum(["PASS", "FAIL", "NA"]),
+    statusNote: z.string().trim().min(1).optional(),
+  })
+  .refine((v) => v.status === "PASS" || !!v.statusNote, {
+    message: "A FAIL needs a corrective action, and NA needs a reason",
+  });
 
 export const calibrationRowInputSchema = z.object({
   testTermId: z.string().trim().min(1),
@@ -47,6 +52,10 @@ export const receivingInputSchema = z.object({
   plasticWrapGood: z.boolean(),
   productsToStandard: explainWhenNo(),
   labelsCurrent: explainWhenNo(),
+  sealIntact: z.boolean(),
+  caseCountMatches: z.boolean(),
+  supplierPaperworkAttached: z.boolean(),
+  organicCertCurrent: z.boolean(),
   lines: z.array(receivingLineInputSchema).min(1),
 });
 
@@ -54,6 +63,9 @@ export const createLogEntrySchema = z.object({
   locationId: z.string(),
   logDefinitionId: z.string(),
   businessDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
+  // Only meaningful (and only validated as required) when businessDate turns
+  // out to be yesterday relative to the server's clock — see log-entries.ts.
+  lateReason: z.string().trim().min(1).optional(),
   readings: z.array(readingInputSchema).optional(),
   itemChecks: z.array(itemCheckInputSchema).optional(),
   calibrationRows: z.array(calibrationRowInputSchema).optional(),
@@ -75,8 +87,21 @@ export const receivingReviewInputSchema = z.object({
 
 export type CreateLogEntryInput = z.infer<typeof createLogEntrySchema>;
 
-export const amendLogEntrySchema = createLogEntrySchema.omit({
-  locationId: true,
-  logDefinitionId: true,
-  businessDate: true,
+export const amendLogEntrySchema = createLogEntrySchema
+  .omit({
+    locationId: true,
+    logDefinitionId: true,
+    businessDate: true,
+    lateReason: true,
+  })
+  .extend({
+    // Required on every amendment — an auditor reads the "why" as much as
+    // the diff. The original entry's own lateness/reason carries forward
+    // unchanged; amending doesn't re-litigate whether it was late.
+    amendReason: z.string().trim().min(1),
+  });
+
+export const verificationInputSchema = z.object({
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD, the Monday of the week"),
+  comments: z.string().trim().min(1).optional(),
 });

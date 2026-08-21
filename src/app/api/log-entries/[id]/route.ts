@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
+import { getCurrentSigner } from "@/lib/signer";
 
 export async function GET(_req: Request, ctx: RouteContext<"/api/log-entries/[id]">) {
   try {
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
+
     const { id } = await ctx.params;
     const entry = await prisma.logEntry.findUnique({
       where: { id },
