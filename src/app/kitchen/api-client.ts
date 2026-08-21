@@ -67,6 +67,10 @@ export type SubmitPayload = {
     plasticWrapGood: boolean;
     productsToStandard: { approved: boolean; explain?: string };
     labelsCurrent: { approved: boolean; explain?: string };
+    sealIntact: boolean;
+    caseCountMatches: boolean;
+    supplierPaperworkAttached: boolean;
+    organicCertCurrent: boolean;
     lines: {
       productName: string;
       productId?: string;

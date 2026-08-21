@@ -239,6 +239,10 @@ export default function KitchenApp() {
                   plasticWrapGood: draft.receiving.plasticWrapGood,
                   productsToStandard: draft.receiving.productsToStandard,
                   labelsCurrent: draft.receiving.labelsCurrent,
+                  sealIntact: draft.receiving.sealIntact,
+                  caseCountMatches: draft.receiving.caseCountMatches,
+                  supplierPaperworkAttached: draft.receiving.supplierPaperworkAttached,
+                  organicCertCurrent: draft.receiving.organicCertCurrent,
                   lines: draft.receiving.lines.map((l) => ({
                     productName: l.productName,
                     ...(l.productId ? { productId: l.productId } : {}),

@@ -121,6 +121,10 @@ export default function EntryDetail({
                 [t.truckConditionGood, entry.receivingDetail.truckConditionGood, entry.receivingDetail.truckConditionExplain],
                 [t.productsToStandard, entry.receivingDetail.productsToStandard, entry.receivingDetail.productsToStandardExplain],
                 [t.labelsCurrent, entry.receivingDetail.labelsCurrent, entry.receivingDetail.labelsCurrentExplain],
+                [t.sealIntact, entry.receivingDetail.sealIntact, null],
+                [t.caseCountMatches, entry.receivingDetail.caseCountMatches, null],
+                [t.supplierPaperworkAttached, entry.receivingDetail.supplierPaperworkAttached, null],
+                [t.organicCertCurrent, entry.receivingDetail.organicCertCurrent, null],
               ].map(([label, ok, explain], i) => (
                 <span key={i} style={{ fontSize: 14, color: ok ? "var(--color-muted)" : "var(--color-alert-text)" }}>
                   {label as string} {ok ? t.yes : `${t.no} — ${explain ?? ""}`}

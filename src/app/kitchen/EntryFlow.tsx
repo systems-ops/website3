@@ -490,6 +490,10 @@ export default function EntryFlow({
               {renderBoolToggle(t.plasticWrapGood, draft.receiving.plasticWrapGood, (v) => updateReceiving({ plasticWrapGood: v }))}
               {renderApproval(t.productsToStandard, draft.receiving.productsToStandard, (f) => updateReceiving({ productsToStandard: f }))}
               {renderApproval(t.labelsCurrent, draft.receiving.labelsCurrent, (f) => updateReceiving({ labelsCurrent: f }))}
+              {renderBoolToggle(t.sealIntact, draft.receiving.sealIntact, (v) => updateReceiving({ sealIntact: v }))}
+              {renderBoolToggle(t.caseCountMatches, draft.receiving.caseCountMatches, (v) => updateReceiving({ caseCountMatches: v }))}
+              {renderBoolToggle(t.supplierPaperworkAttached, draft.receiving.supplierPaperworkAttached, (v) => updateReceiving({ supplierPaperworkAttached: v }))}
+              {renderBoolToggle(t.organicCertCurrent, draft.receiving.organicCertCurrent, (v) => updateReceiving({ organicCertCurrent: v }))}
             </div>
 
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.products}</span>

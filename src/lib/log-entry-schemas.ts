@@ -47,6 +47,10 @@ export const receivingInputSchema = z.object({
   plasticWrapGood: z.boolean(),
   productsToStandard: explainWhenNo(),
   labelsCurrent: explainWhenNo(),
+  sealIntact: z.boolean(),
+  caseCountMatches: z.boolean(),
+  supplierPaperworkAttached: z.boolean(),
+  organicCertCurrent: z.boolean(),
   lines: z.array(receivingLineInputSchema).min(1),
 });
 

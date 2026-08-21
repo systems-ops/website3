@@ -69,6 +69,10 @@ function buildReceivingData(receiving: NonNullable<CreateLogEntryInput["receivin
     productsToStandardExplain: receiving.productsToStandard.explain ?? null,
     labelsCurrent: receiving.labelsCurrent.approved,
     labelsCurrentExplain: receiving.labelsCurrent.explain ?? null,
+    sealIntact: receiving.sealIntact,
+    caseCountMatches: receiving.caseCountMatches,
+    supplierPaperworkAttached: receiving.supplierPaperworkAttached,
+    organicCertCurrent: receiving.organicCertCurrent,
     lines: {
       create: receiving.lines.map((line, i) => ({
         rowIndex: i,

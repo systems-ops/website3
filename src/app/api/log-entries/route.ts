@@ -70,19 +70,25 @@ export async function POST(req: NextRequest) {
     if (!location) throw new ApiError(404, "Location not found");
     if (!definition) throw new ApiError(404, "Log definition not found");
 
-    const existing = await prisma.logEntry.findFirst({
-      where: {
-        locationId: body.locationId,
-        logDefinitionId: body.logDefinitionId,
-        businessDate: body.businessDate,
-        amendsId: null,
-      },
-    });
-    if (existing) {
-      throw new ApiError(
-        409,
-        "This log was already submitted for that date and location. Use the amend endpoint to correct it."
-      );
+    // Every other log kind is one submission per kitchen/day — that's the
+    // whole point (a single fridge-temp check, one pre-production sweep).
+    // Receiving is different: a kitchen can get several separate truck
+    // deliveries in the same day, each its own real event, so it's exempt.
+    if (definition.kind !== "receiving") {
+      const existing = await prisma.logEntry.findFirst({
+        where: {
+          locationId: body.locationId,
+          logDefinitionId: body.logDefinitionId,
+          businessDate: body.businessDate,
+          amendsId: null,
+        },
+      });
+      if (existing) {
+        throw new ApiError(
+          409,
+          "This log was already submitted for that date and location. Use the amend endpoint to correct it."
+        );
+      }
     }
 
     const childData = await buildLogEntryCreateData(body, body.logDefinitionId);

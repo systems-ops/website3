@@ -73,20 +73,6 @@ const LOGS = [
     ],
   },
   {
-    id: "delivery",
-    name: "Deliveries received",
-    formCode: "Form FR-02 (rev 3)",
-    kind: "check",
-    items: [
-      "Truck temperature written down",
-      "Seal intact and matches the paperwork",
-      "Case count matches the invoice",
-      "Supplier paperwork attached",
-      "Organic certificate still current",
-      "Lot codes written down",
-    ],
-  },
-  {
     id: "hygiene",
     name: "Hygiene inspection",
     formCode: "Form FR-65-A",
@@ -205,10 +191,7 @@ const CORRECTIVE_ACTIONS: Record<string, string[]> = {
 const CERTIFICATES = [
   {
     name: "Organic",
-    requires: [
-      { logId: "delivery", frequency: "daily" },
-      { logId: "receiving-log", frequency: "daily" },
-    ],
+    requires: [{ logId: "receiving-log", frequency: "daily" }],
   },
   { name: "FDA", requires: [{ logId: "clean", frequency: "daily" }] },
   {
@@ -333,6 +316,19 @@ async function main() {
       }
     }
   }
+
+  // "Deliveries received" (FR-02) is retired — folded into the Receiving
+  // Log (FR-40, id "receiving-log") above, since both covered the same
+  // event (a truck arriving). Kept in the database rather than deleted
+  // (past submissions still reference it), just deactivated so it stops
+  // showing up as a daily task, with its certificate requirement dropped.
+  await prisma.logDefinition.updateMany({
+    where: { id: "delivery" },
+    data: { active: false },
+  });
+  await prisma.certificateRequirement.deleteMany({
+    where: { logDefinitionId: "delivery" },
+  });
 
   for (const [logId, texts] of Object.entries(CORRECTIVE_ACTIONS)) {
     const logDefinitionId = logId === "_" ? null : logId;

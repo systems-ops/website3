@@ -298,6 +298,14 @@ model ReceivingDetail {
   labelsCurrent             Boolean
   labelsCurrentExplain      String?
 
+  /// Folded in from the old standalone "Deliveries received" checklist
+  /// (FR-02) — that form and this one always covered the same physical
+  /// event (a truck arriving), so they're one form now instead of two.
+  sealIntact                 Boolean
+  caseCountMatches           Boolean
+  supplierPaperworkAttached  Boolean
+  organicCertCurrent         Boolean
+
   lines ReceivingLine[]
 
   @@map("receiving_details")

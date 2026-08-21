@@ -108,6 +108,10 @@ export type ReceivingDetailRecord = {
   productsToStandardExplain: string | null;
   labelsCurrent: boolean;
   labelsCurrentExplain: string | null;
+  sealIntact: boolean;
+  caseCountMatches: boolean;
+  supplierPaperworkAttached: boolean;
+  organicCertCurrent: boolean;
   lines: ReceivingLineRecord[];
 };
 
@@ -179,6 +183,10 @@ export type ReceivingDraft = {
   plasticWrapGood: boolean;
   productsToStandard: ApprovalField;
   labelsCurrent: ApprovalField;
+  sealIntact: boolean;
+  caseCountMatches: boolean;
+  supplierPaperworkAttached: boolean;
+  organicCertCurrent: boolean;
   lines: ReceivingLineDraft[];
 };
 
@@ -194,6 +202,10 @@ export const emptyReceivingDraft = (): ReceivingDraft => ({
   plasticWrapGood: true,
   productsToStandard: { approved: true },
   labelsCurrent: { approved: true },
+  sealIntact: true,
+  caseCountMatches: true,
+  supplierPaperworkAttached: true,
+  organicCertCurrent: true,
   lines: [],
 });
 

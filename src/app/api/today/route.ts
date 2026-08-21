@@ -41,15 +41,28 @@ export async function GET(req: NextRequest) {
     const done: unknown[] = [];
 
     for (const def of definitions) {
+      // Receiving is a running log, not a once-a-day checkbox — a kitchen
+      // can get several separate deliveries in one day. It always stays
+      // available to add another, rather than locking into "done" after
+      // the first one.
+      if (def.kind === "receiving") {
+        const countToday = entries.filter((e) => e.logDefinitionId === def.id).length;
+        todo.push({
+          logDefinitionId: def.id,
+          name: def.name,
+          kind: def.kind,
+          sub: countToday > 0 ? `${countToday} logged today · tap to add another` : "Log the delivery",
+        });
+        continue;
+      }
+
       const entry = submittedByLog.get(def.id);
       const sub =
         def.kind === "temps"
           ? `${def.units.length} to check`
           : def.kind === "calibration"
             ? "Log each thermometer tested"
-            : def.kind === "receiving"
-              ? "Log the delivery"
-              : `${def.items.length} things to tick`;
+            : `${def.items.length} things to tick`;
 
       if (entry) {
         done.push({
