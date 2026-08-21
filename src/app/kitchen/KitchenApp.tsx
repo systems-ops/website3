@@ -88,20 +88,36 @@ export default function KitchenApp() {
   const flushOutbox = useCallback(async () => {
     const queued = await listOutbox();
     for (const item of queued) {
+      // A queued entry can sit offline past midnight — the server only
+      // accepts today or yesterday-with-a-reason, so attach one
+      // preemptively rather than waiting on a rejection to react to.
+      const payload =
+        item.payload.businessDate !== todayBusinessDate() && !item.payload.lateReason
+          ? { ...item.payload, lateReason: "Queued offline, submitted after reconnect" }
+          : item.payload;
       try {
-        await submitLogEntry(item.payload);
+        await submitLogEntry(payload);
         await removeFromOutbox(item.id);
         setPendingLogIds((prev) => {
           const next = new Set(prev);
           next.delete(item.payload.logDefinitionId);
           return next;
         });
-      } catch {
-        break; // still offline (or a real error) — stop and retry next time
+      } catch (err) {
+        // A 4xx here means the server will never accept this payload as-is
+        // (too stale to backdate, form definition changed, etc.) — looping
+        // on it forever would silently hide a lost record. Drop it from the
+        // outbox and tell the cook, rather than retry indefinitely.
+        if (err instanceof ApiRequestError && err.status < 500) {
+          await removeFromOutbox(item.id);
+          note(`${item.payload.logDefinitionId}: ${err.message}`);
+          continue;
+        }
+        break; // still offline (or a real network error) — stop and retry next time
       }
     }
     if (locationId) refreshTodayAndCerts(locationId);
-  }, [locationId, refreshTodayAndCerts]);
+  }, [locationId, refreshTodayAndCerts, note]);
 
   // Boot: locations, session.
   useEffect(() => {
@@ -258,7 +274,11 @@ export default function KitchenApp() {
                 locationId,
                 logDefinitionId: flowLogId,
                 businessDate,
-                itemChecks: log.items.map((item) => ({ logItemId: item.id, checked: !!draft.checks[item.id] })),
+                itemChecks: log.items.map((item) => {
+                  const status = draft.checks[item.id] ?? "PASS";
+                  const statusNote = draft.checkNotes[item.id];
+                  return { logItemId: item.id, status, ...(statusNote ? { statusNote } : {}) };
+                }),
               };
 
     const key = draftKey(locationId, flowLogId, businessDate);

@@ -4,6 +4,7 @@ import { ApiError, handleApiError } from "@/lib/api-errors";
 import { createLogEntrySchema } from "@/lib/log-entry-schemas";
 import { buildLogEntryCreateData } from "@/lib/log-entries";
 import { getCurrentSigner } from "@/lib/signer";
+import { classifySubmissionDate } from "@/lib/business-date";
 
 // GET /api/log-entries?locationId=&logDefinitionId=&month=YYYY-MM&date=YYYY-MM-DD
 // Powers the Records tab: month calendar and single-day detail.
@@ -66,6 +67,12 @@ export async function POST(req: NextRequest) {
       throw new ApiError(403, "Not scoped to this kitchen");
     }
 
+    // businessDate is never trusted from the client beyond today or
+    // yesterday-with-a-reason — otherwise any valid PIN could manufacture
+    // a month of missing logs in minutes.
+    const dateCheck = classifySubmissionDate(body.businessDate, body.lateReason);
+    if (!dateCheck.ok) throw new ApiError(400, dateCheck.error);
+
     const [location, definition] = await Promise.all([
       prisma.location.findUnique({ where: { id: body.locationId } }),
       prisma.logDefinition.findUnique({ where: { id: body.logDefinitionId } }),
@@ -103,6 +110,8 @@ export async function POST(req: NextRequest) {
         businessDate: body.businessDate,
         submittedBy: signer.id,
         signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
+        enteredLate: dateCheck.enteredLate,
+        lateReason: dateCheck.lateReason,
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
         ...(childData.calibrationRows ? { calibrationRows: { create: childData.calibrationRows } } : {}),

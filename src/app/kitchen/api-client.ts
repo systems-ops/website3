@@ -53,7 +53,8 @@ export type SubmitPayload = {
   logDefinitionId: string;
   businessDate: string;
   readings?: { logUnitId: string; slotIndex: number; value: number; correctiveAction?: string }[];
-  itemChecks?: { logItemId: string; checked: boolean }[];
+  itemChecks?: { logItemId: string; status: "PASS" | "FAIL" | "NA"; statusNote?: string }[];
+  lateReason?: string;
   calibrationRows?: { testTermId: string; referenceReading: number; testReading: number; comments?: string }[];
   receiving?: {
     invoiceNumber: string;
@@ -126,4 +127,24 @@ export const submitReceivingReview = (entryId: string, payload: ReceivingReviewP
   api(`/api/log-entries/${entryId}/receiving-review`, {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+
+export type WeekSummary = {
+  weekStart: string;
+  days: string[];
+  missingByLog: { logDefinitionId: string; name: string; daysMissing: string[] }[];
+  outOfSpecCount: number;
+  failedCount: number;
+  lateCount: number;
+  rejectedReceivingCount: number;
+  verification: { id: string; verifiedAt: string; comments: string | null; manager: Manager } | null;
+};
+
+export const fetchVerifications = (locationId: string, weeks = 4) =>
+  api<{ weeks: WeekSummary[] }>(`/api/verifications?locationId=${locationId}&weeks=${weeks}`);
+
+export const submitVerification = (locationId: string, weekStart: string, comments?: string) =>
+  api("/api/verifications", {
+    method: "POST",
+    body: JSON.stringify({ locationId, weekStart, ...(comments ? { comments } : {}) }),
   });

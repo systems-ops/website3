@@ -113,10 +113,21 @@ export default function EntryFlow({
     canSubmit = !!r.invoiceNumber.trim() && !!r.distributorName.trim() && approvalsOk && linesOk;
     submitNote = canSubmit ? t.signsAs(cookName, locationName) : t.fillReceivingRequired;
   } else {
+    // A checklist submits successfully with a FAIL present — it must never
+    // be possible to only ever record 100% pass. FAIL/NA just need a note.
     const total = log.items.length;
-    const checkedCount = log.items.filter((i) => draft.checks[i.id]).length;
-    canSubmit = checkedCount === total && total > 0;
-    submitNote = canSubmit ? t.signsAs(cookName, locationName) : t.ticked(checkedCount, total);
+    const answeredCount = log.items.filter((i) => draft.checks[i.id]).length;
+    const needsNote = log.items.filter((i) => {
+      const status = draft.checks[i.id];
+      return (status === "FAIL" || status === "NA") && !draft.checkNotes[i.id]?.trim();
+    });
+    canSubmit = answeredCount === total && total > 0 && needsNote.length === 0;
+    submitNote =
+      answeredCount < total
+        ? t.ticked(answeredCount, total)
+        : needsNote.length > 0
+          ? t.pickWhatYouDid
+          : t.signsAs(cookName, locationName);
   }
 
   function addCalibrationRow() {
@@ -221,8 +232,18 @@ export default function EntryFlow({
     onChangeDraft({ ...draft, ca: { ...draft.ca, [unresolved.key]: label } });
   }
 
-  function toggleItem(itemId: string) {
-    onChangeDraft({ ...draft, checks: { ...draft.checks, [itemId]: !draft.checks[itemId] } });
+  function setItemStatus(itemId: string, status: "PASS" | "FAIL" | "NA") {
+    const next = { ...draft, checks: { ...draft.checks, [itemId]: status } };
+    if (status === "PASS") {
+      const notes = { ...draft.checkNotes };
+      delete notes[itemId];
+      next.checkNotes = notes;
+    }
+    onChangeDraft(next);
+  }
+
+  function setItemNote(itemId: string, note: string) {
+    onChangeDraft({ ...draft, checkNotes: { ...draft.checkNotes, [itemId]: note } });
   }
 
   return (
@@ -248,7 +269,7 @@ export default function EntryFlow({
               ? t.addThermometer
               : log.kind === "receiving"
                 ? t.products
-                : t.tickEach}
+                : t.tapEachItem}
         </span>
       </div>
 
@@ -331,33 +352,67 @@ export default function EntryFlow({
 
         {log.kind === "check" &&
           log.items.map((item) => {
-            const on = !!draft.checks[item.id];
+            const status = draft.checks[item.id];
             return (
-              <button
+              <div
                 key={item.id}
-                onClick={() => toggleItem(item.id)}
-                style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "10px 14px", background: "transparent", border: "1px solid var(--color-divider)", cursor: "pointer", textAlign: "left" }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  width: "100%",
+                  padding: "10px 14px",
+                  border: `1px solid ${status === "FAIL" ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                }}
               >
-                <span
-                  style={{
-                    width: 26,
-                    height: 26,
-                    flex: "none",
-                    border: "1px solid rgba(29,31,32,.45)",
-                    background: on ? "var(--color-accent)" : "transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {on && (
-                    <svg width="15" height="12" viewBox="0 0 12 10">
-                      <path d="M1 5l3.5 3.5L11 1.5" stroke="#f2f2f3" strokeWidth="2" fill="none" strokeLinecap="round" />
-                    </svg>
-                  )}
-                </span>
-                <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{item.label}</span>
-              </button>
+                <span style={{ fontSize: 16.5, lineHeight: 1.35 }}>{item.label}</span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {(["PASS", "FAIL", "NA"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setItemStatus(item.id, s)}
+                      className={status === s ? "btn btn-primary" : "btn btn-secondary"}
+                      style={{
+                        flex: 1,
+                        minHeight: 48,
+                        fontSize: 14,
+                        ...(status === s && s === "FAIL" ? { background: "var(--color-alert)", borderColor: "var(--color-alert)" } : {}),
+                      }}
+                    >
+                      {s === "PASS" ? t.pass : s === "FAIL" ? t.fail : t.na}
+                    </button>
+                  ))}
+                </div>
+                {status === "FAIL" && log.correctiveActions.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {log.correctiveActions.map((preset) => (
+                      <button
+                        key={preset}
+                        onClick={() => setItemNote(item.id, preset)}
+                        className={draft.checkNotes[item.id] === preset ? "btn btn-primary" : "btn btn-secondary"}
+                        style={{ minHeight: 40, fontSize: 12.5, padding: "0 10px" }}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {(status === "FAIL" || status === "NA") && (
+                  <input
+                    type="text"
+                    value={draft.checkNotes[item.id] ?? ""}
+                    onChange={(e) => setItemNote(item.id, e.target.value)}
+                    placeholder={status === "FAIL" ? t.whatWasWrong : t.whyNotApplicable}
+                    style={{
+                      minHeight: 44,
+                      padding: "0 10px",
+                      fontSize: 15,
+                      border: "1px solid var(--color-alert-border)",
+                      background: "transparent",
+                    }}
+                  />
+                )}
+              </div>
             );
           })}
 

@@ -32,6 +32,14 @@ export default function EntryDetail({
         </button>
         <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>{log.name}</span>
         <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.writtenDownBy(entry.signatureName)}</span>
+        {entry.enteredLate && (
+          <span style={{ fontSize: 13, color: "var(--color-alert-text)" }}>
+            {t.lateEntry}{entry.lateReason ? ` — ${entry.lateReason}` : ""}
+          </span>
+        )}
+        {entry.amendReason && (
+          <span style={{ fontSize: 13, color: "var(--color-alert-text)" }}>{t.amendedNote(entry.amendReason)}</span>
+        )}
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
@@ -69,16 +77,30 @@ export default function EntryDetail({
         {log.kind === "check" &&
           log.items.map((item) => {
             const check = entry.itemChecks.find((c) => c.logItemId === item.id);
+            const status = check?.status;
+            const color =
+              status === "FAIL" ? "var(--color-alert)" : status === "NA" ? "var(--color-muted)" : "var(--color-accent)";
             return (
-              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "10px 14px", border: "1px solid var(--color-divider)" }}>
-                <span style={{ width: 26, height: 26, flex: "none", border: "1px solid rgba(29,31,32,.45)", background: check?.checked ? "var(--color-accent)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {check?.checked && (
-                    <svg width="15" height="12" viewBox="0 0 12 10">
-                      <path d="M1 5l3.5 3.5L11 1.5" stroke="#f2f2f3" strokeWidth="2" fill="none" strokeLinecap="round" />
-                    </svg>
-                  )}
-                </span>
-                <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{item.label}</span>
+              <div
+                key={item.id}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  width: "100%",
+                  padding: "10px 14px",
+                  border: `1px solid ${status === "FAIL" ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <span style={{ width: 54, flex: "none", fontSize: 12, fontWeight: 600, letterSpacing: ".05em", color }}>
+                    {status ?? "—"}
+                  </span>
+                  <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{item.label}</span>
+                </div>
+                {check?.statusNote && (
+                  <span style={{ fontSize: 13, color: "var(--color-alert-text)", paddingLeft: 68 }}>{check.statusNote}</span>
+                )}
               </div>
             );
           })}

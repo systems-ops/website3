@@ -10,6 +10,8 @@ export type ExportRow = {
   signedBy: string;
   submittedAt: string;
   amended: boolean;
+  amendReason: string;
+  daysLate: string;
   item: string;
   slotOrStatus: string;
   value: string;
@@ -83,6 +85,8 @@ export async function buildExportRows(params: {
         signedBy: entry.signatureName,
         submittedAt: entry.submittedAt.toISOString(),
         amended,
+        amendReason: entry.amendReason ?? "",
+        daysLate: entry.enteredLate ? `1 day late — ${entry.lateReason ?? ""}` : "",
       };
 
       if (entry.logDefinition.kind === "temps") {
@@ -134,10 +138,10 @@ export async function buildExportRows(params: {
           rows.push({
             ...base,
             item: c.logItem.label,
-            slotOrStatus: c.checked ? "checked" : "unchecked",
+            slotOrStatus: c.status,
             value: "",
-            outOfSpec: "",
-            correctiveAction: "",
+            outOfSpec: c.status === "FAIL" ? "yes" : "no",
+            correctiveAction: c.statusNote ?? "",
           });
         }
       }
@@ -164,6 +168,8 @@ export function rowsToCsv(rows: ExportRow[]): string {
     "signed_by",
     "submitted_at",
     "amended",
+    "amend_reason",
+    "days_late",
     "item",
     "slot_or_status",
     "value",
@@ -182,6 +188,8 @@ export function rowsToCsv(rows: ExportRow[]): string {
         r.signedBy,
         r.submittedAt,
         r.amended ? "amended" : "",
+        r.amendReason,
+        r.daysLate,
         r.item,
         r.slotOrStatus,
         r.value,
@@ -228,7 +236,8 @@ export function rowsToPdf(rows: ExportRow[], title: string): Promise<Buffer> {
       if (r.outOfSpec === "yes") parts.push("OUT OF SPEC");
       if (r.correctiveAction) parts.push(`corrective action: ${r.correctiveAction}`);
       parts.push(`signed: ${r.signedBy}`);
-      if (r.amended) parts.push("(amended)");
+      if (r.daysLate) parts.push(`LATE: ${r.daysLate}`);
+      if (r.amended) parts.push(`(amended${r.amendReason ? `: ${r.amendReason}` : ""})`);
       doc.fontSize(10).text(parts.join("  ·  "));
     }
 
