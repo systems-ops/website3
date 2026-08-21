@@ -5,6 +5,8 @@ import type {
   LogDefinition,
   LogEntryRecord,
   Manager,
+  ProductionBatchRecord,
+  ReceivedLot,
   TodayResponse,
 } from "./types";
 
@@ -148,3 +150,64 @@ export const submitVerification = (locationId: string, weekStart: string, commen
     method: "POST",
     body: JSON.stringify({ locationId, weekStart, ...(comments ? { comments } : {}) }),
   });
+
+export const fetchRecentLots = (locationId: string) =>
+  api<{ lots: ReceivedLot[] }>(`/api/batches/recent-lots?locationId=${locationId}`);
+
+export const fetchBatchesByMonth = (locationId: string, month: string) =>
+  api<{ batches: ProductionBatchRecord[] }>(`/api/batches?locationId=${locationId}&month=${month}`);
+
+export type CreateBatchPayload = {
+  locationId: string;
+  businessDate: string;
+  lateReason?: string;
+  batchCode: string;
+  productType: string;
+  quantity?: string;
+  inputs: { receivingLineId: string }[];
+  outputs: {
+    productName: string;
+    quantity?: string;
+    bakeDate: string;
+    bestByDate?: string;
+    disposition: "held" | "sold_in_store" | "shipped";
+    reference?: string;
+  }[];
+};
+
+export const createBatch = (payload: CreateBatchPayload) =>
+  api<{ batch: ProductionBatchRecord }>("/api/batches", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export type TraceBatch = {
+  id: string;
+  batchCode: string;
+  productType: string;
+  quantity: string | null;
+  businessDate: string;
+  location: string;
+  signatureName: string;
+  producedAt: string;
+  inputs: {
+    productNameSnapshot: string;
+    supplierLotNumber: string | null;
+    distributorName: string;
+    invoiceNumber: string;
+    receivedDate: string;
+  }[];
+  outputs: {
+    productName: string;
+    quantity: string | null;
+    bakeDate: string;
+    bestByDate: string | null;
+    disposition: string;
+    reference: string | null;
+  }[];
+};
+
+export const fetchTrace = (query: string, locationId?: string) =>
+  api<{ batches: TraceBatch[] }>(
+    `/api/trace?query=${encodeURIComponent(query)}${locationId ? `&locationId=${locationId}` : ""}`
+  );

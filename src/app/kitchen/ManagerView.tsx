@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import {
   fetchLogEntriesByMonth,
+  fetchTrace,
   fetchVerifications,
   managerLogout,
   submitReceivingReview,
   submitVerification,
 } from "./api-client";
-import type { ReceivingReviewPayload, WeekSummary } from "./api-client";
+import type { ReceivingReviewPayload, TraceBatch, WeekSummary } from "./api-client";
 import type { Location, LogEntryRecord, Manager } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
@@ -46,6 +47,12 @@ export default function ManagerView({
   const [selectedWeek, setSelectedWeek] = useState<WeekSummary | null>(null);
   const [verifyComments, setVerifyComments] = useState("");
   const [verifyBusy, setVerifyBusy] = useState(false);
+  const [traceOpen, setTraceOpen] = useState(false);
+  const [traceQuery, setTraceQuery] = useState("");
+  const [traceLocationScoped, setTraceLocationScoped] = useState(true);
+  const [traceResults, setTraceResults] = useState<TraceBatch[]>([]);
+  const [traceBusy, setTraceBusy] = useState(false);
+  const [traceSearched, setTraceSearched] = useState(false);
 
   function refreshWeeks() {
     if (!locationId) return;
@@ -106,6 +113,26 @@ export default function ManagerView({
     }
   }
 
+  async function runTraceSearch() {
+    if (!traceQuery.trim()) return;
+    setTraceBusy(true);
+    setTraceSearched(true);
+    try {
+      const { batches } = await fetchTrace(traceQuery.trim(), traceLocationScoped ? locationId ?? undefined : undefined);
+      setTraceResults(batches);
+    } catch {
+      setTraceResults([]);
+    } finally {
+      setTraceBusy(false);
+    }
+  }
+
+  function traceExportUrl(format: "csv" | "pdf") {
+    const p = new URLSearchParams({ query: traceQuery.trim(), format });
+    if (traceLocationScoped && locationId) p.set("locationId", locationId);
+    return `/api/trace?${p.toString()}`;
+  }
+
   return (
     <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
       <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)" }}>
@@ -133,6 +160,14 @@ export default function ManagerView({
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
+        <button
+          onClick={() => setTraceOpen(true)}
+          className="btn btn-secondary"
+          style={{ minHeight: 52, fontSize: 15 }}
+        >
+          {t.trace}
+        </button>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.weeklyVerification}</span>
           {weekSummaries.map((w) => {
@@ -228,6 +263,89 @@ export default function ManagerView({
                 <span style={{ width: 14, height: 14, flex: "none", background: loc.id === locationId ? "var(--color-accent)" : "transparent", border: "1px solid var(--color-accent)" }} />
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 20, flex: 1 }}>{loc.name}</span>
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {traceOpen && (
+        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+            <button
+              onClick={() => setTraceOpen(false)}
+              style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
+            >
+              {t.back}
+            </button>
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24 }}>{t.trace}</span>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
+            <input
+              type="text"
+              value={traceQuery}
+              onChange={(e) => setTraceQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && runTraceSearch()}
+              placeholder={t.traceSearchPlaceholder}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+              <span style={{ fontSize: 14 }}>{traceLocationScoped ? currentLocation?.name : t.traceAllKitchens}</span>
+              <button
+                onClick={() => setTraceLocationScoped((v) => !v)}
+                className="btn btn-secondary"
+                style={{ minHeight: 40, fontSize: 13 }}
+              >
+                {traceLocationScoped ? t.traceAllKitchens : currentLocation?.name}
+              </button>
+            </div>
+            <button className="btn btn-primary" disabled={traceBusy || !traceQuery.trim()} onClick={runTraceSearch} style={{ minHeight: 52, fontSize: 16 }}>
+              {t.traceSearch}
+            </button>
+
+            {traceSearched && !traceBusy && traceResults.length > 0 && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <a className="btn btn-secondary" style={{ flex: 1, textAlign: "center", minHeight: 46, lineHeight: "46px" }} href={traceExportUrl("csv")}>
+                  {t.exportCsv}
+                </a>
+                <a className="btn btn-secondary" style={{ flex: 1, textAlign: "center", minHeight: 46, lineHeight: "46px" }} href={traceExportUrl("pdf")}>
+                  {t.exportPdf}
+                </a>
+              </div>
+            )}
+
+            {traceSearched && !traceBusy && traceResults.length === 0 && (
+              <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.traceNoResults}</span>
+            )}
+
+            {traceResults.map((b) => (
+              <div key={b.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
+                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 18 }}>
+                  {b.batchCode} — {b.productType}
+                </span>
+                <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
+                  {b.location} · {b.businessDate} · {t.signedBy} {b.signatureName}
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 12.5, letterSpacing: ".08em", color: "var(--color-muted)" }}>{t.inputsFromReceiving}</span>
+                  {b.inputs.map((i, idx) => (
+                    <span key={idx} style={{ fontSize: 13.5 }}>
+                      {i.productNameSnapshot} — lot {i.supplierLotNumber ?? "—"} — {i.distributorName}, invoice {i.invoiceNumber}, received {i.receivedDate}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 12.5, letterSpacing: ".08em", color: "var(--color-muted)" }}>{t.outputs}</span>
+                  {b.outputs.map((o, idx) => (
+                    <span key={idx} style={{ fontSize: 13.5 }}>
+                      {o.productName} — {o.quantity ?? "—"} — {o.bakeDate}
+                      {o.bestByDate ? ` · best by ${o.bestByDate}` : ""} — {o.disposition}
+                      {o.reference ? ` (${o.reference})` : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
