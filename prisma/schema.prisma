@@ -10,6 +10,24 @@ datasource db {
   provider = "postgresql"
 }
 
+/// One row per login attempt (success or failure), for rate limiting and
+/// so an attack in progress is actually visible. Persisted (not in-memory)
+/// because Vercel's serverless functions cold-start — an in-process counter
+/// would reset on every new instance and protect nothing.
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  /// "cook" | "manager"
+  kind       String
+  /// null for manager attempts — managers aren't location-scoped
+  locationId String?
+  ip         String
+  succeeded  Boolean
+  createdAt  DateTime @default(now())
+
+  @@index([kind, locationId, ip, createdAt])
+  @@map("login_attempts")
+}
+
 // --- Reference data -------------------------------------------------------
 
 model Location {

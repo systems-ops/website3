@@ -9,6 +9,9 @@ import { getCurrentSigner } from "@/lib/signer";
 // Powers the Records tab: month calendar and single-day detail.
 export async function GET(req: NextRequest) {
   try {
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
+
     const params = req.nextUrl.searchParams;
     const locationId = params.get("locationId");
     const logDefinitionId = params.get("logDefinitionId");

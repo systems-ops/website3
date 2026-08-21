@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { computeCertificateStatuses } from "@/lib/certificates";
+import { getCurrentSigner } from "@/lib/signer";
 
 // GET /api/certificates?locationId=&days=30
 // Derives certificate status from actual log_entries instead of hardcoding it.
 export async function GET(req: NextRequest) {
   try {
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
+
     const locationId = req.nextUrl.searchParams.get("locationId");
     if (!locationId) throw new ApiError(400, "locationId is required");
 

@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { buildExportRows, rowsToCsv, rowsToPdf } from "@/lib/export";
-import { getCurrentCook } from "@/lib/session";
+import { getCurrentSigner } from "@/lib/signer";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/export?locationId=&logDefinitionId=&from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|pdf
-// Lets a signed-in cook pull the underlying records out of the app as a
-// downloadable file — the "get our data back out" escape hatch.
+// Lets a signed-in cook (their own kitchen only) or manager (any kitchen)
+// pull the underlying records out of the app as a downloadable file — the
+// "get our data back out" escape hatch.
 export async function GET(req: NextRequest) {
   try {
-    const cook = await getCurrentCook();
-    if (!cook) throw new ApiError(401, "Sign in first");
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
 
     const params = req.nextUrl.searchParams;
     const locationId = params.get("locationId");
@@ -20,6 +21,9 @@ export async function GET(req: NextRequest) {
     const format = params.get("format") === "pdf" ? "pdf" : "csv";
 
     if (!locationId) throw new ApiError(400, "locationId is required");
+    if (signer.kind === "cook" && !signer.locationIds.includes(locationId)) {
+      throw new ApiError(403, "Not scoped to this kitchen");
+    }
 
     const location = await prisma.location.findUnique({ where: { id: locationId } });
     if (!location) throw new ApiError(404, "Location not found");

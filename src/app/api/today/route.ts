@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { todayBusinessDate } from "@/lib/business-date";
+import { getCurrentSigner } from "@/lib/signer";
 
 // GET /api/today?locationId=...&date=YYYY-MM-DD
 // Splits active log definitions into "to do" and "done" for one location/day,
 // mirroring the Today tab in the design.
 export async function GET(req: NextRequest) {
   try {
+    const signer = await getCurrentSigner();
+    if (!signer) throw new ApiError(401, "Sign in first");
+
     const locationId = req.nextUrl.searchParams.get("locationId");
     if (!locationId) {
       throw new ApiError(400, "locationId is required");
