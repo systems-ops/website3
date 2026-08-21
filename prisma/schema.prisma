@@ -38,6 +38,7 @@ model Location {
   certificateRequirements CertificateRequirement[]
   cooks                   CookLocation[]
   verifications           Verification[]
+  productionBatches       ProductionBatch[]
 
   @@map("locations")
 }
@@ -362,6 +363,8 @@ model ReceivingLine {
   /// "dry" | "refrig" | "freezer"
   storageType       String
 
+  batchInputs BatchInput[]
+
   @@unique([receivingDetailId, rowIndex])
   @@map("receiving_lines")
 }
@@ -410,4 +413,69 @@ model Verification {
 
   @@unique([locationId, weekStart])
   @@map("verifications")
+}
+
+/// A production run — flour and yeast from two different deliveries went
+/// into a batch of dough, which produced some finished product. This is the
+/// record that makes a mock recall a database query instead of a day of
+/// paper-chasing: given a lot number, batch code, or product, trace the
+/// chain in either direction. No paper form preceded this (FR-70 is a new
+/// code, not a digitization of an existing one).
+model ProductionBatch {
+  id            String   @id @default(cuid())
+  locationId    String
+  location      Location @relation(fields: [locationId], references: [id])
+  /// Calendar date the batch was produced, "YYYY-MM-DD" — same string
+  /// convention as LogEntry.businessDate.
+  businessDate  String
+  /// Our own batch/lot code, distinct from any supplier's lot number.
+  batchCode     String
+  productType   String
+  quantity      String?
+  producedAt    DateTime @default(now())
+  submittedBy   String
+  signatureName String
+  enteredLate   Boolean  @default(false)
+  lateReason    String?
+
+  inputs  BatchInput[]
+  outputs BatchOutput[]
+
+  @@unique([locationId, batchCode])
+  @@map("production_batches")
+}
+
+/// One supplier delivery that fed a batch (many-to-many: a batch draws
+/// flour from one delivery and yeast from another). The supplier's lot
+/// number is snapshotted here at write time — same principle as
+/// Reading.specLow/specHigh — so a later correction to the receiving
+/// record can never silently rewrite what this batch record says it used.
+model BatchInput {
+  id                  String          @id @default(cuid())
+  batchId             String
+  batch               ProductionBatch @relation(fields: [batchId], references: [id])
+  receivingLineId     String
+  receivingLine       ReceivingLine   @relation(fields: [receivingLineId], references: [id])
+  productNameSnapshot String
+  supplierLotNumber   String?
+
+  @@unique([batchId, receivingLineId])
+  @@map("batch_inputs")
+}
+
+/// One finished product that came out of a batch — quantity, dates, and
+/// where it went.
+model BatchOutput {
+  id          String          @id @default(cuid())
+  batchId     String
+  batch       ProductionBatch @relation(fields: [batchId], references: [id])
+  productName String
+  quantity    String?
+  bakeDate    String
+  bestByDate  String?
+  /// "held" | "sold_in_store" | "shipped"
+  disposition String
+  reference   String?
+
+  @@map("batch_outputs")
 }

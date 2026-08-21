@@ -32,6 +32,7 @@ import RecordsTab from "./RecordsTab";
 import EntryFlow from "./EntryFlow";
 import EntryDetail from "./EntryDetail";
 import ManagerView from "./ManagerView";
+import BatchTab from "./BatchTab";
 
 const LOCATION_STORAGE_KEY = "kitchen.locationId";
 const LANG_STORAGE_KEY = "kitchen.lang";
@@ -61,7 +62,7 @@ export default function KitchenApp() {
   const [logs, setLogs] = useState<LogDefinition[]>([]);
   const [today, setToday] = useState<TodayResponse | null>(null);
   const [certificates, setCertificates] = useState<CertificateStatus[]>([]);
-  const [tab, setTab] = useState<"today" | "records">("today");
+  const [tab, setTab] = useState<"today" | "batches" | "records">("today");
   const [sitesOpen, setSitesOpen] = useState(false);
   const [flowLogId, setFlowLogId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
@@ -392,6 +393,15 @@ export default function KitchenApp() {
         {tab === "today" && today && (
           <TodayTab today={today} pendingLogIds={pendingLogIds} onOpen={openFlow} lang={lang} />
         )}
+        {tab === "batches" && locationId && (
+          <BatchTab
+            locationId={locationId}
+            businessDate={businessDate}
+            signerName={cook.name}
+            lang={lang}
+            onSaved={note}
+          />
+        )}
         {tab === "records" && locationId && (
           <RecordsTab locationId={locationId} logs={logs} certificates={certificates} lang={lang} />
         )}
@@ -403,6 +413,12 @@ export default function KitchenApp() {
           style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "today" ? "var(--color-accent)" : "var(--color-muted)" }}
         >
           {t.today}
+        </button>
+        <button
+          onClick={() => setTab("batches")}
+          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "batches" ? "var(--color-accent)" : "var(--color-muted)" }}
+        >
+          {t.batches}
         </button>
         <button
           onClick={() => setTab("records")}

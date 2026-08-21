@@ -216,6 +216,58 @@ export const emptyReceivingDraft = (): ReceivingDraft => ({
   lines: [],
 });
 
+export type ReceivedLot = {
+  receivingLineId: string;
+  productName: string;
+  lotNumber: string | null;
+  distributorName: string;
+  receivedDate: string;
+};
+
+export type BatchDisposition = "held" | "sold_in_store" | "shipped";
+
+export type BatchInputRecord = {
+  id: string;
+  receivingLineId: string;
+  productNameSnapshot: string;
+  supplierLotNumber: string | null;
+};
+
+export type BatchOutputRecord = {
+  id: string;
+  productName: string;
+  quantity: string | null;
+  bakeDate: string;
+  bestByDate: string | null;
+  disposition: BatchDisposition;
+  reference: string | null;
+};
+
+export type ProductionBatchRecord = {
+  id: string;
+  locationId: string;
+  businessDate: string;
+  batchCode: string;
+  productType: string;
+  quantity: string | null;
+  producedAt: string;
+  submittedBy: string;
+  signatureName: string;
+  enteredLate: boolean;
+  lateReason: string | null;
+  inputs: BatchInputRecord[];
+  outputs: BatchOutputRecord[];
+};
+
+export type BatchOutputDraft = {
+  productName: string;
+  quantity: string;
+  bakeDate: string;
+  bestByDate: string;
+  disposition: BatchDisposition;
+  reference: string;
+};
+
 // Local draft state for an in-progress (unsubmitted) form, keyed by
 // `${locationId}|${logDefinitionId}|${businessDate}`.
 export type Draft = {
