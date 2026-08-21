@@ -53,6 +53,12 @@ export default function ManagerView({
   const [traceResults, setTraceResults] = useState<TraceBatch[]>([]);
   const [traceBusy, setTraceBusy] = useState(false);
   const [traceSearched, setTraceSearched] = useState(false);
+  const [auditFrom, setAuditFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().slice(0, 10);
+  });
+  const [auditTo, setAuditTo] = useState(() => new Date().toISOString().slice(0, 10));
 
   function refreshWeeks() {
     if (!locationId) return;
@@ -133,6 +139,11 @@ export default function ManagerView({
     return `/api/trace?${p.toString()}`;
   }
 
+  function auditPackUrl(format: "csv" | "pdf") {
+    const p = new URLSearchParams({ locationId: locationId ?? "", from: auditFrom, to: auditTo, format });
+    return `/api/audit-pack?${p.toString()}`;
+  }
+
   return (
     <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
       <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)" }}>
@@ -167,6 +178,39 @@ export default function ManagerView({
         >
           {t.trace}
         </button>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.auditPack}</span>
+          <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{t.auditPackHint}</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+              <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{t.auditPackFrom}</span>
+              <input
+                type="date"
+                value={auditFrom}
+                onChange={(e) => setAuditFrom(e.target.value)}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+              <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{t.auditPackTo}</span>
+              <input
+                type="date"
+                value={auditTo}
+                onChange={(e) => setAuditTo(e.target.value)}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a className="btn btn-primary" style={{ flex: 1, textAlign: "center", minHeight: 48, lineHeight: "48px" }} href={auditPackUrl("pdf")}>
+              {t.auditPackDownloadPdf}
+            </a>
+            <a className="btn btn-secondary" style={{ flex: 1, textAlign: "center", minHeight: 48, lineHeight: "48px" }} href={auditPackUrl("csv")}>
+              {t.auditPackDownloadCsv}
+            </a>
+          </div>
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.weeklyVerification}</span>

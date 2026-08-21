@@ -140,6 +140,12 @@ export const strings = {
     traceNoResults: "No batches match that search",
     traceAllKitchens: "All kitchens",
     signedBy: "Signed by",
+    auditPack: "Audit pack",
+    auditPackFrom: "From",
+    auditPackTo: "To",
+    auditPackDownloadPdf: "Download PDF",
+    auditPackDownloadCsv: "Download CSV appendix",
+    auditPackHint: "One PDF covering completeness, exceptions, late entries, amendments, and weekly verification for the range, plus a CSV of the flat data.",
   },
   es: {
     change: "Cambiar",
@@ -275,6 +281,12 @@ export const strings = {
     traceNoResults: "Ningún lote coincide con esa búsqueda",
     traceAllKitchens: "Todas las cocinas",
     signedBy: "Firmado por",
+    auditPack: "Paquete de auditoría",
+    auditPackFrom: "Desde",
+    auditPackTo: "Hasta",
+    auditPackDownloadPdf: "Descargar PDF",
+    auditPackDownloadCsv: "Descargar anexo CSV",
+    auditPackHint: "Un PDF con integridad, excepciones, entradas tardías, enmiendas y verificación semanal del rango, más un CSV de los datos planos.",
   },
 };
 
