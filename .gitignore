@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Remotion render output
 /out/
+public/reel-footage
