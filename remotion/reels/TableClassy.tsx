@@ -1,10 +1,16 @@
 import { AbsoluteFill, Sequence } from "remotion";
 import { ElegantVideoClip } from "./ElegantVideoClip";
 import { ElegantWord } from "./ElegantWord";
-import { sequenceClips } from "./sequenceClips";
-import { TABLE_CLIPS, TABLE_FPS, TABLE_WIDTH, TABLE_HEIGHT, TABLE_DURATION_IN_FRAMES } from "./Table";
+import { ElegantCTACard } from "./ElegantCTACard";
+import { sequenceClips, totalDurationInFrames } from "./sequenceClips";
+import { TABLE_CLIPS, TABLE_FPS, TABLE_WIDTH, TABLE_HEIGHT, CTA_FRAMES } from "./Table";
 
-export { TABLE_FPS as TABLE_CLASSY_FPS, TABLE_WIDTH as TABLE_CLASSY_WIDTH, TABLE_HEIGHT as TABLE_CLASSY_HEIGHT, TABLE_DURATION_IN_FRAMES as TABLE_CLASSY_DURATION_IN_FRAMES };
+export const TABLE_CLASSY_FPS = TABLE_FPS;
+export const TABLE_CLASSY_WIDTH = TABLE_WIDTH;
+export const TABLE_CLASSY_HEIGHT = TABLE_HEIGHT;
+
+const CONTENT_DURATION_IN_FRAMES = totalDurationInFrames(TABLE_CLIPS, TABLE_FPS);
+export const TABLE_CLASSY_DURATION_IN_FRAMES = CONTENT_DURATION_IN_FRAMES + CTA_FRAMES;
 
 export const TableClassyReel: React.FC = () => {
   const sequences = sequenceClips(TABLE_CLIPS, TABLE_FPS);
@@ -24,6 +30,9 @@ export const TableClassyReel: React.FC = () => {
           )}
         </Sequence>
       ))}
+      <Sequence from={CONTENT_DURATION_IN_FRAMES} durationInFrames={CTA_FRAMES}>
+        <ElegantCTACard />
+      </Sequence>
     </AbsoluteFill>
   );
 };

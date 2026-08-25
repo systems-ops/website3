@@ -1,10 +1,16 @@
 import { AbsoluteFill, Sequence } from "remotion";
 import { ElegantVideoClip } from "./ElegantVideoClip";
 import { ElegantWord } from "./ElegantWord";
-import { sequenceClips } from "./sequenceClips";
-import { KITCHEN_CLIPS, KITCHEN_FPS, KITCHEN_WIDTH, KITCHEN_HEIGHT, KITCHEN_DURATION_IN_FRAMES } from "./Kitchen";
+import { ElegantCTACard } from "./ElegantCTACard";
+import { sequenceClips, totalDurationInFrames } from "./sequenceClips";
+import { KITCHEN_CLIPS, KITCHEN_FPS, KITCHEN_WIDTH, KITCHEN_HEIGHT, CTA_FRAMES } from "./Kitchen";
 
-export { KITCHEN_FPS as KITCHEN_CLASSY_FPS, KITCHEN_WIDTH as KITCHEN_CLASSY_WIDTH, KITCHEN_HEIGHT as KITCHEN_CLASSY_HEIGHT, KITCHEN_DURATION_IN_FRAMES as KITCHEN_CLASSY_DURATION_IN_FRAMES };
+export const KITCHEN_CLASSY_FPS = KITCHEN_FPS;
+export const KITCHEN_CLASSY_WIDTH = KITCHEN_WIDTH;
+export const KITCHEN_CLASSY_HEIGHT = KITCHEN_HEIGHT;
+
+const CONTENT_DURATION_IN_FRAMES = totalDurationInFrames(KITCHEN_CLIPS, KITCHEN_FPS);
+export const KITCHEN_CLASSY_DURATION_IN_FRAMES = CONTENT_DURATION_IN_FRAMES + CTA_FRAMES;
 
 export const KitchenClassyReel: React.FC = () => {
   const sequences = sequenceClips(KITCHEN_CLIPS, KITCHEN_FPS);
@@ -29,6 +35,9 @@ export const KitchenClassyReel: React.FC = () => {
           )}
         </Sequence>
       ))}
+      <Sequence from={CONTENT_DURATION_IN_FRAMES} durationInFrames={CTA_FRAMES}>
+        <ElegantCTACard />
+      </Sequence>
     </AbsoluteFill>
   );
 };

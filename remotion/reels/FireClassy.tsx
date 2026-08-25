@@ -1,10 +1,16 @@
 import { AbsoluteFill, Sequence } from "remotion";
 import { ElegantVideoClip } from "./ElegantVideoClip";
 import { ElegantWord } from "./ElegantWord";
-import { sequenceClips } from "./sequenceClips";
-import { FIRE_CLIPS, FIRE_FPS, FIRE_WIDTH, FIRE_HEIGHT, FIRE_DURATION_IN_FRAMES } from "./Fire";
+import { ElegantCTACard } from "./ElegantCTACard";
+import { sequenceClips, totalDurationInFrames } from "./sequenceClips";
+import { FIRE_CLIPS, FIRE_FPS, FIRE_WIDTH, FIRE_HEIGHT, CTA_FRAMES } from "./Fire";
 
-export { FIRE_FPS as FIRE_CLASSY_FPS, FIRE_WIDTH as FIRE_CLASSY_WIDTH, FIRE_HEIGHT as FIRE_CLASSY_HEIGHT, FIRE_DURATION_IN_FRAMES as FIRE_CLASSY_DURATION_IN_FRAMES };
+export const FIRE_CLASSY_FPS = FIRE_FPS;
+export const FIRE_CLASSY_WIDTH = FIRE_WIDTH;
+export const FIRE_CLASSY_HEIGHT = FIRE_HEIGHT;
+
+const CONTENT_DURATION_IN_FRAMES = totalDurationInFrames(FIRE_CLIPS, FIRE_FPS);
+export const FIRE_CLASSY_DURATION_IN_FRAMES = CONTENT_DURATION_IN_FRAMES + CTA_FRAMES;
 
 export const FireClassyReel: React.FC = () => {
   const sequences = sequenceClips(FIRE_CLIPS, FIRE_FPS);
@@ -24,6 +30,9 @@ export const FireClassyReel: React.FC = () => {
           )}
         </Sequence>
       ))}
+      <Sequence from={CONTENT_DURATION_IN_FRAMES} durationInFrames={CTA_FRAMES}>
+        <ElegantCTACard />
+      </Sequence>
     </AbsoluteFill>
   );
 };
