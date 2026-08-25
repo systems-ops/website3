@@ -15,7 +15,7 @@ const OUTRO_FRAMES = 90;
 const slides: { image: string; caption: string }[] = [
   { image: "/images/pizza-oven.jpg", caption: "Wood-Fired, Always" },
   { image: "/images/pasta-trio.jpg", caption: "Handmade Pasta" },
-  { image: "/images/charcuterie-board.jpg", caption: "Charcuterie & Friends" },
+  { image: "/images/charcuterie-board-2.jpg", caption: "Charcuterie & Friends" },
   { image: "/images/founder-tossing-dough.jpg", caption: "Made with Passione" },
   { image: "/images/wine-bottles.jpg", caption: "Perfectly Paired Wine" },
   { image: "/images/dining-scene.jpg", caption: "A Hidden Gem in Berkeley" },
