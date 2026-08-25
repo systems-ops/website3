@@ -18,15 +18,9 @@ export const ElegantVideoClip: React.FC<{
   const drift = interpolate(frame, [0, durationInFrames], [0, 0.05]);
   const scale = 1.06 - punch * 0.06 + drift;
 
-  // Quick dip from black rather than a flash or shake — reads as a considered cut.
-  const dipIn = interpolate(frame, [0, 8], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0705", overflow: "hidden" }}>
-      <AbsoluteFill style={{ transform: `scale(${scale})`, opacity: dipIn }}>
+      <AbsoluteFill style={{ transform: `scale(${scale})` }}>
         <OffthreadVideo
           src={staticFile(src)}
           startFrom={Math.round(trimStartSeconds * 30)}

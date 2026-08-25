@@ -27,12 +27,6 @@ export const VideoClip: React.FC<{
   const shakeX = shake ? Math.sin(frame * 9) * 6 * shakeAmount : 0;
   const shakeY = shake ? Math.cos(frame * 7) * 5 * shakeAmount : 0;
 
-  // A near-white strobe flash on the cut itself sells the "jump cut" feel.
-  const flash = interpolate(frame, [0, 4], [0.9, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
       <AbsoluteFill
@@ -46,7 +40,6 @@ export const VideoClip: React.FC<{
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </AbsoluteFill>
-      <AbsoluteFill style={{ backgroundColor: "#fff", opacity: flash }} />
     </AbsoluteFill>
   );
 };
