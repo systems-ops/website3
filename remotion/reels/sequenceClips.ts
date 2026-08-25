@@ -3,6 +3,7 @@ export type RawClip = {
   trimStart: number;
   seconds: number;
   word: string;
+  rate?: number;
 };
 
 export type SequencedClip = RawClip & {

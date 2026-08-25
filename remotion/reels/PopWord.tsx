@@ -1,6 +1,5 @@
 import { AbsoluteFill, useCurrentFrame, spring, useVideoConfig, interpolate } from "remotion";
-
-const SANS_STACK = "'Helvetica Neue', Arial, sans-serif";
+import { useAntonFont } from "./useAntonFont";
 
 export const PopWord: React.FC<{
   text: string;
@@ -8,52 +7,83 @@ export const PopWord: React.FC<{
   durationInFrames: number;
   align?: "center" | "lower";
   size?: number;
-}> = ({ text, from, durationInFrames, align = "lower", size = 56 }) => {
+  accent?: string;
+}> = ({ text, from, durationInFrames, align = "lower", size = 76, accent = "#ff3b1f" }) => {
+  useAntonFont();
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const localFrame = frame - from;
 
   if (localFrame < 0 || localFrame > durationInFrames) return null;
 
-  const pop = spring({
+  // Snappy overshoot punch-in: fast rise, small settle wobble.
+  const punch = spring({
     frame: localFrame,
     fps,
-    config: { damping: 12, stiffness: 220, mass: 0.5 },
+    config: { damping: 9, stiffness: 260, mass: 0.4 },
   });
 
-  const fadeOut = interpolate(
-    localFrame,
-    [durationInFrames - 8, durationInFrames],
-    [1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+  const exitStart = durationInFrames - 6;
+  const exitProgress = interpolate(localFrame, [exitStart, durationInFrames], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
-  const scale = 0.7 + pop * 0.3;
-  const opacity = Math.min(pop, fadeOut);
+  const scale = 0.4 + punch * 0.65 + exitProgress * 0.35;
+  const rotate = (1 - punch) * -6;
+  const translateY = (1 - punch) * 18;
+  const opacity = Math.min(1, punch * 1.4) * (1 - exitProgress);
+
+  const barWidth = interpolate(localFrame, [0, 5], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   return (
     <AbsoluteFill
       style={{
         alignItems: "center",
         justifyContent: align === "center" ? "center" : "flex-end",
-        paddingBottom: align === "lower" ? 220 : 0,
+        paddingBottom: align === "lower" ? 260 : 0,
       }}
     >
       <div
         style={{
-          transform: `scale(${scale})`,
+          position: "relative",
+          transform: `translateY(${translateY}px) rotate(${rotate}deg) scale(${scale})`,
           opacity,
-          fontFamily: SANS_STACK,
-          fontWeight: 700,
-          fontSize: size,
-          color: "#ffffff",
-          textShadow: "0 4px 24px rgba(0,0,0,0.55)",
-          textAlign: "center",
-          padding: "0 70px",
-          letterSpacing: 0.5,
         }}
       >
-        {text}
+        <div
+          style={{
+            position: "absolute",
+            left: -14,
+            right: -14,
+            top: 6,
+            bottom: 6,
+            background: accent,
+            transform: `scaleX(${barWidth})`,
+            transformOrigin: "left center",
+            zIndex: 0,
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            fontFamily: "Anton, 'Helvetica Neue', Arial, sans-serif",
+            fontWeight: 400,
+            fontSize: size,
+            lineHeight: 1.02,
+            color: "#ffffff",
+            textTransform: "uppercase",
+            textAlign: "center",
+            padding: "0 70px",
+            letterSpacing: 1,
+          }}
+        >
+          {text}
+        </div>
       </div>
     </AbsoluteFill>
   );

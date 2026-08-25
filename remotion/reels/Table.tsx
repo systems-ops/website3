@@ -6,14 +6,15 @@ import { sequenceClips, totalDurationInFrames } from "./sequenceClips";
 export const TABLE_WIDTH = 1080;
 export const TABLE_HEIGHT = 1920;
 export const TABLE_FPS = 30;
+const ACCENT = "#8c1c3c";
 
 const clips = [
-  { src: "/reel-footage/IMG_2137.MOV", trimStart: 0.3, seconds: 2.3, word: "A Hidden Gem." },
-  { src: "/reel-footage/IMG_2186.MOV", trimStart: 0.1, seconds: 2.3, word: "Berkeley, California." },
-  { src: "/reel-footage/IMG_2275.MOV", trimStart: 0.2, seconds: 2.0, word: "Good Wine." },
-  { src: "/reel-footage/IMG_2269.MOV", trimStart: 0.3, seconds: 2.5, word: "Good Company." },
-  { src: "/reel-footage/IMG_2278.MOV", trimStart: 4.0, seconds: 3.0, word: "Buon Appetito." },
-  { src: "/reel-footage/IMG_2279.MOV", trimStart: 3.0, seconds: 3.5, word: "Sweet Endings." },
+  { src: "/reel-footage/IMG_2137.MOV", trimStart: 0.3, seconds: 1.0, word: "A Hidden Gem." },
+  { src: "/reel-footage/IMG_2186.MOV", trimStart: 0.1, seconds: 1.2, word: "Berkeley, CA.", rate: 1.1 },
+  { src: "/reel-footage/IMG_2275.MOV", trimStart: 0.2, seconds: 0.9, word: "Good Wine." },
+  { src: "/reel-footage/IMG_2269.MOV", trimStart: 0.3, seconds: 1.3, word: "Good Company." },
+  { src: "/reel-footage/IMG_2278.MOV", trimStart: 4.0, seconds: 2.0, word: "Buon Appetito." },
+  { src: "/reel-footage/IMG_2279.MOV", trimStart: 3.0, seconds: 2.2, word: "Sweet Endings." },
 ];
 
 export const TABLE_DURATION_IN_FRAMES = totalDurationInFrames(clips, TABLE_FPS);
@@ -23,14 +24,22 @@ export const TableReel: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
-      {sequences.map((clip) => (
-        <Sequence key={clip.src} from={clip.from} durationInFrames={clip.durationInFrames}>
+      {sequences.map((clip, i) => (
+        <Sequence key={`${clip.src}-${i}`} from={clip.from} durationInFrames={clip.durationInFrames}>
           <VideoClip
             src={clip.src}
             trimStartSeconds={clip.trimStart}
             durationInFrames={clip.durationInFrames}
+            playbackRate={clip.rate ?? 1}
           />
-          <PopWord text={clip.word} from={8} durationInFrames={clip.durationInFrames - 8} />
+          {clip.word && (
+            <PopWord
+              text={clip.word}
+              from={2}
+              durationInFrames={clip.durationInFrames - 2}
+              accent={ACCENT}
+            />
+          )}
         </Sequence>
       ))}
     </AbsoluteFill>
