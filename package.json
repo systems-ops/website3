@@ -19,6 +19,7 @@
     "@remotion/cli": "^4.0.517",
     "@remotion/eslint-plugin": "^4.0.517",
     "@remotion/renderer": "^4.0.517",
+    "@remotion/transitions": "^4.0.518",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

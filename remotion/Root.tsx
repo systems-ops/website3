@@ -6,6 +6,7 @@ import { TableReel, TABLE_FPS, TABLE_HEIGHT, TABLE_WIDTH, TABLE_DURATION_IN_FRAM
 import { FireClassyReel, FIRE_CLASSY_FPS, FIRE_CLASSY_HEIGHT, FIRE_CLASSY_WIDTH, FIRE_CLASSY_DURATION_IN_FRAMES } from "./reels/FireClassy";
 import { KitchenClassyReel, KITCHEN_CLASSY_FPS, KITCHEN_CLASSY_HEIGHT, KITCHEN_CLASSY_WIDTH, KITCHEN_CLASSY_DURATION_IN_FRAMES } from "./reels/KitchenClassy";
 import { TableClassyReel, TABLE_CLASSY_FPS, TABLE_CLASSY_HEIGHT, TABLE_CLASSY_WIDTH, TABLE_CLASSY_DURATION_IN_FRAMES } from "./reels/TableClassy";
+import { SignatureReel, SIGNATURE_FPS, SIGNATURE_HEIGHT, SIGNATURE_WIDTH, SIGNATURE_DURATION_IN_FRAMES } from "./reels/Signature";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -65,6 +66,14 @@ export const RemotionRoot: React.FC = () => {
         fps={TABLE_CLASSY_FPS}
         width={TABLE_CLASSY_WIDTH}
         height={TABLE_CLASSY_HEIGHT}
+      />
+      <Composition
+        id="Signature"
+        component={SignatureReel}
+        durationInFrames={SIGNATURE_DURATION_IN_FRAMES}
+        fps={SIGNATURE_FPS}
+        width={SIGNATURE_WIDTH}
+        height={SIGNATURE_HEIGHT}
       />
     </>
   );
