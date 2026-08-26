@@ -1,7 +1,6 @@
 import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { restaurant } from "../../src/lib/restaurant";
 import { useLocalFont } from "./useLocalFont";
-import { FilmGrain } from "./FilmGrain";
 
 const GOLD = "#d8a24a";
 
@@ -30,12 +29,11 @@ export const ElegantHeroCTACard: React.FC = () => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "sepia(0.3) blur(10px) brightness(0.32) saturate(1.2)",
+            filter: "blur(10px) brightness(0.5)",
           }}
         />
       </AbsoluteFill>
-      <AbsoluteFill style={{ backgroundColor: "rgba(10,6,3,0.5)" }} />
-      <FilmGrain opacity={0.07} />
+      <AbsoluteFill style={{ backgroundColor: "rgba(10,6,3,0.35)" }} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <div
           style={{
