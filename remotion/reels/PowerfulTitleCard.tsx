@@ -28,22 +28,21 @@ export const PowerfulTitleCard: React.FC<{ durationInFrames: number }> = ({ dura
     extrapolateRight: "clamp",
   });
 
-  const bgBlur = interpolate(frame, [0, 16], [22, 12], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const bgBlur = interpolate(frame, [0, 16], [10, 5], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0705", opacity: fadeOut }}>
-      <AbsoluteFill style={{ transform: "scale(1.15)" }}>
+      <AbsoluteFill style={{ transform: "scale(1.1)" }}>
         <Img
           src={staticFile("/reel-footage/stills/hook.jpg")}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: `blur(${bgBlur}px) brightness(0.4) contrast(1.1)`,
+            filter: `blur(${bgBlur}px) brightness(0.72) contrast(1.05)`,
           }}
         />
       </AbsoluteFill>
-      <AbsoluteFill style={{ backgroundColor: "rgba(10,6,3,0.35)" }} />
 
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
