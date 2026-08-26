@@ -7,8 +7,8 @@ import { fade } from "@remotion/transitions/fade";
 
 import { VideoClip } from "./VideoClip";
 import { ElegantWord } from "./ElegantWord";
-import { CinematicGrade } from "./CinematicGrade";
-import { TitleCardOpen } from "./TitleCardOpen";
+import { MoodyGrade } from "./MoodyGrade";
+import { PowerfulTitleCard } from "./PowerfulTitleCard";
 import { CinematicHook } from "./CinematicHook";
 import { FreezeHeroClip } from "./FreezeHeroClip";
 import { ElegantHeroCTACard } from "./ElegantHeroCTACard";
@@ -17,7 +17,7 @@ export const SIGNATURE_CLASSY_WIDTH = 1080;
 export const SIGNATURE_CLASSY_HEIGHT = 1920;
 export const SIGNATURE_CLASSY_FPS = 30;
 
-const TITLE_CARD_FRAMES = 30;
+const TITLE_CARD_FRAMES = 45;
 const TRANSITION_OPEN_FADE = 8;
 const HOOK_FRAMES = 33;
 const STOREFRONT_FRAMES = 45;
@@ -52,7 +52,7 @@ export const SignatureClassyReel: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       <TransitionSeries>
         <TransitionSeries.Sequence durationInFrames={TITLE_CARD_FRAMES}>
-          <TitleCardOpen durationInFrames={TITLE_CARD_FRAMES} />
+          <PowerfulTitleCard durationInFrames={TITLE_CARD_FRAMES} />
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Transition
@@ -65,21 +65,21 @@ export const SignatureClassyReel: React.FC = () => {
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Sequence durationInFrames={STOREFRONT_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <VideoClip src="/reel-footage/IMG_2137.MOV" trimStartSeconds={0.3} durationInFrames={STOREFRONT_FRAMES} />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord text="A Hidden Gem." from={2} durationInFrames={STOREFRONT_FRAMES - 2} />
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Sequence durationInFrames={DOUGH_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <VideoClip
               src="/reel-footage/IMG_2190.MOV"
               trimStartSeconds={6.0}
               durationInFrames={DOUGH_FRAMES}
               playbackRate={1.05}
             />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord text="Stretched by Hand." from={2} durationInFrames={DOUGH_FRAMES - 2} />
         </TransitionSeries.Sequence>
 
@@ -89,14 +89,14 @@ export const SignatureClassyReel: React.FC = () => {
         />
 
         <TransitionSeries.Sequence durationInFrames={FREEZE_TOTAL_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <FreezeHeroClip
               src="/reel-footage/IMG_2162.MOV"
               stillSrc="/reel-footage/stills/hero_pause.jpg"
               trimStartSeconds={0.3}
               playFrames={FREEZE_PLAY_FRAMES}
             />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord
             text="Stone Hot."
             from={FREEZE_PLAY_FRAMES}
@@ -110,16 +110,16 @@ export const SignatureClassyReel: React.FC = () => {
         />
 
         <TransitionSeries.Sequence durationInFrames={CHEESE_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <VideoClip src="/reel-footage/IMG_2166.MOV" trimStartSeconds={3.0} durationInFrames={CHEESE_FRAMES} />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord text="Sliced." from={1} durationInFrames={CHEESE_FRAMES - 1} />
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Sequence durationInFrames={WINE_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <VideoClip src="/reel-footage/IMG_2269.MOV" trimStartSeconds={0.3} durationInFrames={WINE_FRAMES} />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord text="Good Company." from={2} durationInFrames={WINE_FRAMES - 2} />
         </TransitionSeries.Sequence>
 
@@ -129,14 +129,14 @@ export const SignatureClassyReel: React.FC = () => {
         />
 
         <TransitionSeries.Sequence durationInFrames={PASTA_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <VideoClip src="/reel-footage/IMG_2278.MOV" trimStartSeconds={4.0} durationInFrames={PASTA_FRAMES} />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord text="Buon Appetito." from={2} durationInFrames={PASTA_FRAMES - 2} />
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Sequence durationInFrames={GELATO_FRAMES}>
-          <CinematicGrade>
+          <MoodyGrade>
             <VideoClip
               src="/reel-footage/IMG_2279.MOV"
               trimStartSeconds={3.0}
@@ -144,7 +144,7 @@ export const SignatureClassyReel: React.FC = () => {
               playbackRate={0.6}
               shake={false}
             />
-          </CinematicGrade>
+          </MoodyGrade>
           <ElegantWord text="Sweet Endings." from={4} durationInFrames={GELATO_FRAMES - 4} />
         </TransitionSeries.Sequence>
 
