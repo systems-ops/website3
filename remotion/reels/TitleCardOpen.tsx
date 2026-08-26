@@ -10,16 +10,12 @@ export const TitleCardOpen: React.FC<{ durationInFrames: number }> = ({ duration
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const rise = spring({ frame, fps, config: { damping: 20, stiffness: 90, mass: 0.8 } });
-  const ruleWidth = interpolate(frame, [16, 40], [0, 1], {
+  const rise = spring({ frame, fps, config: { damping: 16, stiffness: 170, mass: 0.6 } });
+  const ruleWidth = interpolate(frame, [6, 14], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const taglineOpacity = interpolate(frame, [26, 42], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const fadeOut = interpolate(frame, [durationInFrames - 14, durationInFrames], [1, 0], {
+  const fadeOut = interpolate(frame, [durationInFrames - 8, durationInFrames], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -30,7 +26,7 @@ export const TitleCardOpen: React.FC<{ durationInFrames: number }> = ({ duration
         <div
           style={{
             textAlign: "center",
-            transform: `translateY(${(1 - rise) * 20}px)`,
+            transform: `translateY(${(1 - rise) * 14}px)`,
             opacity: rise,
           }}
         >
@@ -39,7 +35,7 @@ export const TitleCardOpen: React.FC<{ durationInFrames: number }> = ({ duration
               fontFamily: "'Playfair Display', Georgia, serif",
               fontStyle: "italic",
               fontWeight: 600,
-              fontSize: 74,
+              fontSize: 68,
               color: "#faf3e8",
               letterSpacing: 1,
               lineHeight: 1.1,
@@ -49,9 +45,9 @@ export const TitleCardOpen: React.FC<{ durationInFrames: number }> = ({ duration
           </div>
           <div
             style={{
-              marginTop: 20,
+              marginTop: 16,
               height: 1,
-              width: 180,
+              width: 150,
               marginLeft: "auto",
               marginRight: "auto",
               background: GOLD,
@@ -59,19 +55,6 @@ export const TitleCardOpen: React.FC<{ durationInFrames: number }> = ({ duration
               transform: `scaleX(${ruleWidth})`,
             }}
           />
-          <div
-            style={{
-              marginTop: 20,
-              fontFamily: "'Helvetica Neue', Arial, sans-serif",
-              fontSize: 22,
-              color: GOLD,
-              textTransform: "uppercase",
-              letterSpacing: 7,
-              opacity: taglineOpacity,
-            }}
-          >
-            {restaurant.tagline}
-          </div>
         </div>
       </AbsoluteFill>
       <FilmGrain opacity={0.07} />
