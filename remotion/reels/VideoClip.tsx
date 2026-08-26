@@ -6,7 +6,19 @@ export const VideoClip: React.FC<{
   durationInFrames: number;
   playbackRate?: number;
   shake?: boolean;
-}> = ({ src, trimStartSeconds, durationInFrames, playbackRate = 1, shake = true }) => {
+  cropZoom?: number;
+  cropFocusX?: number;
+  cropFocusY?: number;
+}> = ({
+  src,
+  trimStartSeconds,
+  durationInFrames,
+  playbackRate = 1,
+  shake = true,
+  cropZoom = 1,
+  cropFocusX = 50,
+  cropFocusY = 50,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -32,13 +44,20 @@ export const VideoClip: React.FC<{
       <AbsoluteFill
         style={{ transform: `translate(${shakeX}px, ${shakeY}px) scale(${scale})` }}
       >
-        <OffthreadVideo
-          src={staticFile(src)}
-          startFrom={Math.round(trimStartSeconds * 30)}
-          volume={0}
-          playbackRate={playbackRate}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
+        <AbsoluteFill
+          style={{
+            transform: `scale(${cropZoom})`,
+            transformOrigin: `${cropFocusX}% ${cropFocusY}%`,
+          }}
+        >
+          <OffthreadVideo
+            src={staticFile(src)}
+            startFrom={Math.round(trimStartSeconds * 30)}
+            volume={0}
+            playbackRate={playbackRate}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </AbsoluteFill>
       </AbsoluteFill>
     </AbsoluteFill>
   );

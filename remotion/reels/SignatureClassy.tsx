@@ -108,7 +108,14 @@ export const SignatureClassyReel: React.FC = () => {
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Sequence durationInFrames={WINE_FRAMES}>
-          <VideoClip src="/reel-footage/IMG_2269.MOV" trimStartSeconds={0.3} durationInFrames={WINE_FRAMES} />
+          <VideoClip
+            src="/reel-footage/IMG_2269.MOV"
+            trimStartSeconds={1.4}
+            durationInFrames={WINE_FRAMES}
+            cropZoom={1.5}
+            cropFocusX={50}
+            cropFocusY={38}
+          />
           <ElegantWord text="Good Company." from={2} durationInFrames={WINE_FRAMES - 2} />
         </TransitionSeries.Sequence>
 
