@@ -25,7 +25,7 @@ const TRANSITION_CLOCK_WIPE = 12;
 const FREEZE_PLAY_FRAMES = 48;
 const FREEZE_TOTAL_FRAMES = 66;
 const TRANSITION_IRIS = 12;
-const CHEESE_FRAMES = 39;
+const STOVE_FRAMES = 39;
 const WINE_FRAMES = 54;
 const TRANSITION_TABLE_WIPE = 10;
 const PASTA_FRAMES = 66;
@@ -39,7 +39,7 @@ export const SIGNATURE_CLASSY_DURATION_IN_FRAMES =
   STOREFRONT_FRAMES +
   DOUGH_FRAMES +
   FREEZE_TOTAL_FRAMES +
-  CHEESE_FRAMES +
+  STOVE_FRAMES +
   WINE_FRAMES +
   PASTA_FRAMES +
   GELATO_FRAMES +
@@ -102,9 +102,9 @@ export const SignatureClassyReel: React.FC = () => {
           timing={linearTiming({ durationInFrames: TRANSITION_IRIS })}
         />
 
-        <TransitionSeries.Sequence durationInFrames={CHEESE_FRAMES}>
-          <VideoClip src="/reel-footage/IMG_2166.MOV" trimStartSeconds={3.0} durationInFrames={CHEESE_FRAMES} />
-          <ElegantWord text="Sliced." from={1} durationInFrames={CHEESE_FRAMES - 1} />
+        <TransitionSeries.Sequence durationInFrames={STOVE_FRAMES}>
+          <VideoClip src="/reel-footage/IMG_2203.MOV" trimStartSeconds={8.0} durationInFrames={STOVE_FRAMES} />
+          <ElegantWord text="On the Flame." from={1} durationInFrames={STOVE_FRAMES - 1} />
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Sequence durationInFrames={WINE_FRAMES}>
