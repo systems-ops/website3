@@ -98,17 +98,9 @@ export const ReservationReel: React.FC = () => {
           timing={linearTiming({ durationInFrames: TRANSITION_SLIDE })}
         />
 
-        {/* Room beat: three hard cuts under one persistent statement */}
+        {/* Room beat: two hard cuts under one persistent statement */}
         <TransitionSeries.Sequence durationInFrames={ROOM_FRAMES}>
           <Sequence from={0} durationInFrames={48}>
-            <VideoClip
-              src="/reel-footage/IMG_2186.MOV"
-              trimStartSeconds={0.1}
-              durationInFrames={48}
-              playbackRate={1.05}
-            />
-          </Sequence>
-          <Sequence from={48} durationInFrames={48}>
             <VideoClip
               src="/reel-footage/IMG_2269.MOV"
               trimStartSeconds={1.4}
@@ -118,8 +110,8 @@ export const ReservationReel: React.FC = () => {
               cropFocusY={38}
             />
           </Sequence>
-          <Sequence from={96} durationInFrames={24}>
-            <VideoClip src="/reel-footage/IMG_2137.MOV" trimStartSeconds={0.3} durationInFrames={24} />
+          <Sequence from={48} durationInFrames={72}>
+            <VideoClip src="/reel-footage/IMG_2137.MOV" trimStartSeconds={0.3} durationInFrames={72} />
           </Sequence>
           <StatementText
             lines={["Good food. Good wine.", "Good company."]}
