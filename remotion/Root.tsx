@@ -9,6 +9,7 @@ import { TableClassyReel, TABLE_CLASSY_FPS, TABLE_CLASSY_HEIGHT, TABLE_CLASSY_WI
 import { SignatureReel, SIGNATURE_FPS, SIGNATURE_HEIGHT, SIGNATURE_WIDTH, SIGNATURE_DURATION_IN_FRAMES } from "./reels/Signature";
 import { SignatureClassyReel, SIGNATURE_CLASSY_FPS, SIGNATURE_CLASSY_HEIGHT, SIGNATURE_CLASSY_WIDTH, SIGNATURE_CLASSY_DURATION_IN_FRAMES } from "./reels/SignatureClassy";
 import { ReservationReel, RESERVATION_FPS, RESERVATION_HEIGHT, RESERVATION_WIDTH, RESERVATION_DURATION_IN_FRAMES } from "./reels/ReservationReel";
+import { NativeStoryReel, NATIVE_STORY_FPS, NATIVE_STORY_HEIGHT, NATIVE_STORY_WIDTH, NATIVE_STORY_DURATION_IN_FRAMES } from "./reels/NativeStoryReel";
 import { StyleTestReel, STYLE_TEST_FPS, STYLE_TEST_HEIGHT, STYLE_TEST_WIDTH, STYLE_TEST_DURATION_IN_FRAMES } from "./reels/StyleTest";
 
 export const RemotionRoot: React.FC = () => {
@@ -69,6 +70,14 @@ export const RemotionRoot: React.FC = () => {
         fps={TABLE_CLASSY_FPS}
         width={TABLE_CLASSY_WIDTH}
         height={TABLE_CLASSY_HEIGHT}
+      />
+      <Composition
+        id="NativeStory"
+        component={NativeStoryReel}
+        durationInFrames={NATIVE_STORY_DURATION_IN_FRAMES}
+        fps={NATIVE_STORY_FPS}
+        width={NATIVE_STORY_WIDTH}
+        height={NATIVE_STORY_HEIGHT}
       />
       <Composition
         id="Reservation"
