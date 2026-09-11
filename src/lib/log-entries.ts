@@ -25,7 +25,8 @@ const CALIBRATION_TOLERANCE = 2;
 
 export async function buildLogEntryCreateData(
   input: Omit<CreateLogEntryInput, "locationId" | "logDefinitionId" | "businessDate">,
-  logDefinitionId: string
+  logDefinitionId: string,
+  shift: string
 ): Promise<LogEntryChildData> {
   const definition = (await prisma.logDefinition.findUnique({
     where: { id: logDefinitionId },
@@ -39,7 +40,7 @@ export async function buildLogEntryCreateData(
     return buildTempsData(definition, input.readings ?? []);
   }
   if (definition.kind === "check") {
-    return buildCheckData(definition, input.itemChecks ?? []);
+    return buildCheckData(definition, input.itemChecks ?? [], shift);
   }
   if (definition.kind === "calibration") {
     return buildCalibrationData(input.calibrationRows ?? []);
@@ -173,13 +174,20 @@ function buildTempsData(
 
 function buildCheckData(
   definition: LogDefinitionWithChildren,
-  itemChecks: NonNullable<CreateLogEntryInput["itemChecks"]>
+  itemChecks: NonNullable<CreateLogEntryInput["itemChecks"]>,
+  shift: string
 ) {
-  const itemIds = new Set(definition.items.map((i) => i.id));
-  if (itemChecks.length !== definition.items.length) {
+  // A shift-aware checklist (see LogItem.shift) presents a different item
+  // list per shift from a single LogDefinition, rather than three separate
+  // log kinds standing in for one form. An item with no shift set applies
+  // regardless, which is every existing checklist's item — this filter is a
+  // no-op for them.
+  const applicableItems = definition.items.filter((i) => i.shift === null || i.shift === shift);
+  const itemIds = new Set(applicableItems.map((i) => i.id));
+  if (itemChecks.length !== applicableItems.length) {
     throw new ApiError(
       400,
-      `Expected ${definition.items.length} checklist entries, got ${itemChecks.length}`
+      `Expected ${applicableItems.length} checklist entries, got ${itemChecks.length}`
     );
   }
 

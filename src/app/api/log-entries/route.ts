@@ -109,7 +109,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const childData = await buildLogEntryCreateData(body, body.logDefinitionId);
+    // TODO(shift dimension, Item 2 in progress): every form is still
+    // "ALL_DAY" until the restaurant opening/running/closing checklist and
+    // its shift-selection/validation are wired in on top of this.
+    const childData = await buildLogEntryCreateData(body, body.logDefinitionId, "ALL_DAY");
 
     const entry = await prisma.logEntry.create({
       data: {
