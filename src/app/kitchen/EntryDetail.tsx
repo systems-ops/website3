@@ -74,15 +74,18 @@ export default function EntryDetail({
             );
           })}
 
+        {/* Iterates the entry's own itemChecks, not log.items — a shift-aware
+            checklist (see LogItem.shift) has items spanning all three
+            shifts on the LogDefinition, but a single submission only ever
+            answers the ones for its own shift. */}
         {log.kind === "check" &&
-          log.items.map((item) => {
-            const check = entry.itemChecks.find((c) => c.logItemId === item.id);
-            const status = check?.status;
+          entry.itemChecks.map((check) => {
+            const status = check.status;
             const color =
               status === "FAIL" ? "var(--color-alert)" : status === "NA" ? "var(--color-muted)" : "var(--color-accent)";
             return (
               <div
-                key={item.id}
+                key={check.id}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -94,11 +97,11 @@ export default function EntryDetail({
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <span style={{ width: 54, flex: "none", fontSize: 12, fontWeight: 600, letterSpacing: ".05em", color }}>
-                    {status ?? "—"}
+                    {status}
                   </span>
-                  <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{item.label}</span>
+                  <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{check.logItem.label}</span>
                 </div>
-                {check?.statusNote && (
+                {check.statusNote && (
                   <span style={{ fontSize: 13, color: "var(--color-alert-text)", paddingLeft: 68 }}>{check.statusNote}</span>
                 )}
               </div>

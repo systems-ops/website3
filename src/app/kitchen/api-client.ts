@@ -55,6 +55,9 @@ export type SubmitPayload = {
   locationId: string;
   logDefinitionId: string;
   businessDate: string;
+  // Only meaningful for a shift-aware checklist (opening/running/closing) —
+  // see SHIFT_AWARE_LOG_IDS server-side.
+  shift?: "OPENING" | "RUNNING" | "CLOSING";
   readings?: { logUnitId: string; slotIndex: number; value: number; correctiveAction?: string }[];
   itemChecks?: { logItemId: string; status: "PASS" | "FAIL" | "NA"; statusNote?: string }[];
   lateReason?: string;

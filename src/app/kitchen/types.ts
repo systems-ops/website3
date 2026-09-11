@@ -9,7 +9,9 @@ export type LogUnit = {
   unitOverride: string | null;
 };
 
-export type LogItem = { id: string; label: string; sortOrder: number };
+export type Shift = "OPENING" | "RUNNING" | "CLOSING";
+
+export type LogItem = { id: string; label: string; sortOrder: number; shift: Shift | null };
 
 export type LogKind = "temps" | "check" | "calibration" | "receiving";
 

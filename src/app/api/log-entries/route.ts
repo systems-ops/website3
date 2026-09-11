@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { createLogEntrySchema } from "@/lib/log-entry-schemas";
-import { buildLogEntryCreateData } from "@/lib/log-entries";
+import { buildLogEntryCreateData, isRepeatableSubmission, SHIFT_AWARE_LOG_IDS } from "@/lib/log-entries";
 import { getCurrentSigner } from "@/lib/signer";
 import { classifySubmissionDate } from "@/lib/business-date";
 import { isLogKindEnabledAt } from "@/lib/location-log-kinds";
@@ -88,16 +88,28 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, "This form isn't enabled at this kitchen");
     }
 
-    // Every other log kind is one submission per kitchen/day — that's the
-    // whole point (a single fridge-temp check, one pre-production sweep).
-    // Receiving is different: a kitchen can get several separate truck
-    // deliveries in the same day, each its own real event, so it's exempt.
-    if (definition.kind !== "receiving") {
+    // shift only matters (and is only trusted) for a shift-aware checklist —
+    // every other log kind gets the fixed "ALL_DAY" placeholder regardless
+    // of what the client sent, same principle as businessDate: not the
+    // client's call to make unilaterally where it actually changes behavior.
+    if (SHIFT_AWARE_LOG_IDS.has(body.logDefinitionId) && !body.shift) {
+      throw new ApiError(400, "shift is required for this form");
+    }
+    const shift = SHIFT_AWARE_LOG_IDS.has(body.logDefinitionId) ? body.shift! : "ALL_DAY";
+
+    // Every other log kind is one submission per kitchen/day/shift — that's
+    // the whole point (a single fridge-temp check, one pre-production
+    // sweep). Receiving is different (a kitchen can get several separate
+    // truck deliveries, each its own real event), and so is the running
+    // shift of the restaurant checklist (bathroom checks recur) — both are
+    // exempt.
+    if (!isRepeatableSubmission(body.logDefinitionId, definition.kind, shift)) {
       const existing = await prisma.logEntry.findFirst({
         where: {
           locationId: body.locationId,
           logDefinitionId: body.logDefinitionId,
           businessDate: body.businessDate,
+          shift,
           amendsId: null,
         },
       });
@@ -109,16 +121,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // TODO(shift dimension, Item 2 in progress): every form is still
-    // "ALL_DAY" until the restaurant opening/running/closing checklist and
-    // its shift-selection/validation are wired in on top of this.
-    const childData = await buildLogEntryCreateData(body, body.logDefinitionId, "ALL_DAY");
+    const childData = await buildLogEntryCreateData(body, body.logDefinitionId, shift);
 
     const entry = await prisma.logEntry.create({
       data: {
         location: { connect: { id: body.locationId } },
         logDefinition: { connect: { id: body.logDefinitionId } },
         businessDate: body.businessDate,
+        shift,
         submittedBy: signer.id,
         signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
         enteredLate: dateCheck.enteredLate,

@@ -23,6 +23,24 @@ type LogEntryChildData = {
 // within +/- 2°F of it (per the paper FR-51-A form's own footer note).
 const CALIBRATION_TOLERANCE = 2;
 
+// Log kinds whose LogItems are tagged by shift (see LogItem.shift) — the
+// only one today is the restaurant opening/running/closing checklist.
+// `shift` is only meaningful, and only required on submission, for these.
+export const SHIFT_AWARE_LOG_IDS = new Set(["restaurant-shift-checklist"]);
+
+// Within a shift-aware log kind, which shift(s) may submit more than once
+// per business date — bathroom checks recur through the running shift, the
+// same way Receiving already can submit more than once a day. Opening and
+// closing stay one-submission-per-shift-per-day.
+const REPEATABLE_SHIFTS: Record<string, Set<string>> = {
+  "restaurant-shift-checklist": new Set(["RUNNING"]),
+};
+
+export function isRepeatableSubmission(logDefinitionId: string, kind: string, shift: string): boolean {
+  if (kind === "receiving") return true;
+  return REPEATABLE_SHIFTS[logDefinitionId]?.has(shift) ?? false;
+}
+
 export async function buildLogEntryCreateData(
   input: Omit<CreateLogEntryInput, "locationId" | "logDefinitionId" | "businessDate">,
   logDefinitionId: string,

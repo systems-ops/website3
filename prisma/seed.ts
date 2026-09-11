@@ -153,7 +153,38 @@ const LOGS = [
     formCode: "Form FR-40",
     kind: "receiving",
   },
+  // Item 2 — restaurant food-safety checklist. Deliberately small: only the
+  // handful of tasks where a failure is a food-safety problem, not a
+  // presentation one (the rest is FOH sidework, item 4). One LogDefinition
+  // covering all three shifts rather than three log kinds, per the spec's
+  // explicit instruction — a checklist item's `shift` picks which shift it
+  // belongs to. No existing paper form/FR-number for this.
+  {
+    id: "restaurant-shift-checklist",
+    name: "Shift checklist",
+    formCode: "Shift Checklist",
+    kind: "check",
+    items: [
+      { label: "Sanitizer bucket prepared at server station, concentration verified", shift: "OPENING" },
+      // Bathroom checks recur during the shift — this is the one item on
+      // this form that's allowed to submit more than once per business
+      // date, the same way Receiving already can.
+      { label: "Bathroom check — customer", shift: "RUNNING" },
+      { label: "Bathroom check — employee", shift: "RUNNING" },
+      { label: "Sanitizer bucket refilled", shift: "RUNNING" },
+      { label: "Sanitizer bucket emptied", shift: "CLOSING" },
+      { label: "Tables and countertops wiped with sanitizer", shift: "CLOSING" },
+      { label: "Gelato water well emptied and cleaned", shift: "CLOSING" },
+      { label: "Gelato scoops and water well parts taken to dish area", shift: "CLOSING" },
+    ],
+  },
 ];
+
+// Restaurant-only log kinds are seeded enabled at Hot Italian/Passione
+// Emporio and disabled at Passione Brands — the inverse of
+// RESTAURANT_ONLY_DISABLED below, which is manufacturing-only kinds
+// disabled at the restaurants.
+const MANUFACTURING_ONLY_DISABLED = new Set(["restaurant-shift-checklist"]);
 
 const CORRECTIVE_ACTIONS: Record<string, string[]> = {
   fridge: [
@@ -309,18 +340,23 @@ async function main() {
     }
 
     if (log.kind === "check" && log.items) {
-      for (const [i, label] of log.items.entries()) {
+      for (const [i, item] of log.items.entries()) {
+        // Most checklists just list plain labels (shift-agnostic — shift
+        // stays null). The new restaurant shift checklist tags each item
+        // with which shift it belongs to.
+        const label = typeof item === "string" ? item : item.label;
+        const shift = typeof item === "string" ? null : item.shift;
         const existing = await prisma.logItem.findFirst({
           where: { logDefinitionId: log.id, label },
         });
         if (existing) {
           await prisma.logItem.update({
             where: { id: existing.id },
-            data: { sortOrder: i },
+            data: { sortOrder: i, shift },
           });
         } else {
           await prisma.logItem.create({
-            data: { logDefinitionId: log.id, label, sortOrder: i },
+            data: { logDefinitionId: log.id, label, sortOrder: i, shift },
           });
         }
       }
@@ -353,7 +389,10 @@ async function main() {
   const locationsForConfig = await prisma.location.findMany();
   for (const loc of locationsForConfig) {
     for (const [i, log] of LOGS.entries()) {
-      const enabled = !(RESTAURANT_ONLY_DISABLED.has(log.id) && RESTAURANT_NAMES.has(loc.name));
+      const isRestaurant = RESTAURANT_NAMES.has(loc.name);
+      const enabled =
+        !(RESTAURANT_ONLY_DISABLED.has(log.id) && isRestaurant) &&
+        !(MANUFACTURING_ONLY_DISABLED.has(log.id) && !isRestaurant);
       await prisma.locationLogKind.upsert({
         where: { locationId_logDefinitionId: { locationId: loc.id, logDefinitionId: log.id } },
         update: { formReference: log.formCode, sortOrder: i },
