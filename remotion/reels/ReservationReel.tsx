@@ -9,6 +9,7 @@ import { VideoClip } from "./VideoClip";
 import { StatementText } from "./StatementText";
 import { DishCallout } from "./DishCallout";
 import { ReservationCTA } from "./ReservationCTA";
+import { FreezeHeroClip } from "./FreezeHeroClip";
 
 export const RESERVATION_WIDTH = 1080;
 export const RESERVATION_HEIGHT = 1920;
@@ -82,9 +83,14 @@ export const ReservationReel: React.FC = () => {
           timing={linearTiming({ durationInFrames: TRANSITION_IRIS })}
         />
 
-        {/* Dish beat */}
+        {/* Dish beat: plays live for 0.9s (before the camera tilts), then freezes */}
         <TransitionSeries.Sequence durationInFrames={DISH_FRAMES}>
-          <VideoClip src="/reel-footage/IMG_2278.MOV" trimStartSeconds={4.0} durationInFrames={DISH_FRAMES} />
+          <FreezeHeroClip
+            src="/reel-footage/IMG_2278.MOV"
+            stillSrc="/reel-footage/stills/pasta_freeze.jpg"
+            trimStartSeconds={4.0}
+            playFrames={27}
+          />
           <DishCallout
             name="Tagliatelle Ragù Bianco"
             description="House-made noodles, creamy pork & chicken ragù, mushrooms, parmigiano"
