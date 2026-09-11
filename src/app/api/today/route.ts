@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     });
     if (!location) throw new ApiError(404, "Location not found");
 
-    const [definitions, entries] = await Promise.all([
+    const [allDefinitions, configs, entries] = await Promise.all([
       prisma.logDefinition.findMany({
         where: { active: true },
         orderBy: { name: "asc" },
@@ -33,11 +33,21 @@ export async function GET(req: NextRequest) {
           items: true,
         },
       }),
+      prisma.locationLogKind.findMany({ where: { locationId } }),
       prisma.logEntry.findMany({
         where: { locationId, businessDate, amendsId: null },
         orderBy: { submittedAt: "asc" },
       }),
     ]);
+
+    // Log kinds are per-location now (see LocationLogKind) — a restaurant
+    // and the manufacturing site don't see the same form set. A form with
+    // no config row for this location defaults to enabled, so a newly
+    // added form doesn't silently vanish until someone turns it off.
+    const configByDefId = new Map(configs.map((c) => [c.logDefinitionId, c]));
+    const definitions = allDefinitions
+      .filter((d) => configByDefId.get(d.id)?.enabled ?? true)
+      .sort((a, b) => (configByDefId.get(a.id)?.sortOrder ?? 0) - (configByDefId.get(b.id)?.sortOrder ?? 0));
 
     const submittedByLog = new Map(entries.map((e) => [e.logDefinitionId, e]));
 
@@ -45,6 +55,8 @@ export async function GET(req: NextRequest) {
     const done: unknown[] = [];
 
     for (const def of definitions) {
+      const name = configByDefId.get(def.id)?.displayLabel ?? def.name;
+
       // Receiving is a running log, not a once-a-day checkbox — a kitchen
       // can get several separate deliveries in one day. It always stays
       // available to add another, rather than locking into "done" after
@@ -53,7 +65,7 @@ export async function GET(req: NextRequest) {
         const countToday = entries.filter((e) => e.logDefinitionId === def.id).length;
         todo.push({
           logDefinitionId: def.id,
-          name: def.name,
+          name,
           kind: def.kind,
           sub: countToday > 0 ? `${countToday} logged today · tap to add another` : "Log the delivery",
         });
@@ -71,13 +83,13 @@ export async function GET(req: NextRequest) {
       if (entry) {
         done.push({
           logDefinitionId: def.id,
-          name: def.name,
+          name,
           entryId: entry.id,
           submittedAt: entry.submittedAt,
           signatureName: entry.signatureName,
         });
       } else {
-        todo.push({ logDefinitionId: def.id, name: def.name, kind: def.kind, sub });
+        todo.push({ logDefinitionId: def.id, name, kind: def.kind, sub });
       }
     }
 
