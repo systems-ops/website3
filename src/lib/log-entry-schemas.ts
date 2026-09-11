@@ -66,6 +66,12 @@ export const createLogEntrySchema = z.object({
   // Only meaningful (and only validated as required) when businessDate turns
   // out to be yesterday relative to the server's clock — see log-entries.ts.
   lateReason: z.string().trim().min(1).optional(),
+  // Only meaningful (and only required) for a shift-aware checklist — see
+  // SHIFT_AWARE_LOG_IDS in log-entries.ts. Ignored for every other log kind
+  // regardless of what's sent, the same principle as businessDate: which
+  // shift this is isn't the client's call to make unilaterally where it
+  // actually matters (dedup, which items are expected).
+  shift: z.enum(["OPENING", "RUNNING", "CLOSING"]).optional(),
   readings: z.array(readingInputSchema).optional(),
   itemChecks: z.array(itemCheckInputSchema).optional(),
   calibrationRows: z.array(calibrationRowInputSchema).optional(),

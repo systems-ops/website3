@@ -186,6 +186,11 @@ model LogItem {
   logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
   label           String
   sortOrder       Int
+  /// null = applies regardless of shift (every existing checklist). Set to
+  /// "OPENING" | "RUNNING" | "CLOSING" for a shift-specific checklist item,
+  /// so one LogDefinition can present a different item list per shift
+  /// instead of three separate log kinds standing in for one form.
+  shift           String?
 
   itemChecks ItemCheck[]
 
@@ -245,6 +250,12 @@ model LogEntry {
   logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id])
   /// Calendar date the record is for, "YYYY-MM-DD" (kitchen-local, not UTC instant).
   businessDate    String
+  /// "OPENING" | "RUNNING" | "CLOSING" for the restaurant food-safety
+  /// checklists, which submit more than once per business date on purpose
+  /// (see LogItem.shift). Every other log kind gets the fixed placeholder
+  /// "ALL_DAY" — it isn't shift-aware, so this keeps their one-per-day
+  /// behavior exactly as it was before this column existed.
+  shift           String        @default("ALL_DAY")
   submittedAt     DateTime      @default(now())
   /// Id (or name, pending auth) of the cook who submitted this record.
   submittedBy     String

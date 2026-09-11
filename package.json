@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
@@ -36,6 +37,7 @@
     "eslint-config-next": "16.2.11",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   }
 }

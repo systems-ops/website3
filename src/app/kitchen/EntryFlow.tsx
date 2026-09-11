@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { ApprovalField, CalibrationDraftRow, Draft, LogDefinition, LogUnit, ReceivingDraft, ReceivingLineDraft, StorageType } from "./types";
+import type { ApprovalField, CalibrationDraftRow, Draft, LogDefinition, LogUnit, ReceivingDraft, ReceivingLineDraft, Shift, StorageType } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
 const CALIBRATION_TOLERANCE = 2;
+
+const SHIFT_LABELS: Record<Shift, string> = { OPENING: "Opening", RUNNING: "Running", CLOSING: "Closing" };
 
 function calibrationOutOfTolerance(row: CalibrationDraftRow): boolean {
   const ref = parseFloat(row.referenceReading.replace("−", "-"));
@@ -58,6 +60,7 @@ function findUnresolved(log: LogDefinition, slots: string[], draft: Draft) {
 
 export default function EntryFlow({
   log,
+  shift,
   locationName,
   cookName,
   draft,
@@ -67,6 +70,10 @@ export default function EntryFlow({
   lang,
 }: {
   log: LogDefinition;
+  // Which shift this submission is for — only meaningful for a shift-aware
+  // checklist (see LogItem.shift), which presents a different item list per
+  // shift from one LogDefinition rather than three separate forms.
+  shift?: Shift;
   locationName: string;
   cookName: string;
   draft: Draft;
@@ -81,6 +88,7 @@ export default function EntryFlow({
 
   const slots = log.slots ?? [];
   const unitLabel = log.unit ? `°${log.unit}` : "";
+  const checklistItems = shift ? log.items.filter((i) => i.shift === shift) : log.items;
 
   const unresolved = findUnresolved(log, slots, draft);
 
@@ -115,9 +123,9 @@ export default function EntryFlow({
   } else {
     // A checklist submits successfully with a FAIL present — it must never
     // be possible to only ever record 100% pass. FAIL/NA just need a note.
-    const total = log.items.length;
-    const answeredCount = log.items.filter((i) => draft.checks[i.id]).length;
-    const needsNote = log.items.filter((i) => {
+    const total = checklistItems.length;
+    const answeredCount = checklistItems.filter((i) => draft.checks[i.id]).length;
+    const needsNote = checklistItems.filter((i) => {
       const status = draft.checks[i.id];
       return (status === "FAIL" || status === "NA") && !draft.checkNotes[i.id]?.trim();
     });
@@ -261,7 +269,9 @@ export default function EntryFlow({
           </svg>
           {t.back}
         </button>
-        <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>{log.name}</span>
+        <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>
+          {shift ? `${log.name} — ${SHIFT_LABELS[shift]}` : log.name}
+        </span>
         <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
           {log.kind === "temps"
             ? t.tapAndType
@@ -351,7 +361,7 @@ export default function EntryFlow({
           })}
 
         {log.kind === "check" &&
-          log.items.map((item) => {
+          checklistItems.map((item) => {
             const status = draft.checks[item.id];
             return (
               <div
