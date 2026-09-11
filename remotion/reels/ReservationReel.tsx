@@ -18,7 +18,7 @@ const ACCENT = "#ff3b1f";
 const HOOK_FRAMES = 60;
 const CRAFT_FRAMES = 120;
 const TRANSITION_IRIS = 14;
-const DISH_FRAMES = 27;
+const DISH_FRAMES = 138;
 const TRANSITION_SLIDE = 12;
 const ROOM_FRAMES = 120;
 const TRANSITION_WIPE = 10;
@@ -88,8 +88,8 @@ export const ReservationReel: React.FC = () => {
           <DishCallout
             name="Tagliatelle Ragù Bianco"
             description="House-made noodles, creamy pork & chicken ragù, mushrooms, parmigiano"
-            from={1}
-            durationInFrames={DISH_FRAMES - 1}
+            from={6}
+            durationInFrames={DISH_FRAMES - 6}
           />
         </TransitionSeries.Sequence>
 
