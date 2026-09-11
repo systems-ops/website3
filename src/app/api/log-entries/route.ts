@@ -5,6 +5,7 @@ import { createLogEntrySchema } from "@/lib/log-entry-schemas";
 import { buildLogEntryCreateData } from "@/lib/log-entries";
 import { getCurrentSigner } from "@/lib/signer";
 import { classifySubmissionDate } from "@/lib/business-date";
+import { isLogKindEnabledAt } from "@/lib/location-log-kinds";
 
 // GET /api/log-entries?locationId=&logDefinitionId=&month=YYYY-MM&date=YYYY-MM-DD
 // Powers the Records tab: month calendar and single-day detail.
@@ -79,6 +80,13 @@ export async function POST(req: NextRequest) {
     ]);
     if (!location) throw new ApiError(404, "Location not found");
     if (!definition) throw new ApiError(404, "Log definition not found");
+
+    // A form disabled at this location (see LocationLogKind) isn't just
+    // hidden from Today — turning it off has to actually stop new
+    // submissions, or it's a UI-level hide with nothing enforcing it.
+    if (!(await isLogKindEnabledAt(body.locationId, body.logDefinitionId))) {
+      throw new ApiError(400, "This form isn't enabled at this kitchen");
+    }
 
     // Every other log kind is one submission per kitchen/day — that's the
     // whole point (a single fridge-temp check, one pre-production sweep).

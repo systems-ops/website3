@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { buildExportRows, rowsToCsv, type ExportRow } from "@/lib/export";
 import { computeWeekSummary, mondayOf, type WeekSummary } from "@/lib/verification";
 import { todayBusinessDate } from "@/lib/business-date";
+import { getEnabledLogDefinitions } from "@/lib/location-log-kinds";
 
 const COMPANY_NAME = "Passione Brands";
 
@@ -74,7 +75,7 @@ export async function buildAuditPack(params: {
 
   const [location, definitions, rows, weeks] = await Promise.all([
     prisma.location.findUniqueOrThrow({ where: { id: locationId } }),
-    prisma.logDefinition.findMany({ where: { active: true } }),
+    getEnabledLogDefinitions(locationId),
     buildExportRows({ locationId, from, to }),
     Promise.all(mondaysInRange(from, to).map((weekStart) => computeWeekSummary(locationId, weekStart))),
   ]);

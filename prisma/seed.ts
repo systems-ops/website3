@@ -340,6 +340,34 @@ async function main() {
     where: { logDefinitionId: "delivery" },
   });
 
+  // Per-location form config (item 0): every log kind is enabled at every
+  // location by default, so this is a no-op on top of existing behaviour —
+  // except the one item-1 decision that's safe to make outright (delivery
+  // truck coolers don't apply to the restaurants; the arrival-temperature
+  // check that matters to them already lives in the receiving log). Only
+  // `enabled` is decided here at create time — re-running the seed does not
+  // stomp `enabled`/`displayLabel` on existing rows, since those become
+  // manager-editable per-location overrides once a config UI exists.
+  const RESTAURANT_ONLY_DISABLED = new Set(["truck"]);
+  const RESTAURANT_NAMES = new Set(["Hot Italian", "Passione Emporio"]);
+  const locationsForConfig = await prisma.location.findMany();
+  for (const loc of locationsForConfig) {
+    for (const [i, log] of LOGS.entries()) {
+      const enabled = !(RESTAURANT_ONLY_DISABLED.has(log.id) && RESTAURANT_NAMES.has(loc.name));
+      await prisma.locationLogKind.upsert({
+        where: { locationId_logDefinitionId: { locationId: loc.id, logDefinitionId: log.id } },
+        update: { formReference: log.formCode, sortOrder: i },
+        create: {
+          locationId: loc.id,
+          logDefinitionId: log.id,
+          enabled,
+          formReference: log.formCode,
+          sortOrder: i,
+        },
+      });
+    }
+  }
+
   for (const [logId, texts] of Object.entries(CORRECTIVE_ACTIONS)) {
     const logDefinitionId = logId === "_" ? null : logId;
     const already = await prisma.correctiveActionOption.count({

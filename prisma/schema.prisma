@@ -39,8 +39,37 @@ model Location {
   cooks                   CookLocation[]
   verifications           Verification[]
   productionBatches       ProductionBatch[]
+  logKindConfigs          LocationLogKind[]
 
   @@map("locations")
+}
+
+/// Per-location on/off switch and presentation override for a LogDefinition.
+/// The three sites (two restaurants, one manufacturing/commissary) don't share
+/// a form set — this is the config layer that makes a form's availability a
+/// per-location decision instead of a global one. Disabling a row here hides
+/// the form from that location's Today tab and blocks new submissions there;
+/// it never touches existing LogEntry rows, which stay fully visible in
+/// Records, exports, trace search and audit packs regardless of the form's
+/// current enabled state — turning a form off is forward-looking only.
+model LocationLogKind {
+  id              String        @id @default(cuid())
+  locationId      String
+  location        Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  logDefinitionId String
+  logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
+  enabled         Boolean       @default(true)
+  /// Overrides LogDefinition.name for this location only (e.g. a simplified
+  /// restaurant variant of a manufacturing form keeping the same logKind).
+  displayLabel    String?
+  /// The FR-number staff and auditors think in (e.g. "FR-40"). Can differ per
+  /// site for the same log kind, which is why it lives here and not on
+  /// LogDefinition.
+  formReference   String?
+  sortOrder       Int           @default(0)
+
+  @@unique([locationId, logDefinitionId])
+  @@map("location_log_kinds")
 }
 
 /// A cook who can sign entries. Auth is a fast PIN switch on a shared kitchen
@@ -127,6 +156,7 @@ model LogDefinition {
   entries                 LogEntry[]
   correctiveActionOptions CorrectiveActionOption[]
   certificateRequirements CertificateRequirement[]
+  locationConfigs         LocationLogKind[]
 
   @@map("log_definitions")
 }
