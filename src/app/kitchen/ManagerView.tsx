@@ -2,18 +2,31 @@
 
 import { useEffect, useState } from "react";
 import {
+  clearLowStock,
+  createProduct,
   createSideworkTask,
   fetchLogEntriesByMonth,
+  fetchLowStockFlags,
+  fetchProducts,
   fetchSideworkTasks,
   fetchTrace,
   fetchVerifications,
   managerLogout,
   submitReceivingReview,
   submitVerification,
+  updateProduct,
   updateSideworkTask,
 } from "./api-client";
 import type { ReceivingReviewPayload, TraceBatch, WeekSummary } from "./api-client";
-import type { Location, LogEntryRecord, Manager, SideworkShift, SideworkTaskRecord } from "./types";
+import type {
+  Location,
+  LogEntryRecord,
+  Manager,
+  OpenLowStockFlag,
+  ProductRecord,
+  SideworkShift,
+  SideworkTaskRecord,
+} from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
@@ -129,6 +142,73 @@ export default function ManagerView({
       // no-op; task stays listed so the manager can retry
     } finally {
       setSideworkBusy(false);
+    }
+  }
+
+  const [products, setProducts] = useState<ProductRecord[]>([]);
+  const [lowStockFlags, setLowStockFlags] = useState<OpenLowStockFlag[]>([]);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductCategory, setNewProductCategory] = useState("");
+  const [newProductShelfLife, setNewProductShelfLife] = useState("");
+  const [productsBusy, setProductsBusy] = useState(false);
+
+  function refreshProducts() {
+    if (!locationId) return;
+    fetchProducts(locationId, true)
+      .then((r) => setProducts(r.products))
+      .catch(() => setProducts([]));
+    fetchLowStockFlags(locationId)
+      .then((r) => setLowStockFlags(r.flags))
+      .catch(() => setLowStockFlags([]));
+  }
+
+  useEffect(() => {
+    refreshProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId]);
+
+  async function addProduct() {
+    if (!locationId || !newProductName.trim()) return;
+    setProductsBusy(true);
+    try {
+      await createProduct({
+        locationId,
+        name: newProductName.trim(),
+        category: newProductCategory.trim() || undefined,
+        shelfLifeDays: newProductShelfLife.trim() ? Number(newProductShelfLife.trim()) : undefined,
+      });
+      setNewProductName("");
+      setNewProductCategory("");
+      setNewProductShelfLife("");
+      refreshProducts();
+    } catch {
+      // leave the form filled so the manager can retry
+    } finally {
+      setProductsBusy(false);
+    }
+  }
+
+  async function deactivateProduct(productId: string) {
+    setProductsBusy(true);
+    try {
+      await updateProduct(productId, { active: false });
+      refreshProducts();
+    } catch {
+      // no-op; product stays listed so the manager can retry
+    } finally {
+      setProductsBusy(false);
+    }
+  }
+
+  async function clearFlag(productId: string, disposition: "ordered" | "received") {
+    setProductsBusy(true);
+    try {
+      await clearLowStock(productId, disposition);
+      refreshProducts();
+    } catch {
+      // no-op; flag stays listed so the manager can retry
+    } finally {
+      setProductsBusy(false);
     }
   }
 
@@ -403,6 +483,102 @@ export default function ManagerView({
               style={{ minHeight: 48, fontSize: 15 }}
             >
               {t.sideworkNewTask}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.productsLowStockLive}</span>
+          {lowStockFlags.length === 0 && (
+            <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.productsLowStockNone}</span>
+          )}
+          {lowStockFlags.map((flag) => (
+            <div key={flag.id} className="blueprint" style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 66, padding: "12px 14px" }}>
+              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
+              <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>{flag.productName}</span>
+                <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
+                  {t.productsFlagged(flag.raisedSignatureName)}
+                  {flag.raiseCount > 1 ? ` · ${t.productsFlaggedCount(flag.raiseCount)}` : ""}
+                  {flag.note ? ` · ${flag.note}` : ""}
+                </span>
+              </span>
+              <div style={{ display: "flex", gap: 6, flex: "none" }}>
+                <button
+                  onClick={() => clearFlag(flag.productId, "ordered")}
+                  disabled={productsBusy}
+                  className="btn btn-secondary"
+                  style={{ minHeight: 40, fontSize: 13 }}
+                >
+                  {t.productsMarkOrdered}
+                </button>
+                <button
+                  onClick={() => clearFlag(flag.productId, "received")}
+                  disabled={productsBusy}
+                  className="btn btn-primary"
+                  style={{ minHeight: 40, fontSize: 13 }}
+                >
+                  {t.productsMarkReceived}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.productsManage}</span>
+          {products
+            .filter((p) => p.active)
+            .map((product) => (
+              <div key={product.id} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+                <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 15 }}>{product.name}</span>
+                  <span style={{ fontSize: 12, color: "var(--color-muted)" }}>
+                    {product.category ?? "—"}
+                    {product.shelfLifeDays != null ? ` · ${t.productsShelfLifeSummary(product.shelfLifeDays)}` : ""}
+                  </span>
+                </span>
+                <button
+                  onClick={() => deactivateProduct(product.id)}
+                  disabled={productsBusy}
+                  className="btn btn-secondary"
+                  style={{ minHeight: 40, fontSize: 13, flex: "none" }}
+                >
+                  {t.productsDeactivate}
+                </button>
+              </div>
+            ))}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
+            <input
+              type="text"
+              value={newProductName}
+              onChange={(e) => setNewProductName(e.target.value)}
+              placeholder={t.productsProductName}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <input
+              type="text"
+              value={newProductCategory}
+              onChange={(e) => setNewProductCategory(e.target.value)}
+              placeholder={t.productsCategory}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <input
+              type="number"
+              min="1"
+              value={newProductShelfLife}
+              onChange={(e) => setNewProductShelfLife(e.target.value)}
+              placeholder={t.productsShelfLifeDays}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <button
+              onClick={addProduct}
+              disabled={productsBusy || !newProductName.trim()}
+              className="btn btn-primary"
+              style={{ minHeight: 48, fontSize: 15 }}
+            >
+              {t.productsNewProduct}
             </button>
           </div>
         </div>
