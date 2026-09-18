@@ -5,6 +5,9 @@ import type {
   LogDefinition,
   LogEntryRecord,
   Manager,
+  OpenItemRecord,
+  OpenLowStockFlag,
+  ProductRecord,
   ProductionBatchRecord,
   ReceivedLot,
   SideworkShift,
@@ -251,4 +254,61 @@ export const updateSideworkTask = (
   api<{ task: SideworkTaskRecord }>(`/api/sidework-tasks/${taskId}`, {
     method: "PATCH",
     body: JSON.stringify(patch),
+  });
+
+export const fetchProducts = (locationId: string, includeInactive = false) =>
+  api<{ products: ProductRecord[] }>(
+    `/api/products?locationId=${locationId}${includeInactive ? "&includeInactive=true" : ""}`
+  );
+
+export const createProduct = (product: {
+  locationId: string;
+  name: string;
+  category?: string;
+  shelfLifeDays?: number;
+}) => api<{ product: ProductRecord }>("/api/products", { method: "POST", body: JSON.stringify(product) });
+
+export const updateProduct = (
+  productId: string,
+  patch: Partial<{ name: string; category: string; shelfLifeDays: number | null; active: boolean }>
+) =>
+  api<{ product: ProductRecord }>(`/api/products/${productId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+
+export const flagLowStock = (productId: string, locationId: string, note?: string) =>
+  api(`/api/products/${productId}/flag-low-stock`, {
+    method: "POST",
+    body: JSON.stringify({ locationId, ...(note ? { note } : {}) }),
+  });
+
+export const clearLowStock = (productId: string, disposition: "ordered" | "received") =>
+  api(`/api/products/${productId}/clear-low-stock`, {
+    method: "POST",
+    body: JSON.stringify({ disposition }),
+  });
+
+export const fetchLowStockFlags = (locationId: string) =>
+  api<{ flags: OpenLowStockFlag[] }>(`/api/low-stock-flags?locationId=${locationId}`);
+
+export const fetchOpenItems = (locationId: string, onHandOnly = false) =>
+  api<{ items: OpenItemRecord[] }>(
+    `/api/open-items?locationId=${locationId}${onHandOnly ? "&onHandOnly=true" : ""}`
+  );
+
+export const createOpenItem = (payload: {
+  locationId: string;
+  productId: string;
+  receivingLineId?: string;
+  sourceText?: string;
+  openedDate: string;
+  useByDate?: string;
+  storageLocation?: string;
+}) => api<{ item: OpenItemRecord }>("/api/open-items", { method: "POST", body: JSON.stringify(payload) });
+
+export const discardOpenItem = (itemId: string, reason: string) =>
+  api<{ item: OpenItemRecord }>(`/api/open-items/${itemId}/discard`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
   });
