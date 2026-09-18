@@ -7,6 +7,8 @@ import type {
   Manager,
   ProductionBatchRecord,
   ReceivedLot,
+  SideworkShift,
+  SideworkTaskRecord,
   TodayResponse,
 } from "./types";
 
@@ -212,3 +214,41 @@ export const fetchTrace = (query: string, locationId?: string) =>
   api<{ batches: TraceBatch[] }>(
     `/api/trace?query=${encodeURIComponent(query)}${locationId ? `&locationId=${locationId}` : ""}`
   );
+
+export const fetchSideworkTasks = (locationId: string, includeInactive = false) =>
+  api<{ businessDate: string; tasks: SideworkTaskRecord[] }>(
+    `/api/sidework-tasks?locationId=${locationId}${includeInactive ? "&includeInactive=true" : ""}`
+  );
+
+export const claimSideworkTask = (taskId: string, locationId: string, businessDate: string) =>
+  api(`/api/sidework-tasks/${taskId}/claim`, {
+    method: "POST",
+    body: JSON.stringify({ locationId, businessDate }),
+  });
+
+export const completeSideworkTask = (taskId: string, locationId: string, businessDate: string) =>
+  api(`/api/sidework-tasks/${taskId}/complete`, {
+    method: "POST",
+    body: JSON.stringify({ locationId, businessDate }),
+  });
+
+export const createSideworkTask = (task: {
+  title: string;
+  category: string;
+  role: string;
+  shift: SideworkShift;
+  locationIds: string[];
+}) =>
+  api<{ task: SideworkTaskRecord }>("/api/sidework-tasks", {
+    method: "POST",
+    body: JSON.stringify(task),
+  });
+
+export const updateSideworkTask = (
+  taskId: string,
+  patch: Partial<{ title: string; category: string; role: string; shift: SideworkShift; locationIds: string[]; active: boolean }>
+) =>
+  api<{ task: SideworkTaskRecord }>(`/api/sidework-tasks/${taskId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
