@@ -3,6 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/api-errors";
 import { todayBusinessDate } from "@/lib/business-date";
 import { getCurrentSigner } from "@/lib/signer";
+import { isRepeatableSubmission, SHIFT_AWARE_LOG_IDS } from "@/lib/log-entries";
+
+const SHIFTS = ["OPENING", "RUNNING", "CLOSING"] as const;
+const SHIFT_LABELS: Record<(typeof SHIFTS)[number], string> = {
+  OPENING: "Opening",
+  RUNNING: "Running",
+  CLOSING: "Closing",
+};
 
 // GET /api/today?locationId=...&date=YYYY-MM-DD
 // Splits active log definitions into "to do" and "done" for one location/day,
@@ -72,6 +80,54 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
+      // A shift-aware checklist (see LogItem.shift) is three separate due
+      // items — opening and closing are each their own one-submission-
+      // per-day thing, closing staying visibly pending until it's actually
+      // done; running is repeatable through the shift (bathroom checks),
+      // the same "always available, tap to add another" treatment as
+      // Receiving gets. The composite id (`${logDefinitionId}:${shift}`) is
+      // how the client tells the two API calls that follow which shift it
+      // means — split on ":" there.
+      if (SHIFT_AWARE_LOG_IDS.has(def.id)) {
+        for (const shift of SHIFTS) {
+          const compositeId = `${def.id}:${shift}`;
+          const shiftItemCount = def.items.filter((i) => i.shift === shift).length;
+          const shiftEntries = entries.filter((e) => e.logDefinitionId === def.id && e.shift === shift);
+
+          if (isRepeatableSubmission(def.id, def.kind, shift)) {
+            todo.push({
+              logDefinitionId: compositeId,
+              name: `${name} — ${SHIFT_LABELS[shift]}`,
+              kind: def.kind,
+              sub:
+                shiftEntries.length > 0
+                  ? `${shiftEntries.length} logged today · tap to add another`
+                  : `${shiftItemCount} things to tick`,
+            });
+            continue;
+          }
+
+          const shiftEntry = shiftEntries[0];
+          if (shiftEntry) {
+            done.push({
+              logDefinitionId: compositeId,
+              name: `${name} — ${SHIFT_LABELS[shift]}`,
+              entryId: shiftEntry.id,
+              submittedAt: shiftEntry.submittedAt,
+              signatureName: shiftEntry.signatureName,
+            });
+          } else {
+            todo.push({
+              logDefinitionId: compositeId,
+              name: `${name} — ${SHIFT_LABELS[shift]}`,
+              kind: def.kind,
+              sub: `${shiftItemCount} things to tick`,
+            });
+          }
+        }
+        continue;
+      }
+
       const entry = submittedByLog.get(def.id);
       const sub =
         def.kind === "temps"
@@ -96,8 +152,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       location,
       businessDate,
+      // Not definitions.length — a shift-aware checklist contributes three
+      // separate due items (see above), so the real denominator is however
+      // many todo/done rows actually got built.
       doneCount: done.length,
-      totalCount: definitions.length,
+      totalCount: todo.length + done.length,
       todo,
       done,
     });

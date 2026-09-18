@@ -22,7 +22,7 @@ import {
   removeFromOutbox,
   saveDraft,
 } from "./offline";
-import type { CertificateStatus, Cook, Draft, Location, LogDefinition, LogEntryRecord, Manager, TodayResponse } from "./types";
+import type { CertificateStatus, Cook, Draft, Location, LogDefinition, LogEntryRecord, Manager, Shift, TodayResponse } from "./types";
 import { emptyDraft } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
@@ -40,6 +40,22 @@ const LANG_STORAGE_KEY = "kitchen.lang";
 function todayBusinessDate() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// The Today tab hands back a composite id ("restaurant-shift-checklist:OPENING")
+// for a shift-aware checklist, so the client can tell which of its three
+// separate due items was tapped — split it back into the real
+// logDefinitionId the API expects, plus which shift.
+function parseFlowId(id: string): { logDefinitionId: string; shift?: Shift } {
+  const [logDefinitionId, shift] = id.split(":");
+  return shift ? { logDefinitionId, shift: shift as Shift } : { logDefinitionId };
+}
+
+// The inverse of parseFlowId — reconstructs the composite id an outbox
+// payload corresponds to, so pendingLogIds (keyed the same way Today's
+// composite ids are) stays consistent when rebuilt from a queued payload.
+function flowIdFor(payload: { logDefinitionId: string; shift?: Shift }): string {
+  return payload.shift ? `${payload.logDefinitionId}:${payload.shift}` : payload.logDefinitionId;
 }
 
 function dateLabel() {
@@ -101,7 +117,7 @@ export default function KitchenApp() {
         await removeFromOutbox(item.id);
         setPendingLogIds((prev) => {
           const next = new Set(prev);
-          next.delete(item.payload.logDefinitionId);
+          next.delete(flowIdFor(item.payload));
           return next;
         });
       } catch (err) {
@@ -149,7 +165,7 @@ export default function KitchenApp() {
     localStorage.setItem(LOCATION_STORAGE_KEY, locationId);
     refreshTodayAndCerts(locationId);
     listOutbox().then((entries) => {
-      setPendingLogIds(new Set(entries.filter((e) => e.payload.locationId === locationId).map((e) => e.payload.logDefinitionId)));
+      setPendingLogIds(new Set(entries.filter((e) => e.payload.locationId === locationId).map((e) => flowIdFor(e.payload))));
     });
   }, [cook, locationId, refreshTodayAndCerts]);
 
@@ -176,7 +192,7 @@ export default function KitchenApp() {
   async function openFlow(logDefinitionId: string) {
     if (!locationId) return;
     const doneItem = today?.done.find((d) => d.logDefinitionId === logDefinitionId);
-    const log = logs.find((l) => l.id === logDefinitionId);
+    const log = logs.find((l) => l.id === parseFlowId(logDefinitionId).logDefinitionId);
 
     if (pendingLogIds.has(logDefinitionId)) {
       note(t.syncing);
@@ -211,14 +227,19 @@ export default function KitchenApp() {
 
   async function submitFlow() {
     if (!locationId || !flowLogId || !cook) return;
-    const log = logs.find((l) => l.id === flowLogId);
+    const { logDefinitionId: realLogId, shift } = parseFlowId(flowLogId);
+    const log = logs.find((l) => l.id === realLogId);
     if (!log) return;
+    // A shift-aware checklist presents a different item list per shift from
+    // one LogDefinition (see LogItem.shift) — an item with no shift set
+    // applies to every non-shift-aware form unchanged.
+    const shiftItems = shift ? log.items.filter((i) => i.shift === shift) : log.items;
 
     const payload =
       log.kind === "temps"
         ? {
             locationId,
-            logDefinitionId: flowLogId,
+            logDefinitionId: realLogId,
             businessDate,
             readings: log.units.flatMap((unit) =>
               (log.slots ?? []).map((_, slotIndex) => {
@@ -232,7 +253,7 @@ export default function KitchenApp() {
         : log.kind === "calibration"
           ? {
               locationId,
-              logDefinitionId: flowLogId,
+              logDefinitionId: realLogId,
               businessDate,
               calibrationRows: draft.calibrationRows.map((r) => ({
                 testTermId: r.testTermId,
@@ -244,7 +265,7 @@ export default function KitchenApp() {
           : log.kind === "receiving"
             ? {
                 locationId,
-                logDefinitionId: flowLogId,
+                logDefinitionId: realLogId,
                 businessDate,
                 receiving: {
                   invoiceNumber: draft.receiving.invoiceNumber,
@@ -275,9 +296,10 @@ export default function KitchenApp() {
               }
             : {
                 locationId,
-                logDefinitionId: flowLogId,
+                logDefinitionId: realLogId,
                 businessDate,
-                itemChecks: log.items.map((item) => {
+                ...(shift ? { shift } : {}),
+                itemChecks: shiftItems.map((item) => {
                   const status = draft.checks[item.id] ?? "PASS";
                   const statusNote = draft.checkNotes[item.id];
                   return { logItemId: item.id, status, ...(statusNote ? { statusNote } : {}) };
@@ -365,7 +387,8 @@ export default function KitchenApp() {
 
   const scopedLocations = locations.filter((l) => (cook.locationIds ?? []).includes(l.id));
   const currentLocation = locations.find((l) => l.id === locationId);
-  const flowLog = flowLogId ? logs.find((l) => l.id === flowLogId) : null;
+  const flowLog = flowLogId ? logs.find((l) => l.id === parseFlowId(flowLogId).logDefinitionId) : null;
+  const flowShift = flowLogId ? parseFlowId(flowLogId).shift : undefined;
 
   return (
     <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
@@ -458,6 +481,7 @@ export default function KitchenApp() {
       {flowLog && locationId && (
         <EntryFlow
           log={flowLog}
+          shift={flowShift}
           locationName={currentLocation?.name ?? ""}
           cookName={cook.name}
           draft={draft}
