@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { todayBusinessDate } from "@/lib/business-date";
+import { getEnabledLogDefinitions } from "@/lib/location-log-kinds";
 
 function weekDates(weekStart: string): string[] {
   const [y, m, d] = weekStart.split("-").map(Number);
@@ -36,7 +37,7 @@ export async function computeWeekSummary(locationId: string, weekStart: string):
   const today = todayBusinessDate();
 
   const [definitions, entries, verification] = await Promise.all([
-    prisma.logDefinition.findMany({ where: { active: true } }),
+    getEnabledLogDefinitions(locationId),
     prisma.logEntry.findMany({
       where: { locationId, businessDate: { in: days }, amendsId: null },
       include: { readings: true, itemChecks: true, receivingReview: true, logDefinition: true },
