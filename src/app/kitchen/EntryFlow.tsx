@@ -1,7 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import type { ApprovalField, CalibrationDraftRow, Draft, LogDefinition, LogUnit, ReceivingDraft, ReceivingLineDraft, StorageType } from "./types";
+import { useEffect, useState } from "react";
+import { fetchTrainingContext } from "./api-client";
+import type {
+  ApprovalField,
+  CalibrationDraftRow,
+  Draft,
+  LogDefinition,
+  LogUnit,
+  ReceivingDraft,
+  ReceivingLineDraft,
+  StorageType,
+  TrainingContext,
+} from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
@@ -78,6 +89,14 @@ export default function EntryFlow({
   const t = strings[lang];
   const [pad, setPad] = useState<{ unit: LogUnit; slotIndex: number } | null>(null);
   const [buf, setBuf] = useState("");
+  const [training, setTraining] = useState<TrainingContext>({ formLevel: [], byItemId: {} });
+
+  useEffect(() => {
+    fetchTrainingContext(log.id, log.items.map((i) => i.id))
+      .then(setTraining)
+      .catch(() => setTraining({ formLevel: [], byItemId: {} }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log.id]);
 
   const slots = log.slots ?? [];
   const unitLabel = log.unit ? `°${log.unit}` : "";
@@ -274,6 +293,22 @@ export default function EntryFlow({
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {training.formLevel.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {training.formLevel.map((resource) => (
+              <a
+                key={resource.id}
+                href={resource.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 13, color: "var(--color-accent-700)", textDecoration: "underline" }}
+              >
+                {t.trainingSeeAlso}: {resource.title}
+              </a>
+            ))}
+          </div>
+        )}
+
         {unresolved && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14, border: "1px solid var(--color-alert-border)", background: "var(--color-alert-fill)" }}>
             <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, color: "var(--color-alert-text)" }}>
@@ -353,6 +388,7 @@ export default function EntryFlow({
         {log.kind === "check" &&
           log.items.map((item) => {
             const status = draft.checks[item.id];
+            const itemResources = training.byItemId[item.id] ?? [];
             return (
               <div
                 key={item.id}
@@ -365,7 +401,20 @@ export default function EntryFlow({
                   border: `1px solid ${status === "FAIL" ? "var(--color-alert-border)" : "var(--color-divider)"}`,
                 }}
               >
-                <span style={{ fontSize: 16.5, lineHeight: 1.35 }}>{item.label}</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 16.5, lineHeight: 1.35 }}>{item.label}</span>
+                  {itemResources.map((resource) => (
+                    <a
+                      key={resource.id}
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 12.5, color: "var(--color-accent-700)", textDecoration: "underline" }}
+                    >
+                      {resource.title}
+                    </a>
+                  ))}
+                </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {(["PASS", "FAIL", "NA"] as const).map((s) => (
                     <button

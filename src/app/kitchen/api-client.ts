@@ -13,6 +13,9 @@ import type {
   SideworkShift,
   SideworkTaskRecord,
   TodayResponse,
+  TrainingContext,
+  TrainingResourceLinkRecord,
+  TrainingResourceRecord,
 } from "./types";
 
 class ApiRequestError extends Error {
@@ -312,3 +315,52 @@ export const discardOpenItem = (itemId: string, reason: string) =>
     method: "POST",
     body: JSON.stringify({ reason }),
   });
+
+export const fetchTrainingResources = (locationId: string, includeInactive = false) =>
+  api<{ resources: TrainingResourceRecord[] }>(
+    `/api/training-resources?locationId=${locationId}${includeInactive ? "&includeInactive=true" : ""}`
+  );
+
+export const fetchTrainingContext = (logDefinitionId: string, logItemIds: string[]) =>
+  api<TrainingContext>(
+    `/api/training-context?logDefinitionId=${logDefinitionId}&logItemIds=${logItemIds.join(",")}`
+  );
+
+export const createTrainingResource = (resource: {
+  title: string;
+  description?: string;
+  url: string;
+  category: string;
+  applicableRoles?: string[];
+  applicableLocationIds?: string[];
+}) =>
+  api<{ resource: TrainingResourceRecord }>("/api/training-resources", {
+    method: "POST",
+    body: JSON.stringify(resource),
+  });
+
+export const updateTrainingResource = (
+  resourceId: string,
+  patch: Partial<{
+    title: string;
+    description: string | null;
+    url: string;
+    category: string;
+    applicableRoles: string[];
+    applicableLocationIds: string[];
+    active: boolean;
+  }>
+) =>
+  api<{ resource: TrainingResourceRecord }>(`/api/training-resources/${resourceId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+
+export const addTrainingLink = (resourceId: string, logDefinitionId: string, logItemId?: string) =>
+  api<{ link: TrainingResourceLinkRecord }>(`/api/training-resources/${resourceId}/links`, {
+    method: "POST",
+    body: JSON.stringify({ logDefinitionId, ...(logItemId ? { logItemId } : {}) }),
+  });
+
+export const removeTrainingLink = (linkId: string) =>
+  api(`/api/training-resources/links/${linkId}`, { method: "DELETE" });

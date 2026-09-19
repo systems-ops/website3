@@ -338,6 +338,32 @@ export type OpenLowStockFlag = {
 
 export type OpenItemDisposition = "ON_HAND" | "DISCARDED";
 
+// --- Item 6: training hub ----------------------------------------------------
+
+export type TrainingResourceRecord = {
+  id: string;
+  title: string;
+  description: string | null;
+  url: string;
+  category: string;
+  applicableRoles: string[];
+  applicableLocationIds: string[];
+  sortOrder: number;
+  active: boolean;
+};
+
+export type TrainingContext = {
+  formLevel: TrainingResourceRecord[];
+  byItemId: Record<string, TrainingResourceRecord[]>;
+};
+
+export type TrainingResourceLinkRecord = {
+  id: string;
+  trainingResourceId: string;
+  logDefinitionId: string;
+  logItemId: string | null;
+};
+
 export type OpenItemRecord = {
   id: string;
   locationId: string;

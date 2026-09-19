@@ -35,6 +35,7 @@ import ManagerView from "./ManagerView";
 import BatchTab from "./BatchTab";
 import SideworkTab from "./SideworkTab";
 import ProductsTab from "./ProductsTab";
+import TrainingTab from "./TrainingTab";
 
 const LOCATION_STORAGE_KEY = "kitchen.locationId";
 const LANG_STORAGE_KEY = "kitchen.lang";
@@ -64,7 +65,7 @@ export default function KitchenApp() {
   const [logs, setLogs] = useState<LogDefinition[]>([]);
   const [today, setToday] = useState<TodayResponse | null>(null);
   const [certificates, setCertificates] = useState<CertificateStatus[]>([]);
-  const [tab, setTab] = useState<"today" | "sidework" | "products" | "batches" | "records">("today");
+  const [tab, setTab] = useState<"today" | "sidework" | "products" | "training" | "batches" | "records">("today");
   const [sitesOpen, setSitesOpen] = useState(false);
   const [flowLogId, setFlowLogId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
@@ -411,6 +412,7 @@ export default function KitchenApp() {
         {tab === "products" && locationId && (
           <ProductsTab locationId={locationId} businessDate={businessDate} lang={lang} />
         )}
+        {tab === "training" && locationId && <TrainingTab locationId={locationId} lang={lang} />}
         {tab === "batches" && locationId && (
           <BatchTab
             locationId={locationId}
@@ -443,6 +445,12 @@ export default function KitchenApp() {
           style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "products" ? "var(--color-accent)" : "var(--color-muted)" }}
         >
           {t.products}
+        </button>
+        <button
+          onClick={() => setTab("training")}
+          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "training" ? "var(--color-accent)" : "var(--color-muted)" }}
+        >
+          {t.training}
         </button>
         <button
           onClick={() => setTab("batches")}
