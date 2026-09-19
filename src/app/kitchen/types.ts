@@ -146,6 +146,7 @@ export type LogEntryRecord = {
   enteredLate: boolean;
   lateReason: string | null;
   amendReason: string | null;
+  bulkPassUsed: boolean;
   readings: ReadingRecord[];
   itemChecks: ItemCheckRecord[];
   calibrationRows: CalibrationRowRecord[];
@@ -277,6 +278,10 @@ export type Draft = {
   ca: Record<string, string>; // key: `${logUnitId}|${slotIndex}` -> corrective action text
   calibrationRows: CalibrationDraftRow[];
   receiving: ReceivingDraft;
+  // Set when the mark-all-pass control (item 7.5) touched this draft —
+  // carried on the entry at submission so an auditor can tell ten
+  // considered taps from one.
+  bulkPassUsed: boolean;
 };
 
 export const emptyDraft = (): Draft => ({
@@ -286,6 +291,7 @@ export const emptyDraft = (): Draft => ({
   ca: {},
   calibrationRows: [],
   receiving: emptyReceivingDraft(),
+  bulkPassUsed: false,
 });
 
 export type SideworkShift = "OPENING" | "RUNNING" | "CLOSING" | "DOWNTIME";

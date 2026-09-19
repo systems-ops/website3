@@ -14,8 +14,24 @@
   --color-alert-fill: rgba(143, 74, 74, 0.06);
   --color-alert-border: rgba(143, 74, 74, 0.5);
   --color-muted: rgba(29, 31, 32, 0.55);
+  /* Higher-contrast than --color-muted (>=7:1 against --color-bg) for text
+     that item 7.3 calls out by name — progress counters and instruction
+     lines, which need to read at a glance in worse-than-desk conditions. */
+  --color-muted-strong: rgba(29, 31, 32, 0.82);
   --color-disabled: rgba(29, 31, 32, 0.28);
   --color-hover: rgba(29, 31, 32, 0.04);
+
+  /* Status color system (item 7.1) — PASS/FAIL/NA share this vocabulary
+     everywhere a status appears: checklist controls, Today tab, Records,
+     detail views. FAIL reuses --color-alert, the same red already used for
+     out-of-spec readings, so a person learns the color language once. */
+  --color-pass: #3c7a4f;
+  --color-pass-text: #2f6140;
+  --color-pass-fill: rgba(60, 122, 79, 0.1);
+  --color-pass-border: rgba(60, 122, 79, 0.55);
+  --color-na: #55575c;
+  --color-na-fill: rgba(29, 31, 32, 0.08);
+  --color-na-border: rgba(29, 31, 32, 0.4);
 
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-body: "Barlow", system-ui, sans-serif;

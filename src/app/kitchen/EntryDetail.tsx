@@ -3,6 +3,7 @@
 import type { LogDefinition, LogEntryRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import { STATUS_STYLE, StatusIcon } from "./status-visuals";
 
 export default function EntryDetail({
   log,
@@ -39,6 +40,9 @@ export default function EntryDetail({
         )}
         {entry.amendReason && (
           <span style={{ fontSize: 13, color: "var(--color-alert-text)" }}>{t.amendedNote(entry.amendReason)}</span>
+        )}
+        {entry.bulkPassUsed && (
+          <span style={{ fontSize: 13, color: "var(--color-muted-strong)" }}>{t.bulkPassUsedNote}</span>
         )}
       </div>
 
@@ -78,8 +82,7 @@ export default function EntryDetail({
           log.items.map((item) => {
             const check = entry.itemChecks.find((c) => c.logItemId === item.id);
             const status = check?.status;
-            const color =
-              status === "FAIL" ? "var(--color-alert)" : status === "NA" ? "var(--color-muted)" : "var(--color-accent)";
+            const style = status ? STATUS_STYLE[status] : null;
             return (
               <div
                 key={item.id}
@@ -93,13 +96,26 @@ export default function EntryDetail({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <span style={{ width: 54, flex: "none", fontSize: 12, fontWeight: 600, letterSpacing: ".05em", color }}>
+                  <span
+                    style={{
+                      width: 64,
+                      flex: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      letterSpacing: ".05em",
+                      color: style?.text ?? "var(--color-muted)",
+                    }}
+                  >
+                    {status && <StatusIcon status={status} />}
                     {status ?? "—"}
                   </span>
                   <span style={{ fontSize: 16.5, lineHeight: 1.35, flex: 1 }}>{item.label}</span>
                 </div>
                 {check?.statusNote && (
-                  <span style={{ fontSize: 13, color: "var(--color-alert-text)", paddingLeft: 68 }}>{check.statusNote}</span>
+                  <span style={{ fontSize: 13, color: "var(--color-alert-text)", paddingLeft: 78 }}>{check.statusNote}</span>
                 )}
               </div>
             );

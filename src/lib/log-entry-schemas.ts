@@ -70,6 +70,9 @@ export const createLogEntrySchema = z.object({
   itemChecks: z.array(itemCheckInputSchema).optional(),
   calibrationRows: z.array(calibrationRowInputSchema).optional(),
   receiving: receivingInputSchema.optional(),
+  // Set when the mark-all-pass control (item 7.5) touched this submission —
+  // PASS only, never FAIL/NA, so this never weakens invariant 5.
+  bulkPassUsed: z.boolean().optional(),
 });
 
 export const receivingReviewInputSchema = z.object({

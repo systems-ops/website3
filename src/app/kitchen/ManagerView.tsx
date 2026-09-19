@@ -549,7 +549,7 @@ export default function ManagerView({
               placeholder={t.sideworkCategory}
               style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
             />
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {SIDEWORK_SHIFTS.map((shift) => (
                 <button
                   key={shift}
@@ -588,7 +588,7 @@ export default function ManagerView({
                   {flag.note ? ` · ${flag.note}` : ""}
                 </span>
               </span>
-              <div style={{ display: "flex", gap: 6, flex: "none" }}>
+              <div style={{ display: "flex", gap: 8, flex: "none" }}>
                 <button
                   onClick={() => clearFlag(flag.productId, "ordered")}
                   disabled={productsBusy}
@@ -728,7 +728,7 @@ export default function ManagerView({
                           ))}
                       </select>
                     )}
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => setLinkingResourceId(null)} className="btn btn-secondary" style={{ flex: 1, minHeight: 40, fontSize: 13 }}>
                         {t.cancel}
                       </button>
@@ -959,7 +959,7 @@ export default function ManagerView({
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
               <span style={{ fontSize: 15.5, flex: 1 }}>{t.approve}</span>
-              <div style={{ display: "flex", gap: 6 }}>
+              <div style={{ display: "flex", gap: 8 }}>
                 {([true, false] as const).map((v) => (
                   <button
                     key={String(v)}
@@ -983,7 +983,7 @@ export default function ManagerView({
             )}
             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
               <span style={{ fontSize: 15.5, flex: 1 }}>{t.releasedForUse}</span>
-              <div style={{ display: "flex", gap: 6 }}>
+              <div style={{ display: "flex", gap: 8 }}>
                 {([true, false] as const).map((v) => (
                   <button
                     key={String(v)}

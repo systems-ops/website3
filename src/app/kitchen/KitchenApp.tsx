@@ -285,6 +285,7 @@ export default function KitchenApp() {
                   const statusNote = draft.checkNotes[item.id];
                   return { logItemId: item.id, status, ...(statusNote ? { statusNote } : {}) };
                 }),
+                ...(draft.bulkPassUsed ? { bulkPassUsed: true } : {}),
               };
 
     const key = draftKey(locationId, flowLogId, businessDate);
