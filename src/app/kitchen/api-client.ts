@@ -69,6 +69,7 @@ export type SubmitPayload = {
   readings?: { logUnitId: string; slotIndex: number; value: number; correctiveAction?: string }[];
   itemChecks?: { logItemId: string; status: "PASS" | "FAIL" | "NA"; statusNote?: string }[];
   lateReason?: string;
+  bulkPassUsed?: boolean;
   calibrationRows?: { testTermId: string; referenceReading: number; testReading: number; comments?: string }[];
   receiving?: {
     invoiceNumber: string;

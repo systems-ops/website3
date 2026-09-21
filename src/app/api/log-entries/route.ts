@@ -133,6 +133,10 @@ export async function POST(req: NextRequest) {
         signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
         enteredLate: dateCheck.enteredLate,
         lateReason: dateCheck.lateReason,
+        // Only meaningful for checklists — mark-all-pass isn't offered
+        // anywhere else, so force it false rather than trust a client value
+        // on a form kind it can't apply to.
+        bulkPassUsed: definition.kind === "check" ? !!body.bulkPassUsed : false,
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),
         ...(childData.itemChecks ? { itemChecks: { create: childData.itemChecks } } : {}),
         ...(childData.calibrationRows ? { calibrationRows: { create: childData.calibrationRows } } : {}),

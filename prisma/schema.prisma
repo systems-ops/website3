@@ -274,6 +274,12 @@ model LogEntry {
   /// Required on amendments, always null on original entries — the "why",
   /// which an auditor reads for even more than the diff itself.
   amendReason     String?
+  /// True when the mark-all-pass control (item 7.5) set one or more
+  /// unanswered items to PASS on this submission. Never weakens invariant
+  /// 5 — FAIL/NA still require a note — but an auditor is entitled to know
+  /// the difference between ten considered taps and one, and a manager
+  /// should be able to see whether a location bulk-passes every single day.
+  bulkPassUsed    Boolean       @default(false)
 
   amendsId   String?
   amends     LogEntry?  @relation("Amendments", fields: [amendsId], references: [id])
