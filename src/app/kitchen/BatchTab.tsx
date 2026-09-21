@@ -10,7 +10,7 @@ function emptyOutput(bakeDate: string): BatchOutputDraft {
   return { productName: "", quantity: "", bakeDate, disposition: "sold_in_store", bestByDate: "", reference: "" };
 }
 
-const DISPOSITIONS = ["held", "sold_in_store", "shipped"] as const;
+const DISPOSITIONS = ["held", "sold_in_store", "shipped", "delivery"] as const;
 
 export default function BatchTab({
   locationId,
@@ -213,7 +213,13 @@ export default function BatchTab({
                     className={o.disposition === d ? "btn btn-primary" : "btn btn-secondary"}
                     style={{ flex: 1, minHeight: 44, fontSize: 13 }}
                   >
-                    {d === "held" ? t.dispositionHeld : d === "sold_in_store" ? t.dispositionSold : t.dispositionShipped}
+                    {d === "held"
+                      ? t.dispositionHeld
+                      : d === "sold_in_store"
+                        ? t.dispositionSold
+                        : d === "shipped"
+                          ? t.dispositionShipped
+                          : t.dispositionDelivery}
                   </button>
                 ))}
               </div>

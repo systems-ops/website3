@@ -184,7 +184,7 @@ export type CreateBatchPayload = {
     quantity?: string;
     bakeDate: string;
     bestByDate?: string;
-    disposition: "held" | "sold_in_store" | "shipped";
+    disposition: "held" | "sold_in_store" | "shipped" | "delivery";
     reference?: string;
   }[];
 };

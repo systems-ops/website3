@@ -227,7 +227,7 @@ export type ReceivedLot = {
   receivedDate: string;
 };
 
-export type BatchDisposition = "held" | "sold_in_store" | "shipped";
+export type BatchDisposition = "held" | "sold_in_store" | "shipped" | "delivery";
 
 export type BatchInputRecord = {
   id: string;

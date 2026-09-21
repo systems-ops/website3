@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
         orderBy: { name: "asc" },
         include: {
           units: true,
-          items: true,
+          items: { where: { active: true } },
         },
       }),
       prisma.locationLogKind.findMany({ where: { locationId } }),

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         orderBy: { name: "asc" },
         include: {
           units: { orderBy: { sortOrder: "asc" } },
-          items: { orderBy: { sortOrder: "asc" } },
+          items: { where: { active: true }, orderBy: { sortOrder: "asc" } },
           correctiveActionOptions: { orderBy: { sortOrder: "asc" } },
         },
       }),
