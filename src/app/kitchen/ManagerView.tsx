@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   addReportRecipient,
   addTrainingLink,
+  ApiRequestError,
   clearLowStock,
   createProduct,
   createSideworkTask,
@@ -98,6 +99,7 @@ export default function ManagerView({
   const [newTaskCategory, setNewTaskCategory] = useState("");
   const [newTaskShift, setNewTaskShift] = useState<SideworkShift>("OPENING");
   const [sideworkBusy, setSideworkBusy] = useState(false);
+  const [sideworkError, setSideworkError] = useState("");
 
   function refreshSideworkTasks() {
     if (!locationId) return;
@@ -126,6 +128,7 @@ export default function ManagerView({
   async function addSideworkTask() {
     if (!locationId || !newTaskTitle.trim() || !newTaskCategory.trim()) return;
     setSideworkBusy(true);
+    setSideworkError("");
     try {
       await createSideworkTask({
         title: newTaskTitle.trim(),
@@ -137,8 +140,9 @@ export default function ManagerView({
       setNewTaskTitle("");
       setNewTaskCategory("");
       refreshSideworkTasks();
-    } catch {
+    } catch (err) {
       // leave the form filled so the manager can retry
+      setSideworkError(err instanceof ApiRequestError ? err.message : t.sideworkAddError);
     } finally {
       setSideworkBusy(false);
     }
@@ -615,6 +619,9 @@ export default function ManagerView({
             >
               {t.sideworkNewTask}
             </button>
+            {sideworkError && (
+              <span style={{ fontSize: 13.5, color: "var(--color-alert-text)" }}>{sideworkError}</span>
+            )}
           </div>
         </div>
 
