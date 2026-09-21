@@ -35,7 +35,8 @@ export { ApiRequestError };
 
 export const fetchLocations = () => api<{ locations: Location[] }>("/api/locations");
 
-export const fetchLogDefinitions = () => api<{ logs: LogDefinition[] }>("/api/log-definitions");
+export const fetchLogDefinitions = (locationId: string) =>
+  api<{ logs: LogDefinition[] }>(`/api/log-definitions?locationId=${locationId}`);
 
 export const fetchToday = (locationId: string, date?: string) =>
   api<TodayResponse>(`/api/today?locationId=${locationId}${date ? `&date=${date}` : ""}`);

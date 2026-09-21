@@ -135,11 +135,13 @@ export default function KitchenApp() {
       .finally(() => setBooted(true));
   }, []);
 
-  // Load form definitions once.
+  // Load form definitions whenever the location changes — the three sites
+  // don't share a form set (see LocationLogKind), so this can't be fetched
+  // once for the whole session.
   useEffect(() => {
-    if (!cook) return;
-    fetchLogDefinitions().then((r) => setLogs(r.logs)).catch(() => {});
-  }, [cook]);
+    if (!cook || !locationId) return;
+    fetchLogDefinitions(locationId).then((r) => setLogs(r.logs)).catch(() => {});
+  }, [cook, locationId]);
 
   // Load today + certificates whenever location changes; also outbox pending badges.
   useEffect(() => {
