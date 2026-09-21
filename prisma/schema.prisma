@@ -40,6 +40,7 @@ model Location {
   verifications           Verification[]
   productionBatches       ProductionBatch[]
   logKindConfigs          LocationLogKind[]
+  sideworkCompletions     SideworkCompletion[]
 
   @@map("locations")
 }
@@ -519,4 +520,65 @@ model BatchOutput {
   reference   String?
 
   @@map("batch_outputs")
+}
+
+// --- Front-of-house sidework (item 4) ---------------------------------------
+//
+// Deliberately NOT modeled through LogEntry. These are operational records
+// (did someone wipe the tables), not regulated observations — landing them
+// in LogEntry would inflate completion statistics, show up in audit packs
+// and compliance exports, and drown out the food-safety signal those exist
+// to carry. Unlike LogEntry, a completion here is allowed to mutate (claim
+// -> done) since nothing here is evidentiary and none of it needs the
+// amendment machinery.
+
+/// One task on a sidework list. `locationIds` lets one row apply to more than
+/// one site (Hot Italian and Passione Emporio share SOPs per item 0's note)
+/// without duplicating rows that then drift — author once, list the
+/// locations it applies to, override by giving a task a narrower list.
+model SideworkTask {
+  id          String   @id @default(cuid())
+  title       String
+  /// The station/grouping a task is shown under (e.g. "Server", "Coffee and
+  /// gelato station", "Patio and exterior") — doubles as the role it belongs
+  /// to, since the spec draws that line at the same granularity ("server
+  /// sidework, gelato/coffee station, and patio close are different
+  /// people's work").
+  category    String
+  role        String
+  /// "OPENING" | "RUNNING" | "CLOSING" | "DOWNTIME" — DOWNTIME is the list
+  /// for tasks that don't need doing every day, deliberately with no
+  /// recurrence engine behind it (client decision).
+  shift       String
+  locationIds String[]
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+
+  completions SideworkCompletion[]
+
+  @@map("sidework_tasks")
+}
+
+/// A task's state for one location/day: unclaimed (no row), claimed (someone
+/// tapped "I'm doing this"), or done. Resets every business date — "today's"
+/// sidework, not a running total. Mutable by design (see note above); one
+/// row per (task, location, day), upserted as the state changes.
+model SideworkCompletion {
+  id                     String       @id @default(cuid())
+  sideworkTaskId         String
+  sideworkTask           SideworkTask @relation(fields: [sideworkTaskId], references: [id], onDelete: Cascade)
+  locationId             String
+  location               Location     @relation(fields: [locationId], references: [id])
+  businessDate           String
+  /// "CLAIMED" | "DONE"
+  status                 String
+  claimedBy              String?
+  claimedSignatureName   String?
+  claimedAt              DateTime?
+  completedBy            String?
+  completedSignatureName String?
+  completedAt            DateTime?
+
+  @@unique([sideworkTaskId, locationId, businessDate])
+  @@map("sidework_completions")
 }

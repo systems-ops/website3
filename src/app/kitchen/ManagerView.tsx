@@ -2,19 +2,23 @@
 
 import { useEffect, useState } from "react";
 import {
+  createSideworkTask,
   fetchLogEntriesByMonth,
+  fetchSideworkTasks,
   fetchTrace,
   fetchVerifications,
   managerLogout,
   submitReceivingReview,
   submitVerification,
+  updateSideworkTask,
 } from "./api-client";
 import type { ReceivingReviewPayload, TraceBatch, WeekSummary } from "./api-client";
-import type { Location, LogEntryRecord, Manager } from "./types";
+import type { Location, LogEntryRecord, Manager, SideworkShift, SideworkTaskRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
 const RECEIVING_LOG_ID = "receiving-log";
+const SIDEWORK_SHIFTS: SideworkShift[] = ["OPENING", "RUNNING", "CLOSING", "DOWNTIME"];
 
 function currentMonthKey() {
   const d = new Date();
@@ -59,6 +63,24 @@ export default function ManagerView({
     return d.toISOString().slice(0, 10);
   });
   const [auditTo, setAuditTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const sideworkShiftLabel: Record<SideworkShift, string> = {
+    OPENING: t.sideworkShiftOpening,
+    RUNNING: t.sideworkShiftRunning,
+    CLOSING: t.sideworkShiftClosing,
+    DOWNTIME: t.sideworkShiftDowntime,
+  };
+  const [sideworkTasks, setSideworkTasks] = useState<SideworkTaskRecord[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskCategory, setNewTaskCategory] = useState("");
+  const [newTaskShift, setNewTaskShift] = useState<SideworkShift>("OPENING");
+  const [sideworkBusy, setSideworkBusy] = useState(false);
+
+  function refreshSideworkTasks() {
+    if (!locationId) return;
+    fetchSideworkTasks(locationId, true)
+      .then((r) => setSideworkTasks(r.tasks))
+      .catch(() => setSideworkTasks([]));
+  }
 
   function refreshWeeks() {
     if (!locationId) return;
@@ -73,8 +95,42 @@ export default function ManagerView({
       .then((r) => setEntries(r.entries.filter((e) => !e.amendsId)))
       .catch(() => setEntries([]));
     refreshWeeks();
+    refreshSideworkTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId]);
+
+  async function addSideworkTask() {
+    if (!locationId || !newTaskTitle.trim() || !newTaskCategory.trim()) return;
+    setSideworkBusy(true);
+    try {
+      await createSideworkTask({
+        title: newTaskTitle.trim(),
+        category: newTaskCategory.trim(),
+        role: newTaskCategory.trim(),
+        shift: newTaskShift,
+        locationIds: [locationId],
+      });
+      setNewTaskTitle("");
+      setNewTaskCategory("");
+      refreshSideworkTasks();
+    } catch {
+      // leave the form filled so the manager can retry
+    } finally {
+      setSideworkBusy(false);
+    }
+  }
+
+  async function deactivateSideworkTask(taskId: string) {
+    setSideworkBusy(true);
+    try {
+      await updateSideworkTask(taskId, { active: false });
+      refreshSideworkTasks();
+    } catch {
+      // no-op; task stays listed so the manager can retry
+    } finally {
+      setSideworkBusy(false);
+    }
+  }
 
   const needsReview = entries.filter((e) => !e.receivingReview);
   const reviewed = entries.filter((e) => e.receivingReview);
@@ -289,6 +345,67 @@ export default function ManagerView({
             ))}
           </div>
         )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.sideworkManage}</span>
+          {sideworkTasks
+            .filter((task) => task.active)
+            .map((task) => (
+              <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+                <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 15 }}>{task.title}</span>
+                  <span style={{ fontSize: 12, color: "var(--color-muted)" }}>
+                    {task.category} · {sideworkShiftLabel[task.shift]}
+                  </span>
+                </span>
+                <button
+                  onClick={() => deactivateSideworkTask(task.id)}
+                  disabled={sideworkBusy}
+                  className="btn btn-secondary"
+                  style={{ minHeight: 40, fontSize: 13, flex: "none" }}
+                >
+                  {t.sideworkDeactivate}
+                </button>
+              </div>
+            ))}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
+            <input
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              placeholder={t.sideworkTaskTitle}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <input
+              type="text"
+              value={newTaskCategory}
+              onChange={(e) => setNewTaskCategory(e.target.value)}
+              placeholder={t.sideworkCategory}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {SIDEWORK_SHIFTS.map((shift) => (
+                <button
+                  key={shift}
+                  onClick={() => setNewTaskShift(shift)}
+                  className={newTaskShift === shift ? "btn btn-primary" : "btn btn-secondary"}
+                  style={{ minHeight: 40, fontSize: 13 }}
+                >
+                  {sideworkShiftLabel[shift]}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={addSideworkTask}
+              disabled={sideworkBusy || !newTaskTitle.trim() || !newTaskCategory.trim()}
+              className="btn btn-primary"
+              style={{ minHeight: 48, fontSize: 15 }}
+            >
+              {t.sideworkNewTask}
+            </button>
+          </div>
+        </div>
       </div>
 
       {sitesOpen && (

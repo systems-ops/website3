@@ -289,3 +289,21 @@ export const emptyDraft = (): Draft => ({
   calibrationRows: [],
   receiving: emptyReceivingDraft(),
 });
+
+export type SideworkShift = "OPENING" | "RUNNING" | "CLOSING" | "DOWNTIME";
+export type SideworkStatus = "OPEN" | "CLAIMED" | "DONE";
+
+export type SideworkTaskRecord = {
+  id: string;
+  title: string;
+  category: string;
+  role: string;
+  shift: SideworkShift;
+  sortOrder: number;
+  active: boolean;
+  locationIds: string[];
+  status: SideworkStatus;
+  claimedSignatureName: string | null;
+  completedSignatureName: string | null;
+  completedAt: string | null;
+};

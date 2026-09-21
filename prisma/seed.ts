@@ -263,6 +263,101 @@ function requiredPin(envVar: string): string {
   return value;
 }
 
+// Item 4 — front-of-house sidework. Source: Passione server sidework and FOH
+// closing checklists. Shared identically between Hot Italian and Passione
+// Emporio per item 0's shared-SOP note (locationIds filled in per-restaurant
+// in main(), once both location ids are known). No cash handling anywhere —
+// client confirmed that's excluded entirely, and none of these touch it.
+// `category` doubles as `role` (see the model comment) since the spec draws
+// the role line at exactly this granularity.
+const SIDEWORK_TASKS: { title: string; category: string; shift: "OPENING" | "RUNNING" | "CLOSING" | "DOWNTIME" }[] = [
+  // OPENING — server
+  { title: "Take down and straighten all chairs", category: "Server", shift: "OPENING" },
+  { title: "Wipe down tables, barstools, barstool bases, countertops", category: "Server", shift: "OPENING" },
+  { title: "Wipe down walls in front of bar and espresso bar", category: "Server", shift: "OPENING" },
+  { title: "Check walls elsewhere, wipe as needed", category: "Server", shift: "OPENING" },
+  { title: "Empty any water remnants from Prosecco table and wipe down", category: "Server", shift: "OPENING" },
+  { title: "Restock and buff mise en place at expo station", category: "Server", shift: "OPENING" },
+  { title: "Stock to-go containers at server station", category: "Server", shift: "OPENING" },
+  { title: "Buff silverware and glassware", category: "Server", shift: "OPENING" },
+  { title: "Rollups as needed", category: "Server", shift: "OPENING" },
+  { title: "Fold wine serviettes and extra napkins", category: "Server", shift: "OPENING" },
+  { title: "Check menus, discard any soiled or worn", category: "Server", shift: "OPENING" },
+  { title: "Wipe condiments with a warm clean towel and place on tables", category: "Server", shift: "OPENING" },
+  { title: "Fill waters and make ready for service", category: "Server", shift: "OPENING" },
+  { title: "Final check: section buffed, clean, ready for guests", category: "Server", shift: "OPENING" },
+  // RUNNING — server
+  { title: "Rollups", category: "Server", shift: "RUNNING" },
+  { title: "Keep server station stocked and clean", category: "Server", shift: "RUNNING" },
+  // CLOSING — coffee and gelato station
+  { title: "Wipe espresso machine inside and out, then turn off", category: "Coffee and gelato station", shift: "CLOSING" },
+  { title: "Wipe down milk frothers", category: "Coffee and gelato station", shift: "CLOSING" },
+  { title: "Fill coffee beans if needed", category: "Coffee and gelato station", shift: "CLOSING" },
+  { title: "Empty coffee grounds from the day", category: "Coffee and gelato station", shift: "CLOSING" },
+  { title: "Wipe gelato display window with glass cleaner", category: "Coffee and gelato station", shift: "CLOSING" },
+  // CLOSING — stocking
+  { title: "Waffle cones, gelato spoons, gelato cups", category: "Stocking", shift: "CLOSING" },
+  { title: "Napkins, coffee cups, clear cups, straws", category: "Stocking", shift: "CLOSING" },
+  { title: "Restock wine as needed", category: "Stocking", shift: "CLOSING" },
+  { title: "Cups at all service stations", category: "Stocking", shift: "CLOSING" },
+  { title: "Plates in the server station by the food pass-through", category: "Stocking", shift: "CLOSING" },
+  { title: "Plates and cups at the back server station", category: "Stocking", shift: "CLOSING" },
+  // CLOSING — beverage station
+  { title: "Wipe down beverage counter", category: "Beverage station", shift: "CLOSING" },
+  { title: "Place tap plugs on all beer taps", category: "Beverage station", shift: "CLOSING" },
+  { title: "Empty ice from the wine service holder", category: "Beverage station", shift: "CLOSING" },
+  { title: "Return wine bottles to the refrigerator", category: "Beverage station", shift: "CLOSING" },
+  { title: "Fill water bottles, place in front refrigerator and retail refrigerator", category: "Beverage station", shift: "CLOSING" },
+  // CLOSING — dining room
+  { title: "Set all tables with plates, silverware, cups", category: "Dining room", shift: "CLOSING" },
+  { title: "Turn off candles using the remote", category: "Dining room", shift: "CLOSING" },
+  // CLOSING — server
+  { title: "Collect condiment caddies, refill oils, leave at service station", category: "Server", shift: "CLOSING" },
+  { title: "Clean serving trays", category: "Server", shift: "CLOSING" },
+  { title: "Wipe down all tables and countertops", category: "Server", shift: "CLOSING" },
+  { title: "75 rollups each", category: "Server", shift: "CLOSING" },
+  { title: "Put up chairs and barstools", category: "Server", shift: "CLOSING" },
+  { title: "Clean server station", category: "Server", shift: "CLOSING" },
+  { title: "Clean expo station, pull plates and wipe underneath", category: "Server", shift: "CLOSING" },
+  { title: "Empty and wash waters", category: "Server", shift: "CLOSING" },
+  { title: "Return Orderman to manager", category: "Server", shift: "CLOSING" },
+  // CLOSING — patio and exterior
+  { title: "Close and lock all patio window doors", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Lower the patio shades", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Empty trash from the ice cream cone receptacle", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Bring in the ice cream cone display", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Bring in outside table and chairs", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Bring in all patio seat cushions", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Fold all patio umbrellas", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Bring the black patio table inside", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Return patio menus, silverware and plates inside", category: "Patio and exterior", shift: "CLOSING" },
+  { title: "Sweep the patio", category: "Patio and exterior", shift: "CLOSING" },
+  // CLOSING — final
+  { title: "Bring all black serving trays to the dish area", category: "Final", shift: "CLOSING" },
+  { title: "Restock beverages in the retail refrigerator", category: "Final", shift: "CLOSING" },
+  { title: "Restock wine in the retail refrigerator", category: "Final", shift: "CLOSING" },
+  { title: "Organize and return all menus to the server station", category: "Final", shift: "CLOSING" },
+  { title: "Final walk-through: front of house clean, stocked, organized, ready to open", category: "Final", shift: "CLOSING" },
+  // DOWNTIME — stocking
+  { title: "Thermal paper for POS terminals, 3 at each station", category: "Stocking", shift: "DOWNTIME" },
+  { title: "Pizza boxes, front and back stock", category: "Stocking", shift: "DOWNTIME" },
+  { title: "Sugar caddies — raw, Splenda, white, straws; 3 each at server and expo", category: "Stocking", shift: "DOWNTIME" },
+  { title: "Foil", category: "Stocking", shift: "DOWNTIME" },
+  { title: "Menus", category: "Stocking", shift: "DOWNTIME" },
+  { title: "Iced tea — 2 full bottles at the water station", category: "Stocking", shift: "DOWNTIME" },
+  // DOWNTIME — cleaning and prep
+  { title: "Fill condiment caddies: salt, pepper, rosemary oil, spicy oil", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Empty and wash salt and pepper shakers", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Wipe down table tents", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Wipe down patio tables, chairs, benches, umbrella bases, couch, pots", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Buff silverware and glassware", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Organize back server station near the dish pit", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Organize front server station at the gelato bar", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Stamp to-go boxes", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Stamp to-go coffee cups", category: "Cleaning and prep", shift: "DOWNTIME" },
+  { title: "Run food and assist other servers", category: "Cleaning and prep", shift: "DOWNTIME" },
+];
+
 // Shared PINs, not tied to a named person — anyone on shift uses whichever
 // PIN they've been given. The PIN's label (not the digits) gets recorded as
 // the signature on anything they submit, so records stay attributable
@@ -406,6 +501,38 @@ async function main() {
           logDefinitionId: log.id,
           enabled,
           formReference: log.formCode,
+          sortOrder: i,
+        },
+      });
+    }
+  }
+
+  // Item 4 — front-of-house sidework, seeded identically at the two
+  // restaurants (shared SOPs, per item 0) via one row's locationIds
+  // covering both, rather than duplicating rows that then drift. Not
+  // seeded at Passione Brands at all — this is a restaurant-only feature.
+  // Matched by (title, shift) rather than an id, same idempotent-seed
+  // pattern as LogItem, since SideworkTask has no natural business key.
+  const restaurantLocationIds = locationsForConfig
+    .filter((loc) => RESTAURANT_NAMES.has(loc.name))
+    .map((loc) => loc.id);
+  for (const [i, task] of SIDEWORK_TASKS.entries()) {
+    const existing = await prisma.sideworkTask.findFirst({
+      where: { title: task.title, shift: task.shift },
+    });
+    if (existing) {
+      await prisma.sideworkTask.update({
+        where: { id: existing.id },
+        data: { category: task.category, role: task.category, sortOrder: i, locationIds: restaurantLocationIds },
+      });
+    } else {
+      await prisma.sideworkTask.create({
+        data: {
+          title: task.title,
+          category: task.category,
+          role: task.category,
+          shift: task.shift,
+          locationIds: restaurantLocationIds,
           sortOrder: i,
         },
       });
