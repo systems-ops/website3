@@ -2,30 +2,37 @@
 
 import { useEffect, useState } from "react";
 import {
+  addTrainingLink,
   clearLowStock,
   createProduct,
   createSideworkTask,
+  createTrainingResource,
+  fetchLogDefinitions,
   fetchLogEntriesByMonth,
   fetchLowStockFlags,
   fetchProducts,
   fetchSideworkTasks,
   fetchTrace,
+  fetchTrainingResources,
   fetchVerifications,
   managerLogout,
   submitReceivingReview,
   submitVerification,
   updateProduct,
   updateSideworkTask,
+  updateTrainingResource,
 } from "./api-client";
 import type { ReceivingReviewPayload, TraceBatch, WeekSummary } from "./api-client";
 import type {
   Location,
+  LogDefinition,
   LogEntryRecord,
   Manager,
   OpenLowStockFlag,
   ProductRecord,
   SideworkShift,
   SideworkTaskRecord,
+  TrainingResourceRecord,
 } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
@@ -209,6 +216,84 @@ export default function ManagerView({
       // no-op; flag stays listed so the manager can retry
     } finally {
       setProductsBusy(false);
+    }
+  }
+
+  const [trainingResources, setTrainingResources] = useState<TrainingResourceRecord[]>([]);
+  const [trainingLogs, setTrainingLogs] = useState<LogDefinition[]>([]);
+  const [newResourceTitle, setNewResourceTitle] = useState("");
+  const [newResourceUrl, setNewResourceUrl] = useState("");
+  const [newResourceCategory, setNewResourceCategory] = useState("");
+  const [trainingBusy, setTrainingBusy] = useState(false);
+  const [linkingResourceId, setLinkingResourceId] = useState<string | null>(null);
+  const [linkLogDefId, setLinkLogDefId] = useState("");
+  const [linkItemId, setLinkItemId] = useState("");
+
+  function refreshTrainingResources() {
+    if (!locationId) return;
+    fetchTrainingResources(locationId, true)
+      .then((r) => setTrainingResources(r.resources))
+      .catch(() => setTrainingResources([]));
+  }
+
+  useEffect(() => {
+    refreshTrainingResources();
+    if (locationId) {
+      fetchLogDefinitions(locationId)
+        .then((r) => setTrainingLogs(r.logs))
+        .catch(() => setTrainingLogs([]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId]);
+
+  function openLinkEditor(resourceId: string) {
+    setLinkingResourceId(resourceId);
+    setLinkLogDefId(trainingLogs[0]?.id ?? "");
+    setLinkItemId("");
+  }
+
+  async function saveLink() {
+    if (!linkingResourceId || !linkLogDefId) return;
+    setTrainingBusy(true);
+    try {
+      await addTrainingLink(linkingResourceId, linkLogDefId, linkItemId || undefined);
+      setLinkingResourceId(null);
+    } catch {
+      // leave the editor open so the manager can retry
+    } finally {
+      setTrainingBusy(false);
+    }
+  }
+
+  async function addTrainingResource() {
+    if (!newResourceTitle.trim() || !newResourceUrl.trim() || !newResourceCategory.trim()) return;
+    setTrainingBusy(true);
+    try {
+      await createTrainingResource({
+        title: newResourceTitle.trim(),
+        url: newResourceUrl.trim(),
+        category: newResourceCategory.trim(),
+      });
+      setNewResourceTitle("");
+      setNewResourceUrl("");
+      setNewResourceCategory("");
+      refreshTrainingResources();
+    } catch {
+      // leave the form filled so the manager can retry
+    } finally {
+      setTrainingBusy(false);
+    }
+  }
+
+  async function deactivateTrainingResource(resourceId: string) {
+    setTrainingBusy(true);
+    try {
+      await updateTrainingResource(resourceId, { active: false });
+      refreshTrainingResources();
+    } catch {
+      // no-op; resource stays listed so the manager can retry
+    } finally {
+      setTrainingBusy(false);
     }
   }
 
@@ -579,6 +664,117 @@ export default function ManagerView({
               style={{ minHeight: 48, fontSize: 15 }}
             >
               {t.productsNewProduct}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.trainingManage}</span>
+          {trainingResources
+            .filter((r) => r.active)
+            .map((resource) => (
+              <div key={resource.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 44 }}>
+                  <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 15 }}>{resource.title}</span>
+                    <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{resource.category}</span>
+                  </span>
+                  <button
+                    onClick={() => openLinkEditor(resource.id)}
+                    disabled={trainingBusy}
+                    className="btn btn-secondary"
+                    style={{ minHeight: 40, fontSize: 13, flex: "none" }}
+                  >
+                    {t.trainingLinkToForm}
+                  </button>
+                  <button
+                    onClick={() => deactivateTrainingResource(resource.id)}
+                    disabled={trainingBusy}
+                    className="btn btn-secondary"
+                    style={{ minHeight: 40, fontSize: 13, flex: "none" }}
+                  >
+                    {t.trainingDeactivate}
+                  </button>
+                </div>
+                {linkingResourceId === resource.id && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 0" }}>
+                    <select
+                      value={linkLogDefId}
+                      onChange={(e) => {
+                        setLinkLogDefId(e.target.value);
+                        setLinkItemId("");
+                      }}
+                      style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                    >
+                      {trainingLogs.map((log) => (
+                        <option key={log.id} value={log.id}>
+                          {log.name}
+                        </option>
+                      ))}
+                    </select>
+                    {trainingLogs.find((l) => l.id === linkLogDefId)?.items && trainingLogs.find((l) => l.id === linkLogDefId)!.items.length > 0 && (
+                      <select
+                        value={linkItemId}
+                        onChange={(e) => setLinkItemId(e.target.value)}
+                        style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                      >
+                        <option value="">{t.trainingWholeForm}</option>
+                        {trainingLogs
+                          .find((l) => l.id === linkLogDefId)!
+                          .items.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.label}
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => setLinkingResourceId(null)} className="btn btn-secondary" style={{ flex: 1, minHeight: 40, fontSize: 13 }}>
+                        {t.cancel}
+                      </button>
+                      <button
+                        onClick={saveLink}
+                        disabled={trainingBusy || !linkLogDefId}
+                        className="btn btn-primary"
+                        style={{ flex: 1, minHeight: 40, fontSize: 13 }}
+                      >
+                        {t.save}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
+            <input
+              type="text"
+              value={newResourceTitle}
+              onChange={(e) => setNewResourceTitle(e.target.value)}
+              placeholder={t.trainingTitle}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <input
+              type="text"
+              value={newResourceCategory}
+              onChange={(e) => setNewResourceCategory(e.target.value)}
+              placeholder={t.trainingCategory}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <input
+              type="text"
+              value={newResourceUrl}
+              onChange={(e) => setNewResourceUrl(e.target.value)}
+              placeholder={t.trainingUrl}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <button
+              onClick={addTrainingResource}
+              disabled={trainingBusy || !newResourceTitle.trim() || !newResourceUrl.trim() || !newResourceCategory.trim()}
+              className="btn btn-primary"
+              style={{ minHeight: 48, fontSize: 15 }}
+            >
+              {t.trainingNewResource}
             </button>
           </div>
         </div>
