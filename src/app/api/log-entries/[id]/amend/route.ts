@@ -36,7 +36,10 @@ export async function POST(
 
     // An amendment keeps the same shift as what it's correcting — it's a
     // correction to that specific submission, not a new one.
-    const childData = await buildLogEntryCreateData(body, original.logDefinitionId, original.shift);
+    const [childData, definition] = await Promise.all([
+      buildLogEntryCreateData(body, original.logDefinitionId, original.shift),
+      prisma.logDefinition.findUniqueOrThrow({ where: { id: original.logDefinitionId } }),
+    ]);
 
     const amendment = await prisma.logEntry.create({
       data: {
@@ -51,6 +54,7 @@ export async function POST(
         // from the original rather than being re-derived.
         enteredLate: original.enteredLate,
         lateReason: original.lateReason,
+        bulkPassUsed: definition.kind === "check" ? !!body.bulkPassUsed : false,
         amendReason: body.amendReason,
         amends: { connect: { id: original.id } },
         ...(childData.readings ? { readings: { create: childData.readings } } : {}),

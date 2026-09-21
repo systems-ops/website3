@@ -45,6 +45,7 @@ export type CompletenessRow = {
 
 export type LateEntry = { businessDate: string; formCode: string; formName: string; signedBy: string; lateReason: string };
 export type AmendmentEntry = { businessDate: string; formCode: string; formName: string; signedBy: string; amendReason: string };
+export type BulkPassSummaryRow = { formCode: string; formName: string; count: number };
 
 export type AuditPack = {
   companyName: string;
@@ -57,6 +58,7 @@ export type AuditPack = {
   exceptions: ExportRow[];
   lateEntries: LateEntry[];
   amendments: AmendmentEntry[];
+  bulkPassSummary: BulkPassSummaryRow[];
   weeks: WeekSummary[];
   rows: ExportRow[];
 };
@@ -105,6 +107,7 @@ export async function buildAuditPack(params: {
   const seenEntries = new Set<string>();
   const lateEntries: LateEntry[] = [];
   const amendments: AmendmentEntry[] = [];
+  const bulkPassCounts = new Map<string, BulkPassSummaryRow>();
   for (const r of rows) {
     const entryKey = `${r.formCode}|${r.businessDate}|${r.submittedAt}|${r.signedBy}`;
     if (seenEntries.has(entryKey)) continue;
@@ -115,7 +118,16 @@ export async function buildAuditPack(params: {
     if (r.amendReason) {
       amendments.push({ businessDate: r.businessDate, formCode: r.formCode, formName: r.formName, signedBy: r.signedBy, amendReason: r.amendReason });
     }
+    // Mark-all-pass usage, counted per submission (not per item row) — a
+    // manager watching for a location that bulk-passes every single day
+    // needs a count of submissions, not of items.
+    if (r.bulkPassUsed) {
+      const existing = bulkPassCounts.get(r.formCode);
+      if (existing) existing.count += 1;
+      else bulkPassCounts.set(r.formCode, { formCode: r.formCode, formName: r.formName, count: 1 });
+    }
   }
+  const bulkPassSummary = Array.from(bulkPassCounts.values()).sort((a, b) => b.count - a.count);
 
   return {
     companyName: COMPANY_NAME,
@@ -128,6 +140,7 @@ export async function buildAuditPack(params: {
     exceptions,
     lateEntries,
     amendments,
+    bulkPassSummary,
     weeks,
     rows,
   };
@@ -213,6 +226,21 @@ export function auditPackToPdf(pack: AuditPack): Promise<Buffer> {
       }
     }
 
+    // Mark-all-pass usage — surfaced per item 7.5: an auditor is entitled to
+    // know the difference between ten considered taps and one, and a
+    // manager should be able to see whether a location bulk-passes every
+    // single day.
+    doc.addPage();
+    doc.fontSize(16).text("Mark-all-pass usage");
+    doc.moveDown(0.5);
+    if (pack.bulkPassSummary.length === 0) {
+      doc.fontSize(11).text("Mark-all-pass was not used on any checklist submission in this range.");
+    } else {
+      for (const b of pack.bulkPassSummary) {
+        doc.fontSize(11).text(`${b.formCode} ${b.formName} — used on ${b.count} submission${b.count === 1 ? "" : "s"}`);
+      }
+    }
+
     // Weekly manager verification
     doc.addPage();
     doc.fontSize(16).text("Weekly manager verification");
@@ -255,6 +283,7 @@ export function auditPackToPdf(pack: AuditPack): Promise<Buffer> {
         if (r.correctiveAction) parts.push(`corrective action: ${r.correctiveAction}`);
         parts.push(`signed: ${r.signedBy}`);
         if (r.amended) parts.push(`(amended${r.amendReason ? `: ${r.amendReason}` : ""})`);
+        if (r.bulkPassUsed) parts.push("bulk-passed");
         doc.fontSize(9).text(parts.join("  ·  "));
       }
     }

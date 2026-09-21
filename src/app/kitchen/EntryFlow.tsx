@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchTrainingContext } from "./api-client";
+import { STATUS_STYLE, StatusIcon } from "./status-visuals";
 import type {
   ApprovalField,
   CalibrationDraftRow,
@@ -20,6 +21,12 @@ import { strings } from "./strings";
 const CALIBRATION_TOLERANCE = 2;
 
 const SHIFT_LABELS: Record<Shift, string> = { OPENING: "Opening", RUNNING: "Running", CLOSING: "Closing" };
+
+// Item 7.5's own exclusion: nine items where each one matters, the saving
+// is small, and the cost to rigour is real. This id belongs to the item 2
+// restaurant food-safety checklist, which is itself shift-aware — mark-all-
+// pass is excluded from it regardless of which shift is open.
+const NO_BULK_PASS_LOG_IDS = new Set(["restaurant-shift-checklist"]);
 
 function calibrationOutOfTolerance(row: CalibrationDraftRow): boolean {
   const ref = parseFloat(row.referenceReading.replace("−", "-"));
@@ -98,6 +105,7 @@ export default function EntryFlow({
   const [pad, setPad] = useState<{ unit: LogUnit; slotIndex: number } | null>(null);
   const [buf, setBuf] = useState("");
   const [training, setTraining] = useState<TrainingContext>({ formLevel: [], byItemId: {} });
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     fetchTrainingContext(log.id, log.items.map((i) => i.id))
@@ -154,8 +162,36 @@ export default function EntryFlow({
       answeredCount < total
         ? t.ticked(answeredCount, total)
         : needsNote.length > 0
-          ? t.pickWhatYouDid
+          ? t.itemsNeedCorrectiveAction(needsNote.length)
           : t.signsAs(cookName, locationName);
+  }
+
+  // checklistItems, not log.items — on a shift-aware form, log.items holds
+  // every shift's items, but only checklistItems' are actually rendered
+  // (see the render loop below). Counting or bulk-passing the full list
+  // would count items from other shifts that can never be answered here.
+  const checkItemsRemaining = log.kind === "check" ? checklistItems.length - checklistItems.filter((i) => draft.checks[i.id]).length : 0;
+  const bulkPassEligible = log.kind === "check" && !NO_BULK_PASS_LOG_IDS.has(log.id);
+
+  function jumpToFirstIssue() {
+    if (log.kind !== "check") return;
+    const target = checklistItems.find((i) => {
+      const status = draft.checks[i.id];
+      if (!status) return true;
+      return (status === "FAIL" || status === "NA") && !draft.checkNotes[i.id]?.trim();
+    });
+    if (target) itemRefs.current[target.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // Item 7.5 — sets PASS only, never touches an already-answered item, and
+  // can never set FAIL or NA in bulk. Recorded on the draft so the entry
+  // carries whether this was used, surfaced later in the audit pack.
+  function markAllPass() {
+    const nextChecks = { ...draft.checks };
+    for (const item of checklistItems) {
+      if (!nextChecks[item.id]) nextChecks[item.id] = "PASS";
+    }
+    onChangeDraft({ ...draft, checks: nextChecks, bulkPassUsed: true });
   }
 
   function addCalibrationRow() {
@@ -201,7 +237,7 @@ export default function EntryFlow({
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
         <span style={{ fontSize: 15.5, flex: 1 }}>{label}</span>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           {([true, false] as const).map((v) => (
             <button
               key={String(v)}
@@ -292,7 +328,13 @@ export default function EntryFlow({
         <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28, lineHeight: 1.1 }}>
           {shift ? `${log.name} — ${SHIFT_LABELS[shift]}` : log.name}
         </span>
-        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>
+        {log.kind === "check" && (
+          <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 20, lineHeight: 1.1, color: checkItemsRemaining > 0 ? "var(--color-muted-strong)" : "var(--color-pass-text)" }}>
+            {checkItemsRemaining > 0 ? t.itemsLeft(checkItemsRemaining) : t.allItemsAnswered}
+          </span>
+        )}
+        <span style={{ fontSize: 14, color: "var(--color-muted-strong)" }}>
+
           {log.kind === "temps"
             ? t.tapAndType
             : log.kind === "calibration"
@@ -301,6 +343,11 @@ export default function EntryFlow({
                 ? t.products
                 : t.tapEachItem}
         </span>
+        {bulkPassEligible && checkItemsRemaining > 0 && (
+          <button onClick={markAllPass} className="btn btn-secondary" style={{ minHeight: 44, fontSize: 14, alignSelf: "flex-start", marginTop: 4 }}>
+            {t.markAllPass}
+          </button>
+        )}
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
@@ -403,6 +450,9 @@ export default function EntryFlow({
             return (
               <div
                 key={item.id}
+                ref={(el) => {
+                  itemRefs.current[item.id] = el;
+                }}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -426,25 +476,39 @@ export default function EntryFlow({
                     </a>
                   ))}
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {(["PASS", "FAIL", "NA"] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setItemStatus(item.id, s)}
-                      className={status === s ? "btn btn-primary" : "btn btn-secondary"}
-                      style={{
-                        flex: 1,
-                        minHeight: 48,
-                        fontSize: 14,
-                        ...(status === s && s === "FAIL" ? { background: "var(--color-alert)", borderColor: "var(--color-alert)" } : {}),
-                      }}
-                    >
-                      {s === "PASS" ? t.pass : s === "FAIL" ? t.fail : t.na}
-                    </button>
-                  ))}
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(["PASS", "FAIL", "NA"] as const).map((s) => {
+                    const selected = status === s;
+                    const style = STATUS_STYLE[s];
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setItemStatus(item.id, s)}
+                        style={{
+                          flex: 1,
+                          minHeight: 48,
+                          minWidth: 48,
+                          fontSize: 14,
+                          fontFamily: "var(--font-heading)",
+                          fontWeight: 600,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          cursor: "pointer",
+                          border: `1.5px solid ${selected ? style.border : "var(--color-divider)"}`,
+                          background: selected ? style.fill : "transparent",
+                          color: selected ? style.text : "var(--color-muted)",
+                        }}
+                      >
+                        {selected && <StatusIcon status={s} />}
+                        {s === "PASS" ? t.pass : s === "FAIL" ? t.fail : t.na}
+                      </button>
+                    );
+                  })}
                 </div>
                 {status === "FAIL" && log.correctiveActions.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {log.correctiveActions.map((preset) => (
                       <button
                         key={preset}
@@ -657,7 +721,7 @@ export default function EntryFlow({
                 {renderBoolToggle(t.labeledOrganic, line.labeledOrganic, (v) => updateReceivingLine(i, { labeledOrganic: v }))}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
                   <span style={{ fontSize: 15.5, flex: 1 }}>{t.storage}</span>
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ display: "flex", gap: 8 }}>
                     {STORAGE_TYPES.map((s) => (
                       <button
                         key={s}
@@ -683,14 +747,33 @@ export default function EntryFlow({
 
       <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)", display: "flex", flexDirection: "column", gap: 8 }}>
         <button
-          className={canSubmit ? "btn btn-primary" : "btn btn-secondary"}
           disabled={!canSubmit}
           onClick={onSubmit}
-          style={{ width: "100%", minHeight: 60, fontSize: 18, letterSpacing: ".02em" }}
+          style={{
+            width: "100%",
+            minHeight: 60,
+            fontSize: 18,
+            letterSpacing: ".02em",
+            fontFamily: "var(--font-heading)",
+            fontWeight: 700,
+            cursor: canSubmit ? "pointer" : "not-allowed",
+            border: `2px solid ${canSubmit ? "var(--color-accent-900)" : "var(--color-divider)"}`,
+            background: canSubmit ? "var(--color-accent)" : "var(--color-disabled)",
+            color: canSubmit ? "var(--color-bg)" : "var(--color-muted-strong)",
+          }}
         >
           {t.submit}
         </button>
-        <span style={{ fontSize: 13.5, textAlign: "center", color: "var(--color-muted)" }}>{submitNote}</span>
+        {canSubmit ? (
+          <span style={{ fontSize: 13.5, textAlign: "center", color: "var(--color-muted-strong)" }}>{submitNote}</span>
+        ) : (
+          <button
+            onClick={jumpToFirstIssue}
+            style={{ background: "transparent", border: 0, cursor: log.kind === "check" ? "pointer" : "default", fontSize: 13.5, textAlign: "center", color: "var(--color-alert-text)", textDecoration: log.kind === "check" ? "underline" : "none" }}
+          >
+            {submitNote}
+          </button>
+        )}
       </div>
 
       {pad && (

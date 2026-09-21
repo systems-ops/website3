@@ -17,6 +17,7 @@ export type ExportRow = {
   value: string;
   outOfSpec: string;
   correctiveAction: string;
+  bulkPassUsed: boolean;
 };
 
 // Flattens submitted records (one row per reading or checked item) into a
@@ -87,6 +88,7 @@ export async function buildExportRows(params: {
         amended,
         amendReason: entry.amendReason ?? "",
         daysLate: entry.enteredLate ? `1 day late — ${entry.lateReason ?? ""}` : "",
+        bulkPassUsed: entry.bulkPassUsed,
       };
 
       if (entry.logDefinition.kind === "temps") {
@@ -175,6 +177,7 @@ export function rowsToCsv(rows: ExportRow[]): string {
     "value",
     "out_of_spec",
     "corrective_action",
+    "bulk_pass_used",
   ];
   const lines = [headers.join(",")];
   for (const r of rows) {
@@ -195,6 +198,7 @@ export function rowsToCsv(rows: ExportRow[]): string {
         r.value,
         r.outOfSpec,
         r.correctiveAction,
+        r.bulkPassUsed ? "yes" : "no",
       ]
         .map((v) => csvEscape(String(v)))
         .join(",")
@@ -238,6 +242,7 @@ export function rowsToPdf(rows: ExportRow[], title: string): Promise<Buffer> {
       parts.push(`signed: ${r.signedBy}`);
       if (r.daysLate) parts.push(`LATE: ${r.daysLate}`);
       if (r.amended) parts.push(`(amended${r.amendReason ? `: ${r.amendReason}` : ""})`);
+      if (r.bulkPassUsed) parts.push("bulk-passed");
       doc.fontSize(10).text(parts.join("  ·  "));
     }
 
