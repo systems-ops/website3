@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  addReportRecipient,
   addTrainingLink,
   clearLowStock,
   createProduct,
@@ -11,11 +12,13 @@ import {
   fetchLogEntriesByMonth,
   fetchLowStockFlags,
   fetchProducts,
+  fetchReportRecipients,
   fetchSideworkTasks,
   fetchTrace,
   fetchTrainingResources,
   fetchVerifications,
   managerLogout,
+  removeReportRecipient,
   submitReceivingReview,
   submitVerification,
   updateProduct,
@@ -30,6 +33,7 @@ import type {
   Manager,
   OpenLowStockFlag,
   ProductRecord,
+  ReportRecipientRecord,
   SideworkShift,
   SideworkTaskRecord,
   TrainingResourceRecord,
@@ -294,6 +298,48 @@ export default function ManagerView({
       // no-op; resource stays listed so the manager can retry
     } finally {
       setTrainingBusy(false);
+    }
+  }
+
+  const [reportRecipients, setReportRecipients] = useState<ReportRecipientRecord[]>([]);
+  const [newRecipientEmail, setNewRecipientEmail] = useState("");
+  const [recipientsBusy, setRecipientsBusy] = useState(false);
+
+  function refreshReportRecipients() {
+    if (!locationId) return;
+    fetchReportRecipients(locationId)
+      .then((r) => setReportRecipients(r.recipients))
+      .catch(() => setReportRecipients([]));
+  }
+
+  useEffect(() => {
+    refreshReportRecipients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId]);
+
+  async function addRecipient() {
+    if (!locationId || !newRecipientEmail.trim()) return;
+    setRecipientsBusy(true);
+    try {
+      await addReportRecipient(locationId, newRecipientEmail.trim());
+      setNewRecipientEmail("");
+      refreshReportRecipients();
+    } catch {
+      // leave the field filled so the manager can retry
+    } finally {
+      setRecipientsBusy(false);
+    }
+  }
+
+  async function removeRecipient(recipientId: string) {
+    setRecipientsBusy(true);
+    try {
+      await removeReportRecipient(recipientId);
+      refreshReportRecipients();
+    } catch {
+      // no-op; recipient stays listed so the manager can retry
+    } finally {
+      setRecipientsBusy(false);
     }
   }
 
@@ -775,6 +821,41 @@ export default function ManagerView({
               style={{ minHeight: 48, fontSize: 15 }}
             >
               {t.trainingNewResource}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.reportRecipients}</span>
+          <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{t.reportRecipientsHint}</span>
+          {reportRecipients.map((recipient) => (
+            <div key={recipient.id} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+              <span style={{ fontSize: 15, flex: 1, minWidth: 0 }}>{recipient.email}</span>
+              <button
+                onClick={() => removeRecipient(recipient.id)}
+                disabled={recipientsBusy}
+                className="btn btn-secondary"
+                style={{ minHeight: 40, fontSize: 13, flex: "none" }}
+              >
+                {t.reportRecipientRemove}
+              </button>
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+            <input
+              type="email"
+              value={newRecipientEmail}
+              onChange={(e) => setNewRecipientEmail(e.target.value)}
+              placeholder={t.reportRecipientEmail}
+              style={{ flex: 1, minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+            />
+            <button
+              onClick={addRecipient}
+              disabled={recipientsBusy || !newRecipientEmail.trim()}
+              className="btn btn-primary"
+              style={{ minHeight: 48, fontSize: 15, flex: "none", padding: "0 16px" }}
+            >
+              {t.reportRecipientAdd}
             </button>
           </div>
         </div>
