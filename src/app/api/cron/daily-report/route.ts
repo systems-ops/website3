@@ -8,14 +8,15 @@ import { sendDailyReportsForAllLocations } from "@/lib/send-daily-reports";
 // gating on the local hour rather than a fixed UTC cron time is what the
 // spec asks for, since a fixed UTC schedule drifts an hour across DST.
 //
-// NOTE for whoever merges item 2 (the 4am business-date cutover): this
-// report currently runs shortly after the plain midnight boundary because
-// that's what "today" means without item 2's cutover in this branch. Once
-// that merges, this job has to run after 4am instead, or it sends before
-// the closing checklist exists and reports it missing every night — the
-// spec calls this out explicitly. Move TARGET_HOUR to (e.g.) 4 and confirm
-// yesterdayBusinessDate() still means what this code assumes it means.
-const TARGET_HOUR = 0;
+// Runs an hour after the 4am business-date cutover (src/lib/business-date.ts),
+// not at plain midnight — the business day that just ended (what
+// yesterdayBusinessDate() returns at this hour) isn't finalized until 4am,
+// since a closing checklist finished after midnight still belongs to it.
+// Running any earlier would send before that checklist exists and report
+// it missing every single night, which the spec calls out explicitly as
+// the failure mode to avoid. The extra hour of buffer over the cutover
+// itself absorbs the last few stragglers.
+const TARGET_HOUR = 5;
 
 // GET /api/cron/daily-report — invoked hourly by Vercel Cron (see
 // vercel.json). Only acts during the target Pacific hour; every other
