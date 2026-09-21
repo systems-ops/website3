@@ -212,6 +212,11 @@ export const strings = {
     trainingDeactivate: "Remove",
     trainingLinkToForm: "Link to a form",
     trainingWholeForm: "Whole form",
+    reportRecipients: "Daily report recipients",
+    reportRecipientsHint: "One end-of-day summary email per kitchen, sent to everyone listed here.",
+    reportRecipientEmail: "Email address",
+    reportRecipientAdd: "+ Add recipient",
+    reportRecipientRemove: "Remove",
   },
   es: {
     change: "Cambiar",
@@ -419,6 +424,11 @@ export const strings = {
     trainingDeactivate: "Quitar",
     trainingLinkToForm: "Vincular a un formulario",
     trainingWholeForm: "Formulario completo",
+    reportRecipients: "Destinatarios del informe diario",
+    reportRecipientsHint: "Un resumen de fin de día por cocina, enviado a todos los que aparecen aquí.",
+    reportRecipientEmail: "Correo electrónico",
+    reportRecipientAdd: "+ Añadir destinatario",
+    reportRecipientRemove: "Quitar",
   },
 };
 

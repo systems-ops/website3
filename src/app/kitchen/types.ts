@@ -346,6 +346,16 @@ export type OpenLowStockFlag = {
 
 export type OpenItemDisposition = "ON_HAND" | "DISCARDED";
 
+// --- Item 3: end-of-day manager report ---------------------------------------
+
+export type ReportRecipientRecord = {
+  id: string;
+  locationId: string;
+  email: string;
+  active: boolean;
+  createdAt: string;
+};
+
 // --- Item 6: training hub ----------------------------------------------------
 
 export type TrainingResourceRecord = {
