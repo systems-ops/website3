@@ -18,6 +18,20 @@ export function yesterdayBusinessDate(): string {
   return formatInZone(new Date(Date.now() - 24 * 60 * 60 * 1000));
 }
 
+// The business date a given instant falls on, in the kitchens' own zone —
+// used where "today" isn't good enough, e.g. deciding which business date
+// an amendment's submittedAt timestamp counts as.
+export function businessDateOf(instant: Date): string {
+  return formatInZone(instant);
+}
+
+// The current hour in the kitchens' zone (0-23). Cron schedules are UTC and
+// drift across DST — this is how a job gates on "it's actually 1am Pacific"
+// instead of hand-rolling a timezone offset that goes stale twice a year.
+export function currentPacificHour(): number {
+  return Number(new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "numeric", hourCycle: "h23" }).format(new Date()));
+}
+
 const BUSINESS_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isValidBusinessDate(value: string): boolean {

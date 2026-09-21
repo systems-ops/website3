@@ -44,6 +44,8 @@ model Location {
   products                Product[]
   lowStockFlags           LowStockFlag[]
   openItems               OpenItem[]
+  reportRecipients        ReportRecipient[]
+  dailyReportLogs         DailyReportLog[]
 
   @@map("locations")
 }
@@ -739,4 +741,41 @@ model TrainingResourceLink {
 
   @@unique([trainingResourceId, logDefinitionId, logItemId])
   @@map("training_resource_links")
+}
+
+// --- End-of-day manager report (item 3) -------------------------------------
+
+/// A manager-editable email address that receives the end-of-day report for
+/// a location. Deliberately not hardcoded — managers aren't location-scoped
+/// in this data model, so the same person may be a recipient at more than
+/// one site, each getting its own email (one per location, not a combined
+/// digest, so the subject line alone says which kitchen it concerns).
+model ReportRecipient {
+  id         String   @id @default(cuid())
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  email      String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@unique([locationId, email])
+  @@map("report_recipients")
+}
+
+/// One row per location per business date the end-of-day report was sent
+/// for. The whole reason this table exists: Vercel Cron invocations can
+/// double-fire, and sending the same manager two reports is a fast way to
+/// have them ignore both. Checked (and written, inside the same
+/// transaction) before sending — a row existing means "already sent,
+/// skip," full stop, regardless of how many times the job runs.
+model DailyReportLog {
+  id             String   @id @default(cuid())
+  locationId     String
+  location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  businessDate   String
+  sentAt         DateTime @default(now())
+  recipientCount Int
+
+  @@unique([locationId, businessDate])
+  @@map("daily_report_log")
 }

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { todayBusinessDate } from "@/lib/business-date";
-import { getEnabledLogDefinitions } from "@/lib/location-log-kinds";
+import { computeComplianceSummary } from "@/lib/compliance-summary";
 
 function weekDates(weekStart: string): string[] {
   const [y, m, d] = weekStart.split("-").map(Number);
@@ -36,56 +36,22 @@ export async function computeWeekSummary(locationId: string, weekStart: string):
   const days = weekDates(weekStart);
   const today = todayBusinessDate();
 
-  const [definitions, entries, verification] = await Promise.all([
-    getEnabledLogDefinitions(locationId),
-    prisma.logEntry.findMany({
-      where: { locationId, businessDate: { in: days }, amendsId: null },
-      include: { readings: true, itemChecks: true, receivingReview: true, logDefinition: true },
-    }),
+  const [summary, verification] = await Promise.all([
+    computeComplianceSummary(locationId, days, today),
     prisma.verification.findFirst({
       where: { locationId, weekStart },
       include: { manager: { select: { id: true, name: true, role: true } } },
     }),
   ]);
 
-  const presentByLog = new Map<string, Set<string>>();
-  for (const e of entries) {
-    if (!presentByLog.has(e.logDefinitionId)) presentByLog.set(e.logDefinitionId, new Set());
-    presentByLog.get(e.logDefinitionId)!.add(e.businessDate);
-  }
-
-  const missingByLog = definitions
-    // Receiving is multiple-per-day (or zero, if no delivery came) — "missing
-    // days" doesn't mean anything for it the way it does for a daily sweep.
-    .filter((d) => d.kind !== "receiving")
-    .map((d) => {
-      const present = presentByLog.get(d.id) ?? new Set();
-      return {
-        logDefinitionId: d.id,
-        name: d.name,
-        daysMissing: days.filter((day) => day <= today && !present.has(day)),
-      };
-    })
-    .filter((d) => d.daysMissing.length > 0);
-
-  const outOfSpecCount = entries.reduce((n, e) => n + e.readings.filter((r) => r.outOfSpec).length, 0);
-  const failedCount = entries.reduce((n, e) => n + e.itemChecks.filter((c) => c.status === "FAIL").length, 0);
-  const lateCount = entries.filter((e) => e.enteredLate).length;
-  const rejectedReceivingCount = entries.filter(
-    (e) =>
-      e.logDefinition.kind === "receiving" &&
-      e.receivingReview &&
-      (!e.receivingReview.approved || !e.receivingReview.releasedForUse)
-  ).length;
-
   return {
     weekStart,
     days,
-    missingByLog,
-    outOfSpecCount,
-    failedCount,
-    lateCount,
-    rejectedReceivingCount,
+    missingByLog: summary.missingByLog,
+    outOfSpecCount: summary.outOfSpec.length,
+    failedCount: summary.failed.length,
+    lateCount: summary.late.length,
+    rejectedReceivingCount: summary.rejectedReceiving.length,
     verification: verification
       ? {
           id: verification.id,

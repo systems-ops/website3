@@ -10,6 +10,7 @@ import type {
   ProductRecord,
   ProductionBatchRecord,
   ReceivedLot,
+  ReportRecipientRecord,
   SideworkShift,
   SideworkTaskRecord,
   TodayResponse,
@@ -365,3 +366,15 @@ export const addTrainingLink = (resourceId: string, logDefinitionId: string, log
 
 export const removeTrainingLink = (linkId: string) =>
   api(`/api/training-resources/links/${linkId}`, { method: "DELETE" });
+
+export const fetchReportRecipients = (locationId: string) =>
+  api<{ recipients: ReportRecipientRecord[] }>(`/api/report-recipients?locationId=${locationId}`);
+
+export const addReportRecipient = (locationId: string, email: string) =>
+  api<{ recipient: ReportRecipientRecord }>("/api/report-recipients", {
+    method: "POST",
+    body: JSON.stringify({ locationId, email }),
+  });
+
+export const removeReportRecipient = (recipientId: string) =>
+  api(`/api/report-recipients/${recipientId}`, { method: "DELETE" });
