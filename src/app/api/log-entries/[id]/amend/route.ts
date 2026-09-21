@@ -34,13 +34,16 @@ export async function POST(
       throw new ApiError(403, "Amending a record from a previous day requires a manager");
     }
 
-    const childData = await buildLogEntryCreateData(body, original.logDefinitionId);
+    // An amendment keeps the same shift as what it's correcting — it's a
+    // correction to that specific submission, not a new one.
+    const childData = await buildLogEntryCreateData(body, original.logDefinitionId, original.shift);
 
     const amendment = await prisma.logEntry.create({
       data: {
         location: { connect: { id: original.locationId } },
         logDefinition: { connect: { id: original.logDefinitionId } },
         businessDate: original.businessDate,
+        shift: original.shift,
         submittedBy: signer.id,
         signatureName: signer.kind === "manager" ? `${signer.name} (${signer.role})` : signer.name,
         // The amendment isn't itself a late *submission* — it's a

@@ -5,17 +5,35 @@
 // tomorrow after ~5pm Pacific.
 const TIME_ZONE = "America/Los_Angeles";
 
+// The business day rolls over at 4am Pacific, not midnight. A restaurant's
+// closing-shift checklist is routinely finished after midnight; without a
+// cutover, every one of those submissions would land on "yesterday" and
+// require a lateReason, flagging every single closing checklist as late,
+// every night, which would destroy the signal value of "entered late"
+// reporting. This is the one place that decision is made — everything else
+// (classifySubmissionDate, and every log kind's date logic) runs through
+// todayBusinessDate()/yesterdayBusinessDate() below, so it only needs
+// changing here.
+const CUTOVER_HOUR = 4;
+
 function formatInZone(date: Date): string {
   // en-CA gives YYYY-MM-DD directly, no manual reassembly.
   return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(date);
 }
 
+// Exported (not just internal) so the rollover boundary itself is directly
+// testable against explicit instants, rather than only through
+// system-clock mocking.
+export function businessDateForInstant(instant: Date): string {
+  return formatInZone(new Date(instant.getTime() - CUTOVER_HOUR * 60 * 60 * 1000));
+}
+
 export function todayBusinessDate(): string {
-  return formatInZone(new Date());
+  return businessDateForInstant(new Date());
 }
 
 export function yesterdayBusinessDate(): string {
-  return formatInZone(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  return businessDateForInstant(new Date(Date.now() - 24 * 60 * 60 * 1000));
 }
 
 const BUSINESS_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
