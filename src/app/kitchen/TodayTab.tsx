@@ -1,6 +1,8 @@
 "use client";
 
-import type { TodayResponse } from "./types";
+import { useEffect, useState } from "react";
+import { fetchOpenItems } from "./api-client";
+import type { OpenItemRecord, TodayResponse } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 
@@ -8,18 +10,39 @@ function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+function addDaysLabel(dateStr: string, days: number): string {
+  const dt = new Date(`${dateStr}T00:00:00Z`);
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
 export default function TodayTab({
   today,
   pendingLogIds,
   onOpen,
+  locationId,
+  businessDate,
+  onOpenProducts,
   lang,
 }: {
   today: TodayResponse;
   pendingLogIds: Set<string>;
   onOpen: (logDefinitionId: string) => void;
+  locationId: string;
+  businessDate: string;
+  onOpenProducts: () => void;
   lang: Lang;
 }) {
   const t = strings[lang];
+  const [expiring, setExpiring] = useState<OpenItemRecord[]>([]);
+  const tomorrow = addDaysLabel(businessDate, 1);
+
+  useEffect(() => {
+    fetchOpenItems(locationId, true)
+      .then((r) => setExpiring(r.items.filter((i) => i.useByDate === businessDate || i.useByDate === tomorrow)))
+      .catch(() => setExpiring([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId, businessDate]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22, paddingTop: 20 }}>
@@ -27,6 +50,27 @@ export default function TodayTab({
         <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 44, lineHeight: 1 }}>{today.doneCount}</span>
         <span style={{ fontSize: 16, lineHeight: 1.3, color: "var(--color-muted)" }}>{t.ofDoneToday(today.doneCount, today.totalCount)}</span>
       </div>
+
+      {expiring.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-alert-text)" }}>{t.productsExpiringSoon}</span>
+          {expiring.map((item) => (
+            <button
+              key={item.id}
+              onClick={onOpenProducts}
+              style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 58, padding: "10px 14px", background: "transparent", border: "1px solid var(--color-alert-border)", cursor: "pointer", textAlign: "left" }}
+            >
+              <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 15.5 }}>{item.productNameSnapshot}</span>
+                <span style={{ fontSize: 12.5, color: "var(--color-alert-text)" }}>
+                  {item.useByDate === businessDate ? t.productsExpiringToday : t.productsExpiringTomorrow}
+                  {item.storageLocation ? ` · ${item.storageLocation}` : ""}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {today.todo.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

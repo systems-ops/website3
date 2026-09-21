@@ -41,6 +41,9 @@ model Location {
   productionBatches       ProductionBatch[]
   logKindConfigs          LocationLogKind[]
   sideworkCompletions     SideworkCompletion[]
+  products                Product[]
+  lowStockFlags           LowStockFlag[]
+  openItems               OpenItem[]
 
   @@map("locations")
 }
@@ -164,7 +167,7 @@ model LogDefinition {
 
 /// One row per thing measured on a "temps" form (e.g. "Walk-in fridge").
 model LogUnit {
-  id              String @id @default(cuid())
+  id              String        @id @default(cuid())
   logDefinitionId String
   logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
   name            String
@@ -182,7 +185,7 @@ model LogUnit {
 
 /// One row per checklist line on a "check" form.
 model LogItem {
-  id              String @id @default(cuid())
+  id              String        @id @default(cuid())
   logDefinitionId String
   logDefinition   LogDefinition @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
   label           String
@@ -274,11 +277,11 @@ model LogEntry {
   amends     LogEntry?  @relation("Amendments", fields: [amendsId], references: [id])
   amendments LogEntry[] @relation("Amendments")
 
-  readings         Reading[]
-  itemChecks       ItemCheck[]
-  calibrationRows  CalibrationRow[]
-  receivingDetail  ReceivingDetail?
-  receivingReview  ReceivingReview?
+  readings        Reading[]
+  itemChecks      ItemCheck[]
+  calibrationRows CalibrationRow[]
+  receivingDetail ReceivingDetail?
+  receivingReview ReceivingReview?
 
   @@index([locationId, logDefinitionId, businessDate])
   @@map("log_entries")
@@ -288,18 +291,18 @@ model LogEntry {
 /// The spec range is snapshotted at write time (specLow/specHigh/specUnitOverride)
 /// so later changes to a unit's spec don't rewrite the meaning of past records.
 model Reading {
-  id                String   @id @default(cuid())
-  logEntryId        String
-  logEntry          LogEntry @relation(fields: [logEntryId], references: [id])
-  logUnitId         String
-  logUnit           LogUnit  @relation(fields: [logUnitId], references: [id])
-  slotIndex         Int
-  value             Float
-  outOfSpec         Boolean
-  specLow           Float
-  specHigh          Float
-  specUnitOverride  String?
-  correctiveAction  String?
+  id               String   @id @default(cuid())
+  logEntryId       String
+  logEntry         LogEntry @relation(fields: [logEntryId], references: [id])
+  logUnitId        String
+  logUnit          LogUnit  @relation(fields: [logUnitId], references: [id])
+  slotIndex        Int
+  value            Float
+  outOfSpec        Boolean
+  specLow          Float
+  specHigh         Float
+  specUnitOverride String?
+  correctiveAction String?
 
   @@unique([logEntryId, logUnitId, slotIndex])
   @@index([logUnitId])
@@ -380,10 +383,10 @@ model ReceivingDetail {
   /// Folded in from the old standalone "Deliveries received" checklist
   /// (FR-02) — that form and this one always covered the same physical
   /// event (a truck arriving), so they're one form now instead of two.
-  sealIntact                 Boolean
-  caseCountMatches           Boolean
-  supplierPaperworkAttached  Boolean
-  organicCertCurrent         Boolean
+  sealIntact                Boolean
+  caseCountMatches          Boolean
+  supplierPaperworkAttached Boolean
+  organicCertCurrent        Boolean
 
   lines ReceivingLine[]
 
@@ -406,6 +409,7 @@ model ReceivingLine {
   storageType       String
 
   batchInputs BatchInput[]
+  openItems   OpenItem[]
 
   @@unique([receivingDetailId, rowIndex])
   @@map("receiving_lines")
@@ -417,12 +421,12 @@ model ReceivingLine {
 /// ReceivingDetail so intake stays immutable the same way every other log
 /// entry does.
 model ReceivingReview {
-  id                String   @id @default(cuid())
-  logEntryId        String   @unique
-  logEntry          LogEntry @relation(fields: [logEntryId], references: [id])
-  managerId         String
-  manager           Manager  @relation(fields: [managerId], references: [id])
-  reviewedAt        DateTime @default(now())
+  id         String   @id @default(cuid())
+  logEntryId String   @unique
+  logEntry   LogEntry @relation(fields: [logEntryId], references: [id])
+  managerId  String
+  manager    Manager  @relation(fields: [managerId], references: [id])
+  reviewedAt DateTime @default(now())
 
   totalCount        Int?
   countTested       Int?
@@ -581,4 +585,106 @@ model SideworkCompletion {
 
   @@unique([sideworkTaskId, locationId, businessDate])
   @@map("sidework_completions")
+}
+
+// --- Product tracking at the restaurants (item 5) ---------------------------
+//
+// Deliberately not stock-count inventory or reorder forecasting — the spec is
+// explicit that predicting a stockout needs a consumption rate this app has
+// no way to get honestly (manual counts decay within a week; POS-derived
+// depletion is a separate Toast-module evaluation, out of scope here). What's
+// built instead is two narrow, high-signal things that share one per-location
+// product list: a one-tap "running low" flag (5a) and open-item / prep-label
+// expiry tracking (5b). No quantities, units, par levels, reorder points, or
+// costing anywhere in this — if a feature seems to need one, it's out of scope.
+
+/// A per-location product, manager-editable. Shared by 5a (low-stock
+/// flagging) and 5b (open-item expiry) — deliberately one table, not two.
+/// `shelfLifeDays`, when set, drives the one-tap use-by computation in the
+/// prep-label flow; left null, an OpenItem for that product needs an
+/// explicit use-by date instead.
+model Product {
+  id            String   @id @default(cuid())
+  locationId    String
+  location      Location @relation(fields: [locationId], references: [id])
+  name          String
+  category      String?
+  shelfLifeDays Int?
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+
+  lowStockFlags LowStockFlag[]
+  openItems     OpenItem[]
+
+  @@unique([locationId, name])
+  @@map("products")
+}
+
+/// "We are about to run out" — a boolean with a timestamp, not a count.
+/// Deliberately no quantity field: requiring a number here kills adoption and
+/// produces worse data than the boolean would. One open flag per product at a
+/// time; a second cook flagging the same product while one is already open
+/// increments `raiseCount` on the existing row instead of creating a
+/// duplicate, but the repeat raise is recorded, not silently dropped. A flag
+/// clears only when a manager marks it ordered or received — never on a
+/// timer — because a flag that's stayed open for four days is itself useful
+/// information.
+model LowStockFlag {
+  id                   String    @id @default(cuid())
+  productId            String
+  product              Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locationId           String
+  location             Location  @relation(fields: [locationId], references: [id])
+  /// "OPEN" | "CLEARED"
+  status               String    @default("OPEN")
+  raisedAt             DateTime  @default(now())
+  raisedBy             String
+  raisedSignatureName  String
+  raiseCount           Int       @default(1)
+  note                 String?
+  /// "ordered" | "received" — set when a manager clears the flag.
+  clearedDisposition   String?
+  clearedAt            DateTime?
+  clearedBy            String?
+  clearedSignatureName String?
+
+  @@map("low_stock_flags")
+}
+
+/// An on-hand opened/prepped item — the compliance-relevant half of item 5,
+/// enforceable by health code independent of the low-stock flag above.
+/// Extends the ReceivingLine -> BatchInput -> BatchOutput traceability chain
+/// from manufacturing into the restaurants: `receivingLineId` links back to
+/// the delivery this was opened from when one exists, `sourceText` covers the
+/// cases where it doesn't (prepped in-house, or received before this feature
+/// existed). Product name and supplier lot are snapshotted at creation per
+/// invariant 2, so a later amendment to a receiving record never rewrites
+/// what was true on the shelf. Not modeled through LogEntry: this is
+/// operational tracking, and disposition changes (discard) are ordinary
+/// mutations, not amendments.
+model OpenItem {
+  id                     String         @id @default(cuid())
+  locationId             String
+  location               Location       @relation(fields: [locationId], references: [id])
+  productId              String
+  product                Product        @relation(fields: [productId], references: [id])
+  productNameSnapshot    String
+  receivingLineId        String?
+  receivingLine          ReceivingLine? @relation(fields: [receivingLineId], references: [id])
+  supplierLotSnapshot    String?
+  sourceText             String?
+  openedDate             String
+  useByDate              String
+  storageLocation        String?
+  openedBy               String
+  openedSignatureName    String
+  createdAt              DateTime       @default(now())
+  /// "ON_HAND" | "DISCARDED"
+  disposition            String         @default("ON_HAND")
+  discardedAt            DateTime?
+  discardedBy            String?
+  discardedSignatureName String?
+  discardReason          String?
+
+  @@map("open_items")
 }

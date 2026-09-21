@@ -307,3 +307,56 @@ export type SideworkTaskRecord = {
   completedSignatureName: string | null;
   completedAt: string | null;
 };
+
+// --- Item 5: product tracking -----------------------------------------------
+
+export type LowStockFlagSummary = {
+  id: string;
+  raisedAt: string;
+  raisedSignatureName: string;
+  raiseCount: number;
+  note: string | null;
+};
+
+export type ProductRecord = {
+  id: string;
+  name: string;
+  category: string | null;
+  shelfLifeDays: number | null;
+  sortOrder: number;
+  active: boolean;
+  lowStockFlag: LowStockFlagSummary | null;
+};
+
+export type OpenLowStockFlag = {
+  id: string;
+  productId: string;
+  productName: string;
+  raisedAt: string;
+  raisedSignatureName: string;
+  raiseCount: number;
+  note: string | null;
+};
+
+export type OpenItemDisposition = "ON_HAND" | "DISCARDED";
+
+export type OpenItemRecord = {
+  id: string;
+  locationId: string;
+  productId: string;
+  productNameSnapshot: string;
+  receivingLineId: string | null;
+  supplierLotSnapshot: string | null;
+  sourceText: string | null;
+  openedDate: string;
+  useByDate: string;
+  storageLocation: string | null;
+  openedBy: string;
+  openedSignatureName: string;
+  createdAt: string;
+  disposition: OpenItemDisposition;
+  discardedAt: string | null;
+  discardedBy: string | null;
+  discardedSignatureName: string | null;
+  discardReason: string | null;
+};
