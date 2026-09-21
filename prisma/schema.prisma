@@ -161,6 +161,7 @@ model LogDefinition {
   correctiveActionOptions CorrectiveActionOption[]
   certificateRequirements CertificateRequirement[]
   locationConfigs         LocationLogKind[]
+  trainingLinks           TrainingResourceLink[]
 
   @@map("log_definitions")
 }
@@ -196,7 +197,8 @@ model LogItem {
   /// instead of three separate log kinds standing in for one form.
   shift           String?
 
-  itemChecks ItemCheck[]
+  itemChecks    ItemCheck[]
+  trainingLinks TrainingResourceLink[]
 
   @@index([logDefinitionId])
   @@map("log_items")
@@ -687,4 +689,59 @@ model OpenItem {
   discardReason          String?
 
   @@map("open_items")
+}
+
+// --- Training hub (item 6) ---------------------------------------------------
+//
+// A resource library plus contextual surfacing — the surfacing is "the part
+// that matters" per the spec, because a Training tab alone gets opened in
+// week one and never again. Deliberately no completion tracking against the
+// PIN pool: "PIN 4 completed allergen training" isn't a fact about a person
+// and can't be used for anything. That's stage two of the signature work
+// (stage-1-typed-signature-prompt.md) and out of scope here.
+
+/// A link to training material — manager-editable so it never needs a
+/// deploy to update, per the spec's explicit warning that a hardcoded list
+/// goes stale and discredits the feature. `url` always opens externally;
+/// embedding Slides/Drive content in an iframe breaks behind the tablets'
+/// homescreen app context.
+model TrainingResource {
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String?
+  url                   String
+  category              String
+  /// Free-text role tags (e.g. "server", "kitchen") — job function, not
+  /// Manager.role, which is an individual's title, not a category of staff.
+  applicableRoles       String[]
+  /// Location ids this resource applies to. Empty means every location —
+  /// most reference material (steps of service, conduct standards) isn't
+  /// site-specific, and requiring an explicit pick for every resource would
+  /// make authoring it once for both restaurants (item 0's shared-SOP note)
+  /// needlessly fiddly.
+  applicableLocationIds String[]
+  sortOrder             Int      @default(0)
+  active                Boolean  @default(true)
+
+  links TrainingResourceLink[]
+
+  @@map("training_resources")
+}
+
+/// Attaches a TrainingResource to a specific form (logDefinitionId set,
+/// logItemId null) or a specific checklist line within one (both set) —
+/// this is what makes the link appear inline on that form instead of only
+/// in the Training tab. A resource can have any number of links, including
+/// none (Training-tab-only reference material).
+model TrainingResourceLink {
+  id                 String           @id @default(cuid())
+  trainingResourceId String
+  trainingResource   TrainingResource @relation(fields: [trainingResourceId], references: [id], onDelete: Cascade)
+  logDefinitionId    String
+  logDefinition      LogDefinition    @relation(fields: [logDefinitionId], references: [id], onDelete: Cascade)
+  logItemId          String?
+  logItem            LogItem?         @relation(fields: [logItemId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingResourceId, logDefinitionId, logItemId])
+  @@map("training_resource_links")
 }
