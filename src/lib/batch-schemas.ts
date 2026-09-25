@@ -9,7 +9,7 @@ export const batchOutputSchema = z.object({
   quantity: z.string().trim().min(1).optional(),
   bakeDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD"),
   bestByDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD").optional(),
-  disposition: z.enum(["held", "sold_in_store", "shipped"]),
+  disposition: z.enum(["held", "sold_in_store", "shipped", "delivery"]),
   reference: z.string().trim().min(1).optional(),
 });
 

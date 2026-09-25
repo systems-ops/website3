@@ -48,7 +48,7 @@ export async function buildLogEntryCreateData(
 ): Promise<LogEntryChildData> {
   const definition = (await prisma.logDefinition.findUnique({
     where: { id: logDefinitionId },
-    include: { units: true, items: true },
+    include: { units: true, items: { where: { active: true } } },
   })) as LogDefinitionWithChildren | null;
 
   if (!definition) throw new ApiError(404, "Log definition not found");
