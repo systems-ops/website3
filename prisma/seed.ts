@@ -55,16 +55,16 @@ const LOGS = [
     name: "Pre-production inspection",
     formCode: "Form FR-47-A",
     kind: "check",
+    // Combined from the original 14 items — client feedback: fewer things
+    // to think through per item, grouped so each one still reads as a
+    // single coherent sweep-through rather than conflating unrelated
+    // concerns (raw-product utensils, labeling, and fridge temps each stay
+    // their own item since they're each independently audit-relevant).
     items: [
-      "Floors are clean",
+      "Floors, all surfaces/tables/mixing bowls/scales/baking tins/white trays, and wood boards are clean and free of debris",
       "Trash recepticals are empty with clean bags",
-      "All surfaces, tables, mixing bowls, scales, baking tins, white trays are clean",
-      "All wood boards are free of debris and residue",
       "All utensils that will come in contact with raw product have been stored and maintained clean",
-      "Dough mixer is clean",
-      "Divider and rounder is clean",
-      "Forming machine is cool and clean",
-      "Saucing machine is clean and dry",
+      "Dough mixer, divider/rounder, forming machine, and saucing machine are clean",
       "All secondary containers are labeled with Julian dates and lots: cheese, tomato sauce, semolina, malt, yeast, and flour",
       "Fridge temperatures have been checked and logged",
       "The employee break room is clean and organized",
@@ -77,25 +77,20 @@ const LOGS = [
     name: "Hygiene inspection",
     formCode: "Form FR-65-A",
     kind: "check",
+    // Combined from the original 18 items — client feedback: too many
+    // near-duplicate "wash X" / "clean X" items to think through
+    // separately. Grouped by what's actually being cleaned rather than
+    // merged indiscriminately, so production equipment, drains, and
+    // employee facilities stay distinguishable.
     items: [
-      "Wash all surfaces",
-      "Wash all tables",
-      "Wash all mixing bowls",
-      "Wash all scales",
-      "Wash baking tins",
-      "Wash white trays",
-      "Wash metal baking racks",
+      "Wash all surfaces, tables, mixing bowls, scales, baking tins, white trays, and metal baking racks",
       "Sanitize all utensils",
-      "Clean dough mixer",
-      "Clean dough divider",
-      "Clean rounder",
-      "Clean former",
+      "Clean dough mixer, dough divider, rounder, and former",
       "Sweep floors",
       "Mop all floors",
       "Dispose of waste",
       "Clean production drains",
-      "Clean employee break room",
-      "Clean employee restroom",
+      "Clean employee break room and restroom",
     ],
   },
   {
@@ -471,6 +466,17 @@ async function main() {
     where: { logDefinitionId: "delivery" },
   });
 
+  // "Restroom cleaning" (FR-60) is retired per client feedback — folded
+  // into the combined "Clean employee break room and restroom" item on the
+  // Hygiene inspection checklist. Same deactivate-don't-delete treatment.
+  await prisma.logDefinition.updateMany({
+    where: { id: "restroom" },
+    data: { active: false },
+  });
+  await prisma.certificateRequirement.deleteMany({
+    where: { logDefinitionId: "restroom" },
+  });
+
   // Per-location form config (item 0): every log kind is enabled at every
   // location by default, so this is a no-op on top of existing behaviour —
   // except the item-1 decisions that are safe to make outright. Delivery
@@ -484,7 +490,7 @@ async function main() {
   // re-running the seed does not stomp `enabled`/`displayLabel` on
   // existing rows, since those become manager-editable per-location
   // overrides once a config UI exists.
-  const RESTAURANT_ONLY_DISABLED = new Set(["truck", "chlorine", "thermometer-calibration"]);
+  const RESTAURANT_ONLY_DISABLED = new Set(["truck", "chlorine", "thermometer-calibration", "clean"]);
   const RESTAURANT_NAMES = new Set(["Hot Italian", "Passione Emporio"]);
   const locationsForConfig = await prisma.location.findMany();
   for (const loc of locationsForConfig) {

@@ -198,6 +198,12 @@ model LogItem {
   /// so one LogDefinition can present a different item list per shift
   /// instead of three separate log kinds standing in for one form.
   shift           String?
+  /// A superseded item (wording changed, combined into another item) is
+  /// deactivated rather than deleted or renamed in place — a past
+  /// ItemCheck still points at it and needs its original label intact.
+  /// Only active items appear on the live form or count toward how many
+  /// answers a submission needs.
+  active          Boolean       @default(true)
 
   itemChecks    ItemCheck[]
   trainingLinks TrainingResourceLink[]
