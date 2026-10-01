@@ -147,7 +147,7 @@ export default function BatchTab({
                 style={{
                   padding: "10px 14px",
                   background: selected ? "var(--color-accent)" : "transparent",
-                  color: selected ? "#f2f2f3" : "var(--color-text)",
+                  color: selected ? "#fff7ef" : "var(--color-text)",
                   border: "1px solid var(--color-divider)",
                   cursor: "pointer",
                   textAlign: "left",

@@ -118,7 +118,7 @@ export default function RecordsTab({
                 minHeight: 52,
                 padding: "8px 14px",
                 background: l.id === effectiveHLogId ? "var(--color-accent)" : "transparent",
-                color: l.id === effectiveHLogId ? "#f2f2f3" : "var(--color-text)",
+                color: l.id === effectiveHLogId ? "#fff7ef" : "var(--color-text)",
                 border: "1px solid var(--color-divider)",
                 cursor: "pointer",
                 textAlign: "left",
@@ -149,8 +149,8 @@ export default function RecordsTab({
             const entry = entriesByDay.get(day);
             const over = entry?.readings.some((r) => r.outOfSpec);
             const bg = future || !entry ? "transparent" : over ? "var(--color-alert)" : "var(--color-accent)";
-            const fg = future || !entry ? "rgba(29,31,32,.35)" : "#f2f2f3";
-            const border = day === selectedDay ? "#1d1f20" : future || !entry ? "rgba(29,31,32,.3)" : "transparent";
+            const fg = future || !entry ? "rgba(34,20,10,.35)" : "#fff7ef";
+            const border = day === selectedDay ? "var(--color-accent-900)" : future || !entry ? "rgba(34,20,10,.3)" : "transparent";
             return (
               <button
                 key={day}
@@ -174,7 +174,7 @@ export default function RecordsTab({
             {t.outOfRange}
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--color-muted)" }}>
-            <span style={{ width: 11, height: 11, border: "1px solid rgba(29,31,32,.3)" }} />
+            <span style={{ width: 11, height: 11, border: "1px solid rgba(34,20,10,.3)" }} />
             {t.nothingYet}
           </span>
         </div>

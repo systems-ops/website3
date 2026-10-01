@@ -315,13 +315,13 @@ export default function EntryFlow({
       className="kitchen-app"
       style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}
     >
-      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
         <button
           onClick={onClose}
           style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
         >
           <svg width="10" height="17" viewBox="0 0 12 20">
-            <path d="M10 2L2 10l8 8" stroke="#3f5f80" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
           </svg>
           {t.back}
         </button>
@@ -372,7 +372,7 @@ export default function EntryFlow({
             <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, color: "var(--color-alert-text)" }}>
               {unresolved.unit.name} read {unresolved.value} — outside the range
             </span>
-            <span style={{ fontSize: 14.5, color: "rgba(29,31,32,.72)" }}>{t.whatDidYouDo}</span>
+            <span style={{ fontSize: 14.5, color: "var(--color-muted-strong)" }}>{t.whatDidYouDo}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {log.correctiveActions.map((label) => (
                 <button
@@ -415,9 +415,10 @@ export default function EntryFlow({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: 4,
-                          background: "transparent",
+                          background: bad ? "var(--color-alert-fill)" : "var(--color-surface-sunken)",
                           border: `1px solid ${bad ? "var(--color-alert-border)" : "var(--color-divider)"}`,
                           cursor: "pointer",
+                          transition: "background 0.15s ease",
                         }}
                       >
                         <span style={{ fontSize: 12, color: "var(--color-muted)" }}>{slot}</span>
@@ -453,13 +454,15 @@ export default function EntryFlow({
                 ref={(el) => {
                   itemRefs.current[item.id] = el;
                 }}
+                className="card"
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   gap: 8,
                   width: "100%",
                   padding: "10px 14px",
-                  border: `1px solid ${status === "FAIL" ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                  borderColor: status === "FAIL" ? "var(--color-alert-border)" : "var(--color-divider)",
+                  background: status === "FAIL" ? "var(--color-alert-fill)" : "var(--color-surface)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
@@ -742,10 +745,10 @@ export default function EntryFlow({
           </>
         )}
 
-        <span style={{ fontSize: 12.5, color: "rgba(29,31,32,.4)", paddingTop: 4 }}>{log.formCode}</span>
+        <span style={{ fontSize: 12.5, color: "var(--color-muted)", paddingTop: 4 }}>{log.formCode}</span>
       </div>
 
-      <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)", display: "flex", flexDirection: "column", gap: 8, background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(34,20,10,0.05)" }}>
         <button
           disabled={!canSubmit}
           onClick={onSubmit}
@@ -777,8 +780,8 @@ export default function EntryFlow({
       </div>
 
       {pad && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 80 }}>
-          <div style={{ background: "var(--color-bg)", padding: "16px 14px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 80 }}>
+          <div style={{ background: "var(--color-bg)", padding: "16px 14px 32px", display: "flex", flexDirection: "column", gap: 14, boxShadow: "var(--shadow-md)" }}>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 12, padding: "0 6px" }}>
               <span style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, lineHeight: 1.15 }}>{pad.unit.name}</span>

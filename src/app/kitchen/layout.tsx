@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#f2f2f3",
+  themeColor: "#f6f1ea",
 };
 
 export default function KitchenLayout({ children }: { children: React.ReactNode }) {

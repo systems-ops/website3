@@ -879,7 +879,7 @@ export default function ManagerView({
       </div>
 
       {sitesOpen && (
-        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.5)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.chooseKitchen}</span>
             {locations.map((loc) => (
