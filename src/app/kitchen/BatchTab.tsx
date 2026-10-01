@@ -115,21 +115,21 @@ export default function BatchTab({
           value={batchCode}
           onChange={(e) => setBatchCode(e.target.value)}
           placeholder={t.batchCode}
-          style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+          style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
         />
         <input
           type="text"
           value={productType}
           onChange={(e) => setProductType(e.target.value)}
           placeholder={t.productType}
-          style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+          style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
         />
         <input
           type="text"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           placeholder={t.quantityMade}
-          style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+          style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
         />
       </div>
 
@@ -176,14 +176,14 @@ export default function BatchTab({
               value={o.productName}
               onChange={(e) => updateOutput(i, { productName: e.target.value })}
               placeholder={t.productName}
-              style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={o.quantity}
               onChange={(e) => updateOutput(i, { quantity: e.target.value })}
               placeholder={t.quantityMade}
-              style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>{t.bakeDate}</span>
@@ -191,7 +191,7 @@ export default function BatchTab({
                 type="date"
                 value={o.bakeDate}
                 onChange={(e) => updateOutput(i, { bakeDate: e.target.value })}
-                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -200,7 +200,7 @@ export default function BatchTab({
                 type="date"
                 value={o.bestByDate}
                 onChange={(e) => updateOutput(i, { bestByDate: e.target.value })}
-                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -229,7 +229,7 @@ export default function BatchTab({
               value={o.reference}
               onChange={(e) => updateOutput(i, { reference: e.target.value })}
               placeholder={t.reference}
-              style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             {outputs.length > 1 && (
               <button

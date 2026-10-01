@@ -592,7 +592,7 @@ export default function EntryFlow({
                         inputMode="decimal"
                         value={row.referenceReading}
                         onChange={(e) => updateCalibrationRow(i, { referenceReading: e.target.value })}
-                        style={{ minHeight: 52, padding: "0 10px", fontSize: 20, fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--color-divider)", background: "transparent" }}
+                        style={{ minHeight: 52, padding: "0 10px", fontSize: 20, fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                       />
                     </label>
                     <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -647,14 +647,14 @@ export default function EntryFlow({
                 value={draft.receiving.invoiceNumber}
                 onChange={(e) => updateReceiving({ invoiceNumber: e.target.value })}
                 placeholder={t.invoiceNumber}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
               <input
                 type="text"
                 value={draft.receiving.distributorName}
                 onChange={(e) => updateReceiving({ distributorName: e.target.value })}
                 placeholder={t.distributorName}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
               {renderApproval(t.wfcfoApproved, draft.receiving.wfcfo, (f) => updateReceiving({ wfcfo: f }))}
               {renderApproval(t.nonGmoApproved, draft.receiving.nonGmo, (f) => updateReceiving({ nonGmo: f }))}
@@ -666,7 +666,7 @@ export default function EntryFlow({
                 value={draft.receiving.truckTempF}
                 onChange={(e) => updateReceiving({ truckTempF: e.target.value })}
                 placeholder={t.truckTempF}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 16, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
               {renderBoolToggle(t.palletConditionGood, draft.receiving.palletConditionGood, (v) => updateReceiving({ palletConditionGood: v }))}
               {renderBoolToggle(t.plasticWrapGood, draft.receiving.plasticWrapGood, (v) => updateReceiving({ plasticWrapGood: v }))}
@@ -688,7 +688,7 @@ export default function EntryFlow({
                     value={line.productName}
                     onChange={(e) => updateReceivingLine(i, { productName: e.target.value })}
                     placeholder={t.productName}
-                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 16, fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--color-divider)", background: "transparent" }}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 16, fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                   />
                   <button
                     onClick={() => removeReceivingLine(i)}
@@ -703,21 +703,21 @@ export default function EntryFlow({
                     value={line.productId}
                     onChange={(e) => updateReceivingLine(i, { productId: e.target.value })}
                     placeholder={t.productId}
-                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                   />
                   <input
                     type="text"
                     value={line.productCount}
                     onChange={(e) => updateReceivingLine(i, { productCount: e.target.value })}
                     placeholder={t.productCount}
-                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                   />
                   <input
                     type="text"
                     value={line.lotNumber}
                     onChange={(e) => updateReceivingLine(i, { lotNumber: e.target.value })}
                     placeholder={t.lotNumber}
-                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                    style={{ flex: 1, minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                   />
                 </div>
                 {renderBoolToggle(t.allergenProduct, line.allergenProduct, (v) => updateReceivingLine(i, { allergenProduct: v }))}

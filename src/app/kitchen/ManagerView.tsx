@@ -464,7 +464,7 @@ export default function ManagerView({
                 type="date"
                 value={auditFrom}
                 onChange={(e) => setAuditFrom(e.target.value)}
-                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
@@ -473,7 +473,7 @@ export default function ManagerView({
                 type="date"
                 value={auditTo}
                 onChange={(e) => setAuditTo(e.target.value)}
-                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             </div>
           </div>
@@ -576,7 +576,7 @@ export default function ManagerView({
           {sideworkTasks
             .filter((task) => task.active)
             .map((task) => (
-              <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+              <div key={task.id} className="card" style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px" }}>
                 <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: 15 }}>{task.title}</span>
                   <span style={{ fontSize: 12, color: "var(--color-muted)" }}>
@@ -600,14 +600,14 @@ export default function ManagerView({
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder={t.sideworkTaskTitle}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newTaskCategory}
               onChange={(e) => setNewTaskCategory(e.target.value)}
               placeholder={t.sideworkCategory}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {SIDEWORK_SHIFTS.map((shift) => (
@@ -703,14 +703,14 @@ export default function ManagerView({
               value={newProductName}
               onChange={(e) => setNewProductName(e.target.value)}
               placeholder={t.productsProductName}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newProductCategory}
               onChange={(e) => setNewProductCategory(e.target.value)}
               placeholder={t.productsCategory}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="number"
@@ -718,7 +718,7 @@ export default function ManagerView({
               value={newProductShelfLife}
               onChange={(e) => setNewProductShelfLife(e.target.value)}
               placeholder={t.productsShelfLifeDays}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={addProduct}
@@ -767,7 +767,7 @@ export default function ManagerView({
                         setLinkLogDefId(e.target.value);
                         setLinkItemId("");
                       }}
-                      style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                      style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                     >
                       {trainingLogs.map((log) => (
                         <option key={log.id} value={log.id}>
@@ -779,7 +779,7 @@ export default function ManagerView({
                       <select
                         value={linkItemId}
                         onChange={(e) => setLinkItemId(e.target.value)}
-                        style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                        style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                       >
                         <option value="">{t.trainingWholeForm}</option>
                         {trainingLogs
@@ -815,21 +815,21 @@ export default function ManagerView({
               value={newResourceTitle}
               onChange={(e) => setNewResourceTitle(e.target.value)}
               placeholder={t.trainingTitle}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newResourceCategory}
               onChange={(e) => setNewResourceCategory(e.target.value)}
               placeholder={t.trainingCategory}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newResourceUrl}
               onChange={(e) => setNewResourceUrl(e.target.value)}
               placeholder={t.trainingUrl}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={addTrainingResource}
@@ -864,7 +864,7 @@ export default function ManagerView({
               value={newRecipientEmail}
               onChange={(e) => setNewRecipientEmail(e.target.value)}
               placeholder={t.reportRecipientEmail}
-              style={{ flex: 1, minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ flex: 1, minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={addRecipient}
@@ -918,7 +918,7 @@ export default function ManagerView({
               onChange={(e) => setTraceQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && runTraceSearch()}
               placeholder={t.traceSearchPlaceholder}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
               <span style={{ fontSize: 14 }}>{traceLocationScoped ? currentLocation?.name : t.traceAllKitchens}</span>
@@ -1024,7 +1024,7 @@ export default function ManagerView({
                 value={verifyComments}
                 onChange={(e) => setVerifyComments(e.target.value)}
                 placeholder={t.verificationComments}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             )}
           </div>
@@ -1099,14 +1099,14 @@ export default function ManagerView({
               value={review.storageLocation ?? ""}
               onChange={(e) => setReview((r) => ({ ...r, storageLocation: e.target.value }))}
               placeholder={t.storage}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={review.comments ?? ""}
               onChange={(e) => setReview((r) => ({ ...r, comments: e.target.value }))}
               placeholder={t.calibrationComment}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
           </div>
 

@@ -224,7 +224,7 @@ export default function ProductsTab({
             <select
               value={prepProductId}
               onChange={(e) => setPrepProductId(e.target.value)}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -237,7 +237,7 @@ export default function ProductsTab({
               value={prepStorage}
               onChange={(e) => setPrepStorage(e.target.value)}
               placeholder={t.productsPrepStorage}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             {autoUseBy ? (
               <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.productsPrepUseByAuto(autoUseBy)}</span>
@@ -246,7 +246,7 @@ export default function ProductsTab({
                 type="date"
                 value={prepUseBy}
                 onChange={(e) => setPrepUseBy(e.target.value)}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             )}
             {prepError && <span style={{ fontSize: 13, color: "var(--color-alert-text)" }}>{prepError}</span>}
@@ -271,7 +271,7 @@ export default function ProductsTab({
               value={discardReason}
               onChange={(e) => setDiscardReason(e.target.value)}
               placeholder={t.productsDiscardReason}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={confirmDiscard}
