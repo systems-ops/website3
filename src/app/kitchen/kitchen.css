@@ -1,12 +1,8 @@
 /* Industry design tokens, ported from design_handoff_kitchen_log/industry.css,
    then given real depth (round 2 — "prettier + more flow") while keeping the
-   original blue accent. Scoped under .kitchen-app so it never leaks into the
-   marketing site. Inter instead of Barlow/Barlow Condensed — a taller
-   x-height and open counters read faster at a glance than a condensed face,
-   which matters more here than it costs in character (numerals in
-   particular — reading "38" vs "3B" correctly on a glance at a reading —
-   are designed to stay unambiguous at small sizes). */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+   original blue accent and original Barlow/Barlow Condensed type. Scoped
+   under .kitchen-app so it never leaks into the marketing site. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap");
 
 .kitchen-app {
   /* Cool neutrals — the original scheme, now with real surface/elevation
@@ -48,8 +44,8 @@
   --shadow-sm: 0 2px 6px rgba(20, 22, 24, 0.08), 0 1px 2px rgba(20, 22, 24, 0.05);
   --shadow-md: 0 8px 20px rgba(20, 22, 24, 0.12), 0 2px 6px rgba(20, 22, 24, 0.07);
 
-  --font-heading: "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, sans-serif;
 
   font-family: var(--font-body);
   background: var(--color-bg);
