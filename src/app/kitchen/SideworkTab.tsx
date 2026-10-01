@@ -69,9 +69,26 @@ export default function SideworkTab({
       {SHIFT_ORDER.filter((shift) => tasks.some((task) => task.shift === shift)).map((shift) => {
         const shiftTasks = tasks.filter((task) => task.shift === shift);
         const categories = Array.from(new Set(shiftTasks.map((task) => task.category)));
+        const doneCount = shiftTasks.filter((task) => task.status === "DONE").length;
         return (
           <div key={shift} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{shiftLabel[shift]}</span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "6px 10px",
+                background: "var(--color-surface-sunken)",
+                borderLeft: "3px solid var(--color-accent)",
+              }}
+            >
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13.5, letterSpacing: ".08em", color: "var(--color-accent-900)" }}>
+                {shiftLabel[shift].toUpperCase()}
+              </span>
+              <span style={{ fontSize: 12.5, color: "var(--color-muted)" }}>
+                {doneCount}/{shiftTasks.length}
+              </span>
+            </div>
             {categories.map((category) => (
               <div key={category} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 15, color: "var(--color-muted)" }}>
@@ -82,14 +99,15 @@ export default function SideworkTab({
                   .map((task) => (
                     <div
                       key={task.id}
+                      className="card"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: 12,
                         minHeight: 58,
                         padding: "10px 14px",
-                        border: `1px solid ${task.status === "DONE" ? "var(--color-pass-border)" : "var(--color-divider)"}`,
-                        background: task.status === "DONE" ? "var(--color-pass-fill)" : "transparent",
+                        borderColor: task.status === "DONE" ? "var(--color-pass-border)" : "var(--color-divider)",
+                        background: task.status === "DONE" ? "var(--color-pass-fill)" : "var(--color-surface)",
                       }}
                     >
                       <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
@@ -133,7 +151,22 @@ export default function SideworkTab({
                         </div>
                       )}
                       {task.status === "DONE" && (
-                        <span style={{ width: 22, height: 22, flex: "none", borderRadius: "50%", background: "var(--color-pass)" }} />
+                        <span
+                          style={{
+                            width: 22,
+                            height: 22,
+                            flex: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "var(--color-pass)",
+                            color: "#fff",
+                          }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8.5l3.2 3.2L13 4.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </span>
                       )}
                     </div>
                   ))}

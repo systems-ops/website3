@@ -1,37 +1,49 @@
-/* Industry design tokens, ported from design_handoff_kitchen_log/industry.css.
+/* Industry design tokens, ported from design_handoff_kitchen_log/industry.css,
+   then warmed up and given real depth (round 2 — "prettier + more flow").
    Scoped under .kitchen-app so it never leaks into the marketing site. */
-@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap");
 
 .kitchen-app {
-  --color-bg: #f2f2f3;
-  --color-text: #1d1f20;
-  --color-accent: #5980a6;
-  --color-accent-700: #416180;
-  --color-accent-900: #1d2d3d;
-  --color-divider: rgba(29, 31, 32, 0.16);
-  --color-alert: #8f4a4a;
-  --color-alert-text: #7d3f3f;
-  --color-alert-fill: rgba(143, 74, 74, 0.06);
-  --color-alert-border: rgba(143, 74, 74, 0.5);
-  --color-muted: rgba(29, 31, 32, 0.55);
-  /* Higher-contrast than --color-muted (>=7:1 against --color-bg) for text
-     that item 7.3 calls out by name — progress counters and instruction
-     lines, which need to read at a glance in worse-than-desk conditions. */
-  --color-muted-strong: rgba(29, 31, 32, 0.82);
-  --color-disabled: rgba(29, 31, 32, 0.28);
-  --color-hover: rgba(29, 31, 32, 0.04);
+  /* Warm neutrals instead of cold gray — ties to the Passione brand without
+     softening the industrial/inspection-form identity (every corner stays
+     square; warmth comes from color and depth, not rounding). */
+  --color-bg: #f6f1ea;
+  --color-surface: #fffdfa;
+  --color-surface-sunken: #efe7db;
+  --color-text: #221a14;
+  --color-divider: rgba(34, 26, 20, 0.14);
+  --color-muted: rgba(34, 26, 20, 0.58);
+  --color-muted-strong: rgba(34, 26, 20, 0.82);
+  --color-disabled: rgba(34, 26, 20, 0.28);
+  --color-hover: rgba(34, 26, 20, 0.05);
+
+  /* Terracotta accent — distinct hue from the alert red below so the two
+     never get confused at a glance. */
+  --color-accent: #b5542e;
+  --color-accent-700: #8f4022;
+  --color-accent-900: #3a2013;
+  --color-accent-fill: rgba(181, 84, 46, 0.1);
+
+  --color-alert: #a3293a;
+  --color-alert-text: #8c2130;
+  --color-alert-fill: rgba(163, 41, 58, 0.08);
+  --color-alert-border: rgba(163, 41, 58, 0.5);
 
   /* Status color system (item 7.1) — PASS/FAIL/NA share this vocabulary
      everywhere a status appears: checklist controls, Today tab, Records,
      detail views. FAIL reuses --color-alert, the same red already used for
      out-of-spec readings, so a person learns the color language once. */
-  --color-pass: #3c7a4f;
-  --color-pass-text: #2f6140;
-  --color-pass-fill: rgba(60, 122, 79, 0.1);
-  --color-pass-border: rgba(60, 122, 79, 0.55);
-  --color-na: #55575c;
-  --color-na-fill: rgba(29, 31, 32, 0.08);
-  --color-na-border: rgba(29, 31, 32, 0.4);
+  --color-pass: #3f7d4a;
+  --color-pass-text: #2f6139;
+  --color-pass-fill: rgba(63, 125, 74, 0.1);
+  --color-pass-border: rgba(63, 125, 74, 0.5);
+  --color-na: #5c564e;
+  --color-na-fill: rgba(34, 26, 20, 0.07);
+  --color-na-border: rgba(34, 26, 20, 0.35);
+
+  --shadow-xs: 0 1px 2px rgba(34, 20, 10, 0.06);
+  --shadow-sm: 0 2px 6px rgba(34, 20, 10, 0.07), 0 1px 2px rgba(34, 20, 10, 0.05);
+  --shadow-md: 0 8px 20px rgba(34, 20, 10, 0.1), 0 2px 6px rgba(34, 20, 10, 0.06);
 
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-body: "Barlow", system-ui, sans-serif;
@@ -62,17 +74,32 @@
   outline-offset: 2px;
 }
 
-/* Square, transparent, hairline-bordered "blueprint" frame with four corner
-   registration marks — the system's signature component treatment. */
+.kitchen-app ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Square, hairline-bordered "blueprint" frame with four corner registration
+   marks — the system's signature component treatment, now lifted off the
+   page on a warm white surface with a soft shadow instead of sitting flat
+   and transparent, so it actually reads as a tappable card. */
 .kitchen-app .blueprint {
   position: relative;
   border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+.kitchen-app .blueprint:active {
+  box-shadow: none;
+  transform: translateY(1px);
 }
 .kitchen-app .corner {
   position: absolute;
   width: 11px;
   height: 11px;
-  color: rgba(29, 31, 32, 0.55);
+  color: var(--color-accent);
+  opacity: 0.55;
 }
 .kitchen-app .corner::before,
 .kitchen-app .corner::after {
@@ -109,6 +136,17 @@
   right: -6px;
 }
 
+/* A plain content card: same warm surface + shadow as .blueprint, no
+   registration marks — for rows that aren't "a form to fill" (sidework
+   tasks, manager list rows) so the corner marks stay a meaningful signal
+   reserved for actual compliance forms, not decoration everywhere. */
+.kitchen-app .card {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+}
+
 .kitchen-app .btn {
   display: inline-flex;
   align-items: center;
@@ -119,8 +157,12 @@
   font-weight: 600;
   border-radius: 0;
   border: 1px solid var(--color-divider);
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-text);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.kitchen-app .btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .kitchen-app .btn:disabled {
   opacity: 0.45;
@@ -129,11 +171,19 @@
 .kitchen-app .btn-primary {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: var(--color-bg);
+  color: #fff7ef;
+  box-shadow: var(--shadow-xs);
 }
 .kitchen-app .btn-primary:hover {
   background: var(--color-accent-700);
 }
 .kitchen-app .btn-secondary:hover {
   background: var(--color-hover);
+}
+
+/* Shared icon treatment for nav/section icons (see icons.tsx) — currentColor
+   so it always matches whatever text color the button/label already has. */
+.kitchen-app .icon {
+  flex: none;
+  display: inline-flex;
 }

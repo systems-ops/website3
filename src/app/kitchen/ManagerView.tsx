@@ -41,6 +41,7 @@ import type {
 } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import { LocationIcon } from "./icons";
 
 const RECEIVING_LOG_ID = "receiving-log";
 const SIDEWORK_SHIFTS: SideworkShift[] = ["OPENING", "RUNNING", "CLOSING", "DOWNTIME"];
@@ -417,12 +418,15 @@ export default function ManagerView({
 
   return (
     <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
-      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)" }}>
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <button
             onClick={() => setSitesOpen(true)}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: 0, background: "transparent", border: 0, cursor: "pointer", textAlign: "left" }}
           >
+            <span style={{ display: "flex", color: "var(--color-accent)" }}>
+              <LocationIcon size={20} />
+            </span>
             <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24, lineHeight: 1.1 }}>{currentLocation?.name}</span>
             <span style={{ fontSize: 13, color: "var(--color-accent-700)" }}>{t.change}</span>
           </button>
@@ -497,13 +501,19 @@ export default function ManagerView({
                 <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span
                   style={{
-                    width: 14,
-                    height: 14,
                     flex: "none",
-                    background: w.verification ? "var(--color-accent)" : hasFlags ? "var(--color-alert)" : "transparent",
-                    border: w.verification ? undefined : "1px solid var(--color-alert)",
+                    fontFamily: "var(--font-heading)",
+                    fontWeight: 600,
+                    fontSize: 11.5,
+                    letterSpacing: ".04em",
+                    padding: "4px 9px",
+                    color: w.verification ? "var(--color-pass-text)" : hasFlags ? "var(--color-alert-text)" : "var(--color-muted)",
+                    background: w.verification ? "var(--color-pass-fill)" : hasFlags ? "var(--color-alert-fill)" : "var(--color-na-fill)",
+                    border: `1px solid ${w.verification ? "var(--color-pass-border)" : hasFlags ? "var(--color-alert-border)" : "var(--color-na-border)"}`,
                   }}
-                />
+                >
+                  {w.verification ? t.chipVerified : hasFlags ? t.chipNeedsReview : t.chipOpen}
+                </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
                   <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>{t.weekOf(w.weekStart)}</span>
                   <span style={{ fontSize: 13, color: "var(--color-muted)" }}>

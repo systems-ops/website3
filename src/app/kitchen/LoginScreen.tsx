@@ -5,6 +5,7 @@ import { ApiRequestError, login, managerLogin } from "./api-client";
 import type { Cook, Location, Manager } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import { LocationIcon } from "./icons";
 
 const PAD_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
 const PIN_LENGTH = 6;
@@ -80,9 +81,12 @@ export default function LoginScreen({
         gap: 24,
       }}
     >
-      <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 28 }}>
-        {t.signIn}
-      </span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 32, color: "var(--color-accent-900)" }}>
+          {t.signIn}
+        </span>
+        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.signInSubtitle}</span>
+      </div>
 
       {mode === "cook" && (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -90,43 +94,50 @@ export default function LoginScreen({
           {t.chooseKitchen}
         </span>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {locations.map((loc) => (
-            <button
-              key={loc.id}
-              onClick={() => pickLocation(loc.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                minHeight: 54,
-                padding: "10px 14px",
-                background: "transparent",
-                border: "1px solid var(--color-divider)",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
-              <span
+          {locations.map((loc) => {
+            const active = loc.id === locationId;
+            return (
+              <button
+                key={loc.id}
+                className="card"
+                onClick={() => pickLocation(loc.id)}
                 style={{
-                  width: 14,
-                  height: 14,
-                  flex: "none",
-                  background: loc.id === locationId ? "var(--color-accent)" : "transparent",
-                  border: "1px solid var(--color-accent)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  minHeight: 58,
+                  padding: "10px 16px",
+                  background: active ? "var(--color-accent-fill)" : "var(--color-surface)",
+                  borderColor: active ? "var(--color-accent)" : "var(--color-divider)",
+                  borderWidth: active ? 1.5 : 1,
+                  cursor: "pointer",
+                  textAlign: "left",
                 }}
-              />
-              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 18, flex: 1 }}>
-                {loc.name}
-              </span>
-            </button>
-          ))}
+              >
+                <span style={{ display: "flex", flex: "none", color: active ? "var(--color-accent)" : "var(--color-muted)" }}>
+                  <LocationIcon size={20} />
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-heading)",
+                    fontWeight: 600,
+                    fontSize: 19,
+                    flex: 1,
+                    color: active ? "var(--color-accent-900)" : "var(--color-text)",
+                  }}
+                >
+                  {loc.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
-        <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.enterPin}</span>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "center" }}>
+        <span style={{ fontSize: 14, color: "var(--color-muted)", textAlign: "center" }}>{t.enterPin}</span>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
           {Array.from({ length: PIN_LENGTH }).map((_, i) => (
             <span
               key={i}
@@ -134,8 +145,9 @@ export default function LoginScreen({
                 width: 16,
                 height: 16,
                 borderRadius: "50%",
-                border: "1px solid var(--color-divider)",
-                background: i < pin.length ? "var(--color-accent)" : "transparent",
+                border: `1.5px solid ${i < pin.length ? "var(--color-accent)" : "var(--color-divider)"}`,
+                background: i < pin.length ? "var(--color-accent)" : "var(--color-surface)",
+                transition: "background 0.1s ease, border-color 0.1s ease",
               }}
             />
           ))}
@@ -143,7 +155,7 @@ export default function LoginScreen({
         {error && (
           <span style={{ color: "var(--color-alert-text)", fontSize: 14, textAlign: "center" }}>{error}</span>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: "auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: 20, maxWidth: 420, width: "100%", alignSelf: "center" }}>
           {PAD_KEYS.map((k, i) => (
             <button
               key={i}
