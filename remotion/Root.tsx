@@ -11,6 +11,7 @@ import { SignatureClassyReel, SIGNATURE_CLASSY_FPS, SIGNATURE_CLASSY_HEIGHT, SIG
 import { ReservationReel, RESERVATION_FPS, RESERVATION_HEIGHT, RESERVATION_WIDTH, RESERVATION_DURATION_IN_FRAMES } from "./reels/ReservationReel";
 import { NativeStoryReel, NATIVE_STORY_FPS, NATIVE_STORY_HEIGHT, NATIVE_STORY_WIDTH, NATIVE_STORY_DURATION_IN_FRAMES } from "./reels/NativeStoryReel";
 import { StyleTestReel, STYLE_TEST_FPS, STYLE_TEST_HEIGHT, STYLE_TEST_WIDTH, STYLE_TEST_DURATION_IN_FRAMES } from "./reels/StyleTest";
+import { WelcomeReel, WELCOME_FPS, WELCOME_HEIGHT, WELCOME_WIDTH, WELCOME_DURATION_IN_FRAMES } from "./reels/WelcomeReel";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -110,6 +111,14 @@ export const RemotionRoot: React.FC = () => {
         fps={STYLE_TEST_FPS}
         width={STYLE_TEST_WIDTH}
         height={STYLE_TEST_HEIGHT}
+      />
+      <Composition
+        id="Welcome"
+        component={WelcomeReel}
+        durationInFrames={WELCOME_DURATION_IN_FRAMES}
+        fps={WELCOME_FPS}
+        width={WELCOME_WIDTH}
+        height={WELCOME_HEIGHT}
       />
     </>
   );
