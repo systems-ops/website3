@@ -879,7 +879,7 @@ export default function ManagerView({
       </div>
 
       {sitesOpen && (
-        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.chooseKitchen}</span>
             {locations.map((loc) => (
@@ -901,7 +901,7 @@ export default function ManagerView({
 
       {traceOpen && (
         <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setTraceOpen(false)}
               style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
@@ -984,7 +984,7 @@ export default function ManagerView({
 
       {selectedWeek && (
         <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setSelectedWeek(null)}
               style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
@@ -1041,7 +1041,7 @@ export default function ManagerView({
 
       {selected && (
         <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setSelected(null)}
               style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}

@@ -5,8 +5,8 @@
   "start_url": "/kitchen",
   "scope": "/kitchen",
   "display": "standalone",
-  "background_color": "#f6f1ea",
-  "theme_color": "#f6f1ea",
+  "background_color": "#f2f2f3",
+  "theme_color": "#f2f2f3",
   "orientation": "portrait",
   "icons": [
     { "src": "/kitchen-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },

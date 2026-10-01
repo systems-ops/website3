@@ -128,25 +128,28 @@ export default function ProductsTab({
       </button>
 
       {categories.map((category) => (
-        <div key={category} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div key={category} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {category && (
-            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 15, color: "var(--color-muted)" }}>
-              {category}
-            </span>
+            <div style={{ padding: "6px 10px", background: "var(--color-surface-sunken)", borderLeft: "3px solid var(--color-accent)" }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13.5, letterSpacing: ".08em", color: "var(--color-accent-900)" }}>
+                {category.toUpperCase()}
+              </span>
+            </div>
           )}
           {products
             .filter((p) => (p.category ?? "") === category)
             .map((product) => (
               <div
                 key={product.id}
+                className="card"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
                   minHeight: 58,
                   padding: "10px 14px",
-                  border: `1px solid ${product.lowStockFlag ? "var(--color-alert-border)" : "var(--color-divider)"}`,
-                  background: product.lowStockFlag ? "rgba(178,58,50,.06)" : "transparent",
+                  borderColor: product.lowStockFlag ? "var(--color-alert-border)" : "var(--color-divider)",
+                  background: product.lowStockFlag ? "var(--color-alert-fill)" : "var(--color-surface)",
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
@@ -180,13 +183,15 @@ export default function ProductsTab({
             return (
               <div
                 key={item.id}
+                className="card"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
                   minHeight: 58,
                   padding: "10px 14px",
-                  border: `1px solid ${isToday ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                  borderColor: isToday ? "var(--color-alert-border)" : "var(--color-divider)",
+                  background: isToday ? "var(--color-alert-fill)" : "var(--color-surface)",
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
@@ -213,8 +218,8 @@ export default function ProductsTab({
       )}
 
       {prepOpen && (
-        <div onClick={() => setPrepOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div onClick={() => setPrepOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12, boxShadow: "var(--shadow-md)" }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.productsPrepLabel}</span>
             <select
               value={prepProductId}
@@ -258,8 +263,8 @@ export default function ProductsTab({
       )}
 
       {discardTarget && (
-        <div onClick={() => setDiscardTarget(null)} style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div onClick={() => setDiscardTarget(null)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12, boxShadow: "var(--shadow-md)" }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{discardTarget.productNameSnapshot}</span>
             <input
               type="text"

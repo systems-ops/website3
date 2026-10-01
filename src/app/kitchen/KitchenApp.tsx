@@ -460,7 +460,7 @@ export default function KitchenApp() {
         )}
       </div>
 
-      <div style={{ flex: "none", display: "flex", borderTop: "1px solid var(--color-divider)", padding: "6px 0 26px", background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(34,20,10,0.05)" }}>
+      <div style={{ flex: "none", display: "flex", borderTop: "1px solid var(--color-divider)", padding: "6px 0 26px", background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(29,31,32,0.05)" }}>
         {(
           [
             { key: "today", label: t.today, Icon: TodayIcon },
@@ -502,7 +502,7 @@ export default function KitchenApp() {
       </div>
 
       {sitesOpen && (
-        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12, boxShadow: "var(--shadow-md)" }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.chooseKitchen}</span>
             {scopedLocations.map((loc) => {
@@ -562,7 +562,7 @@ export default function KitchenApp() {
       {detailEntry && <EntryDetail log={detailEntry.log} entry={detailEntry.entry} onClose={() => setDetailEntry(null)} lang={lang} />}
 
       {toast && (
-        <div style={{ position: "absolute", left: 20, right: 20, bottom: 104, padding: "14px 16px", background: "var(--color-accent-900)", color: "#fff7ef", zIndex: 90, fontSize: 14.5, lineHeight: 1.4, boxShadow: "var(--shadow-md)" }}>
+        <div style={{ position: "absolute", left: 20, right: 20, bottom: 104, padding: "14px 16px", background: "var(--color-accent-900)", color: "#f2f2f3", zIndex: 90, fontSize: 14.5, lineHeight: 1.4, boxShadow: "var(--shadow-md)" }}>
           {toast}
         </div>
       )}

@@ -748,7 +748,7 @@ export default function EntryFlow({
         <span style={{ fontSize: 12.5, color: "var(--color-muted)", paddingTop: 4 }}>{log.formCode}</span>
       </div>
 
-      <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)", display: "flex", flexDirection: "column", gap: 8, background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(34,20,10,0.05)" }}>
+      <div style={{ flex: "none", padding: "14px 20px 32px", borderTop: "1px solid var(--color-divider)", display: "flex", flexDirection: "column", gap: 8, background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(29,31,32,0.05)" }}>
         <button
           disabled={!canSubmit}
           onClick={onSubmit}
@@ -780,7 +780,7 @@ export default function EntryFlow({
       </div>
 
       {pad && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(34,20,10,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 80 }}>
+        <div style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 80 }}>
           <div style={{ background: "var(--color-bg)", padding: "16px 14px 32px", display: "flex", flexDirection: "column", gap: 14, boxShadow: "var(--shadow-md)" }}>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 12, padding: "0 6px" }}>
               <span style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
