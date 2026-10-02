@@ -170,7 +170,6 @@ export default function BatchTab({
         <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.outputs}</span>
         {outputs.map((o, i) => (
           <div key={i} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
-            <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
             <input
               type="text"
               value={o.productName}

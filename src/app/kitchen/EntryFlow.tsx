@@ -312,7 +312,7 @@ export default function EntryFlow({
 
   return (
     <div
-      className="kitchen-app"
+      className="kitchen-app page-transition-slide"
       style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}
     >
       <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
@@ -392,7 +392,6 @@ export default function EntryFlow({
             const fixes: string[] = [];
             return (
               <div key={unit.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, lineHeight: 1.2 }}>{unit.name}</span>
                   <span style={{ fontSize: 13.5, color: "var(--color-muted)" }}>{specText(unit, unitLabel)}</span>
@@ -559,7 +558,6 @@ export default function EntryFlow({
                     border: outOfTolerance ? "1px solid var(--color-alert-border)" : undefined,
                   }}
                 >
-                  <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input
                       type="text"
@@ -641,7 +639,6 @@ export default function EntryFlow({
         {log.kind === "receiving" && (
           <>
             <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14 }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <input
                 type="text"
                 value={draft.receiving.invoiceNumber}
@@ -681,7 +678,6 @@ export default function EntryFlow({
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.products}</span>
             {draft.receiving.lines.map((line, i) => (
               <div key={i} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <input
                     type="text"

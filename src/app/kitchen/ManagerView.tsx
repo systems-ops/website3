@@ -498,7 +498,6 @@ export default function ManagerView({
                 onClick={() => openWeek(w)}
                 style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
               >
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span
                   style={{
                     flex: "none",
@@ -545,7 +544,6 @@ export default function ManagerView({
               onClick={() => openReview(e)}
               style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
             >
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>
                   {e.receivingDetail?.distributorName ?? e.businessDate}
@@ -642,7 +640,6 @@ export default function ManagerView({
           )}
           {lowStockFlags.map((flag) => (
             <div key={flag.id} className="blueprint" style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 66, padding: "12px 14px" }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>{flag.productName}</span>
                 <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
@@ -900,7 +897,7 @@ export default function ManagerView({
       )}
 
       {traceOpen && (
-        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+        <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
           <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setTraceOpen(false)}
@@ -951,7 +948,6 @@ export default function ManagerView({
 
             {traceResults.map((b) => (
               <div key={b.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 18 }}>
                   {b.batchCode} — {b.productType}
                 </span>
@@ -983,7 +979,7 @@ export default function ManagerView({
       )}
 
       {selectedWeek && (
-        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+        <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
           <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setSelectedWeek(null)}
@@ -996,7 +992,6 @@ export default function ManagerView({
 
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 6, padding: 14 }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ fontSize: 14 }}>{t.outOfSpecCount(selectedWeek.outOfSpecCount)}</span>
               <span style={{ fontSize: 14 }}>{t.failedCount(selectedWeek.failedCount)}</span>
               <span style={{ fontSize: 14 }}>{t.lateCount(selectedWeek.lateCount)}</span>
@@ -1040,7 +1035,7 @@ export default function ManagerView({
       )}
 
       {selected && (
-        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+        <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
           <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setSelected(null)}

@@ -224,7 +224,6 @@ export default function RecordsTab({
         </div>
 
         <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 14px" }}>
-          <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
           <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>
             {selectedDay} {monthLabel.split(" ")[0]}
           </span>

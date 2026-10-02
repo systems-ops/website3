@@ -115,7 +115,6 @@ export default function TodayTab({
                 onClick={() => onOpen(item.logDefinitionId)}
                 style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 74, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
               >
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span style={{ display: "flex", flex: "none", color: "var(--color-accent)" }}>
                   <KindIcon size={24} />
                 </span>

@@ -428,6 +428,7 @@ export default function KitchenApp() {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 24px" }}>
+        <div key={tab} className="page-transition-fade">
         {tab === "today" && today && locationId && (
           <TodayTab
             today={today}
@@ -458,6 +459,7 @@ export default function KitchenApp() {
         {tab === "records" && locationId && (
           <RecordsTab locationId={locationId} logs={logs} certificates={certificates} lang={lang} />
         )}
+        </div>
       </div>
 
       <div style={{ flex: "none", display: "flex", borderTop: "1px solid var(--color-divider)", padding: "6px 0 26px", background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(29,31,32,0.05)" }}>

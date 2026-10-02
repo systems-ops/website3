@@ -20,7 +20,7 @@ export default function EntryDetail({
   const unitLabel = log.unit ? `°${log.unit}` : "";
 
   return (
-    <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+    <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
       <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
         <button
           onClick={onClose}
@@ -53,7 +53,6 @@ export default function EntryDetail({
             if (!readings.length) return null;
             return (
               <div key={unit.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>{unit.name}</span>
                 <div style={{ display: "flex", gap: 8 }}>
                   {readings.map((r) => (
@@ -130,7 +129,6 @@ export default function EntryDetail({
               className="blueprint"
               style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14, border: row.adjustmentRequired ? "1px solid var(--color-alert-border)" : undefined }}
             >
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>{row.testTermId}</span>
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -151,7 +149,6 @@ export default function EntryDetail({
         {log.kind === "receiving" && entry.receivingDetail && (
           <>
             <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>
                 {entry.receivingDetail.distributorName} — {t.invoiceNumber} {entry.receivingDetail.invoiceNumber}
               </span>
