@@ -5,6 +5,7 @@ import { claimSideworkTask, completeSideworkTask, fetchSideworkTasks } from "./a
 import type { SideworkShift, SideworkTaskRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import LoadingScreen from "./LoadingScreen";
 
 const SHIFT_ORDER: SideworkShift[] = ["OPENING", "RUNNING", "CLOSING", "DOWNTIME"];
 
@@ -20,11 +21,13 @@ export default function SideworkTab({
   const t = strings[lang];
   const [tasks, setTasks] = useState<SideworkTaskRecord[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   function refresh() {
     fetchSideworkTasks(locationId)
       .then((r) => setTasks(r.tasks))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }
 
   useEffect(refresh, [locationId]);
@@ -55,6 +58,10 @@ export default function SideworkTab({
     CLOSING: t.sideworkShiftClosing,
     DOWNTIME: t.sideworkShiftDowntime,
   };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   if (tasks.length === 0) {
     return (

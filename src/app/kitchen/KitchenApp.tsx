@@ -27,6 +27,7 @@ import { emptyDraft } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 import LoginScreen from "./LoginScreen";
+import LoadingScreen from "./LoadingScreen";
 import { BatchesIcon, LocationIcon, ProductsIcon, RecordsIcon, SideworkIcon, TodayIcon, TrainingIcon } from "./icons";
 import TodayTab from "./TodayTab";
 import RecordsTab from "./RecordsTab";
@@ -440,6 +441,7 @@ export default function KitchenApp() {
             lang={lang}
           />
         )}
+        {tab === "today" && !today && locationId && <LoadingScreen />}
         {tab === "sidework" && locationId && (
           <SideworkTab locationId={locationId} businessDate={businessDate} lang={lang} />
         )}

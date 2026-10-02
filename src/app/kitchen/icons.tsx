@@ -149,3 +149,23 @@ export function LocationIcon({ size = 18 }: IconProps) {
 export function ChevronRightIcon({ size = 16 }: IconProps) {
   return base(size, <path d="M9 5l6 7-6 7" />);
 }
+
+// A loading spinner — a 3/4 ring that rotates via the .spin keyframe in
+// kitchen.css, stroke in currentColor so it picks up whatever color the
+// caller sets (usually --color-accent).
+export function SpinnerIcon({ size = 28 }: IconProps) {
+  return (
+    <svg
+      className="icon spin"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+    >
+      <path d="M12 3a9 9 0 1 1-6.36 2.64" />
+    </svg>
+  );
+}

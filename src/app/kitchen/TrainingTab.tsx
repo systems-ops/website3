@@ -5,16 +5,23 @@ import { fetchTrainingResources } from "./api-client";
 import type { TrainingResourceRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import LoadingScreen from "./LoadingScreen";
 
 export default function TrainingTab({ locationId, lang }: { locationId: string; lang: Lang }) {
   const t = strings[lang];
   const [resources, setResources] = useState<TrainingResourceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchTrainingResources(locationId)
       .then((r) => setResources(r.resources))
-      .catch(() => setResources([]));
+      .catch(() => setResources([]))
+      .finally(() => setLoading(false));
   }, [locationId]);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   if (resources.length === 0) {
     return (

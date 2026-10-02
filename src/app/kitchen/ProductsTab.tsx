@@ -5,6 +5,7 @@ import { createOpenItem, discardOpenItem, fetchOpenItems, fetchProducts, flagLow
 import type { OpenItemRecord, ProductRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import LoadingScreen from "./LoadingScreen";
 
 function addDaysLabel(dateStr: string, days: number): string {
   const dt = new Date(`${dateStr}T00:00:00Z`);
@@ -36,14 +37,13 @@ export default function ProductsTab({
   const [discardTarget, setDiscardTarget] = useState<OpenItemRecord | null>(null);
   const [discardReason, setDiscardReason] = useState("");
   const [discardBusy, setDiscardBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   function refresh() {
-    fetchProducts(locationId)
-      .then((r) => setProducts(r.products))
-      .catch(() => setProducts([]));
-    fetchOpenItems(locationId, true)
-      .then((r) => setOpenItems(r.items))
-      .catch(() => setOpenItems([]));
+    Promise.allSettled([
+      fetchProducts(locationId).then((r) => setProducts(r.products)),
+      fetchOpenItems(locationId, true).then((r) => setOpenItems(r.items)),
+    ]).finally(() => setLoading(false));
   }
 
   useEffect(refresh, [locationId]);
@@ -112,6 +112,10 @@ export default function ProductsTab({
   }
 
   const onHand = openItems.filter((i) => i.disposition === "ON_HAND");
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   if (products.length === 0) {
     return (
