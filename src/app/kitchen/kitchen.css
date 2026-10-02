@@ -1,7 +1,7 @@
 /* Industry design tokens, ported from design_handoff_kitchen_log/industry.css,
    then given real depth (round 2), then opened up further (round 3 — brighter,
    rounded, with real page-transition motion) per direct design feedback.
-   Scoped under .kitchen-app so it never leaks into the marketing site. */
+   Scoped under .kitchen-app. */
 @import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap");
 
 .kitchen-app {
