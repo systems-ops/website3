@@ -41,6 +41,7 @@ import type {
 } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
+import { LocationIcon } from "./icons";
 
 const RECEIVING_LOG_ID = "receiving-log";
 const SIDEWORK_SHIFTS: SideworkShift[] = ["OPENING", "RUNNING", "CLOSING", "DOWNTIME"];
@@ -417,12 +418,15 @@ export default function ManagerView({
 
   return (
     <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
-      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)" }}>
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <button
             onClick={() => setSitesOpen(true)}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: 0, background: "transparent", border: 0, cursor: "pointer", textAlign: "left" }}
           >
+            <span style={{ display: "flex", color: "var(--color-accent)" }}>
+              <LocationIcon size={20} />
+            </span>
             <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24, lineHeight: 1.1 }}>{currentLocation?.name}</span>
             <span style={{ fontSize: 13, color: "var(--color-accent-700)" }}>{t.change}</span>
           </button>
@@ -460,7 +464,7 @@ export default function ManagerView({
                 type="date"
                 value={auditFrom}
                 onChange={(e) => setAuditFrom(e.target.value)}
-                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
@@ -469,7 +473,7 @@ export default function ManagerView({
                 type="date"
                 value={auditTo}
                 onChange={(e) => setAuditTo(e.target.value)}
-                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 46, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             </div>
           </div>
@@ -494,16 +498,21 @@ export default function ManagerView({
                 onClick={() => openWeek(w)}
                 style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
               >
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span
                   style={{
-                    width: 14,
-                    height: 14,
                     flex: "none",
-                    background: w.verification ? "var(--color-accent)" : hasFlags ? "var(--color-alert)" : "transparent",
-                    border: w.verification ? undefined : "1px solid var(--color-alert)",
+                    fontFamily: "var(--font-heading)",
+                    fontWeight: 600,
+                    fontSize: 11.5,
+                    letterSpacing: ".04em",
+                    padding: "4px 9px",
+                    color: w.verification ? "var(--color-pass-text)" : hasFlags ? "var(--color-alert-text)" : "var(--color-muted)",
+                    background: w.verification ? "var(--color-pass-fill)" : hasFlags ? "var(--color-alert-fill)" : "var(--color-na-fill)",
+                    border: `1px solid ${w.verification ? "var(--color-pass-border)" : hasFlags ? "var(--color-alert-border)" : "var(--color-na-border)"}`,
                   }}
-                />
+                >
+                  {w.verification ? t.chipVerified : hasFlags ? t.chipNeedsReview : t.chipOpen}
+                </span>
                 <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
                   <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>{t.weekOf(w.weekStart)}</span>
                   <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
@@ -535,7 +544,6 @@ export default function ManagerView({
               onClick={() => openReview(e)}
               style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 66, padding: "12px 14px", background: "transparent", cursor: "pointer", textAlign: "left" }}
             >
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>
                   {e.receivingDetail?.distributorName ?? e.businessDate}
@@ -566,7 +574,7 @@ export default function ManagerView({
           {sideworkTasks
             .filter((task) => task.active)
             .map((task) => (
-              <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px", borderBottom: "1px solid var(--color-divider)" }}>
+              <div key={task.id} className="card" style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 14px" }}>
                 <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: 15 }}>{task.title}</span>
                   <span style={{ fontSize: 12, color: "var(--color-muted)" }}>
@@ -590,14 +598,14 @@ export default function ManagerView({
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder={t.sideworkTaskTitle}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newTaskCategory}
               onChange={(e) => setNewTaskCategory(e.target.value)}
               placeholder={t.sideworkCategory}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {SIDEWORK_SHIFTS.map((shift) => (
@@ -632,7 +640,6 @@ export default function ManagerView({
           )}
           {lowStockFlags.map((flag) => (
             <div key={flag.id} className="blueprint" style={{ display: "flex", alignItems: "center", gap: 14, minHeight: 66, padding: "12px 14px" }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 17 }}>{flag.productName}</span>
                 <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
@@ -693,14 +700,14 @@ export default function ManagerView({
               value={newProductName}
               onChange={(e) => setNewProductName(e.target.value)}
               placeholder={t.productsProductName}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newProductCategory}
               onChange={(e) => setNewProductCategory(e.target.value)}
               placeholder={t.productsCategory}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="number"
@@ -708,7 +715,7 @@ export default function ManagerView({
               value={newProductShelfLife}
               onChange={(e) => setNewProductShelfLife(e.target.value)}
               placeholder={t.productsShelfLifeDays}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={addProduct}
@@ -757,7 +764,7 @@ export default function ManagerView({
                         setLinkLogDefId(e.target.value);
                         setLinkItemId("");
                       }}
-                      style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                      style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                     >
                       {trainingLogs.map((log) => (
                         <option key={log.id} value={log.id}>
@@ -769,7 +776,7 @@ export default function ManagerView({
                       <select
                         value={linkItemId}
                         onChange={(e) => setLinkItemId(e.target.value)}
-                        style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "transparent" }}
+                        style={{ minHeight: 44, padding: "0 10px", fontSize: 14, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
                       >
                         <option value="">{t.trainingWholeForm}</option>
                         {trainingLogs
@@ -805,21 +812,21 @@ export default function ManagerView({
               value={newResourceTitle}
               onChange={(e) => setNewResourceTitle(e.target.value)}
               placeholder={t.trainingTitle}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newResourceCategory}
               onChange={(e) => setNewResourceCategory(e.target.value)}
               placeholder={t.trainingCategory}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={newResourceUrl}
               onChange={(e) => setNewResourceUrl(e.target.value)}
               placeholder={t.trainingUrl}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={addTrainingResource}
@@ -854,7 +861,7 @@ export default function ManagerView({
               value={newRecipientEmail}
               onChange={(e) => setNewRecipientEmail(e.target.value)}
               placeholder={t.reportRecipientEmail}
-              style={{ flex: 1, minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ flex: 1, minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={addRecipient}
@@ -869,7 +876,7 @@ export default function ManagerView({
       </div>
 
       {sitesOpen && (
-        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.5)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.chooseKitchen}</span>
             {locations.map((loc) => (
@@ -890,8 +897,8 @@ export default function ManagerView({
       )}
 
       {traceOpen && (
-        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+        <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setTraceOpen(false)}
               style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
@@ -908,7 +915,7 @@ export default function ManagerView({
               onChange={(e) => setTraceQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && runTraceSearch()}
               placeholder={t.traceSearchPlaceholder}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
               <span style={{ fontSize: 14 }}>{traceLocationScoped ? currentLocation?.name : t.traceAllKitchens}</span>
@@ -941,7 +948,6 @@ export default function ManagerView({
 
             {traceResults.map((b) => (
               <div key={b.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 18 }}>
                   {b.batchCode} — {b.productType}
                 </span>
@@ -973,8 +979,8 @@ export default function ManagerView({
       )}
 
       {selectedWeek && (
-        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+        <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setSelectedWeek(null)}
               style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
@@ -986,7 +992,6 @@ export default function ManagerView({
 
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 6, padding: 14 }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ fontSize: 14 }}>{t.outOfSpecCount(selectedWeek.outOfSpecCount)}</span>
               <span style={{ fontSize: 14 }}>{t.failedCount(selectedWeek.failedCount)}</span>
               <span style={{ fontSize: 14 }}>{t.lateCount(selectedWeek.lateCount)}</span>
@@ -1014,7 +1019,7 @@ export default function ManagerView({
                 value={verifyComments}
                 onChange={(e) => setVerifyComments(e.target.value)}
                 placeholder={t.verificationComments}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             )}
           </div>
@@ -1030,8 +1035,8 @@ export default function ManagerView({
       )}
 
       {selected && (
-        <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+        <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+          <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
             <button
               onClick={() => setSelected(null)}
               style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
@@ -1089,14 +1094,14 @@ export default function ManagerView({
               value={review.storageLocation ?? ""}
               onChange={(e) => setReview((r) => ({ ...r, storageLocation: e.target.value }))}
               placeholder={t.storage}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <input
               type="text"
               value={review.comments ?? ""}
               onChange={(e) => setReview((r) => ({ ...r, comments: e.target.value }))}
               placeholder={t.calibrationComment}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
           </div>
 

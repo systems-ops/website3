@@ -1,25 +1,31 @@
-/* Industry design tokens, ported from design_handoff_kitchen_log/industry.css.
-   Scoped under .kitchen-app so it never leaks into the marketing site. */
-@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap");
+/* Industry design tokens, ported from design_handoff_kitchen_log/industry.css,
+   then given real depth (round 2), then opened up further (round 3 — brighter,
+   rounded, with real page-transition motion) per direct design feedback.
+   Scoped under .kitchen-app. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap");
 
 .kitchen-app {
-  --color-bg: #f2f2f3;
+  /* Bright, open neutrals — near-white background, pure white cards lifted
+     with shadow instead of a border doing the separating work. */
+  --color-bg: #fafbfc;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #eef1f4;
   --color-text: #1d1f20;
+  --color-divider: rgba(29, 31, 32, 0.1);
+  --color-muted: rgba(29, 31, 32, 0.5);
+  --color-muted-strong: rgba(29, 31, 32, 0.78);
+  --color-disabled: rgba(29, 31, 32, 0.26);
+  --color-hover: rgba(29, 31, 32, 0.04);
+
   --color-accent: #5980a6;
   --color-accent-700: #416180;
   --color-accent-900: #1d2d3d;
-  --color-divider: rgba(29, 31, 32, 0.16);
+  --color-accent-fill: #eaf1f7;
+
   --color-alert: #8f4a4a;
   --color-alert-text: #7d3f3f;
-  --color-alert-fill: rgba(143, 74, 74, 0.06);
-  --color-alert-border: rgba(143, 74, 74, 0.5);
-  --color-muted: rgba(29, 31, 32, 0.55);
-  /* Higher-contrast than --color-muted (>=7:1 against --color-bg) for text
-     that item 7.3 calls out by name — progress counters and instruction
-     lines, which need to read at a glance in worse-than-desk conditions. */
-  --color-muted-strong: rgba(29, 31, 32, 0.82);
-  --color-disabled: rgba(29, 31, 32, 0.28);
-  --color-hover: rgba(29, 31, 32, 0.04);
+  --color-alert-fill: #fbf1f1;
+  --color-alert-border: rgba(143, 74, 74, 0.4);
 
   /* Status color system (item 7.1) — PASS/FAIL/NA share this vocabulary
      everywhere a status appears: checklist controls, Today tab, Records,
@@ -27,11 +33,22 @@
      out-of-spec readings, so a person learns the color language once. */
   --color-pass: #3c7a4f;
   --color-pass-text: #2f6140;
-  --color-pass-fill: rgba(60, 122, 79, 0.1);
-  --color-pass-border: rgba(60, 122, 79, 0.55);
+  --color-pass-fill: #eff6f1;
+  --color-pass-border: rgba(60, 122, 79, 0.4);
   --color-na: #55575c;
-  --color-na-fill: rgba(29, 31, 32, 0.08);
-  --color-na-border: rgba(29, 31, 32, 0.4);
+  --color-na-fill: rgba(29, 31, 32, 0.06);
+  --color-na-border: rgba(29, 31, 32, 0.3);
+
+  --shadow-xs: 0 1px 2px rgba(20, 22, 24, 0.05), 0 1px 10px rgba(20, 22, 24, 0.03);
+  --shadow-sm: 0 2px 8px rgba(20, 22, 24, 0.07), 0 1px 2px rgba(20, 22, 24, 0.04);
+  --shadow-md: 0 10px 28px rgba(20, 22, 24, 0.12), 0 2px 8px rgba(20, 22, 24, 0.06);
+
+  /* Rounded, not square — the deliberate departure from the old "blueprint"
+     identity: warmth and lightness now come from soft corners too, not just
+     color and shadow. Three sizes cover card/button/pill. */
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --radius-pill: 999px;
 
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-body: "Barlow", system-ui, sans-serif;
@@ -62,51 +79,29 @@
   outline-offset: 2px;
 }
 
-/* Square, transparent, hairline-bordered "blueprint" frame with four corner
-   registration marks — the system's signature component treatment. */
-.kitchen-app .blueprint {
+.kitchen-app ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* The former "blueprint" treatment (square corners + corner registration
+   marks) is retired — .blueprint and .card are now the same rounded,
+   shadowed surface. Kept as two class names only so call sites don't all
+   need renaming; new code should just reach for .card. */
+.kitchen-app .blueprint,
+.kitchen-app .card {
   position: relative;
   border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
 }
-.kitchen-app .corner {
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  color: rgba(29, 31, 32, 0.55);
-}
-.kitchen-app .corner::before,
-.kitchen-app .corner::after {
-  content: "";
-  position: absolute;
-  background: currentColor;
-}
-.kitchen-app .corner::before {
-  left: 5px;
-  top: 0;
-  width: 1px;
-  height: 100%;
-}
-.kitchen-app .corner::after {
-  top: 5px;
-  left: 0;
-  width: 100%;
-  height: 1px;
-}
-.kitchen-app .corner.tl {
-  top: -6px;
-  left: -6px;
-}
-.kitchen-app .corner.tr {
-  top: -6px;
-  right: -6px;
-}
-.kitchen-app .corner.bl {
-  bottom: -6px;
-  left: -6px;
-}
-.kitchen-app .corner.br {
-  bottom: -6px;
-  right: -6px;
+.kitchen-app .blueprint:active,
+button.kitchen-app .card:active,
+.kitchen-app button .card:active {
+  box-shadow: none;
+  transform: scale(0.98);
 }
 
 .kitchen-app .btn {
@@ -117,10 +112,14 @@
   cursor: pointer;
   font-family: var(--font-heading);
   font-weight: 600;
-  border-radius: 0;
+  border-radius: var(--radius-btn);
   border: 1px solid var(--color-divider);
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-text);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.kitchen-app .btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .kitchen-app .btn:disabled {
   opacity: 0.45;
@@ -129,11 +128,62 @@
 .kitchen-app .btn-primary {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: var(--color-bg);
+  color: #ffffff;
+  box-shadow: var(--shadow-xs);
 }
 .kitchen-app .btn-primary:hover {
   background: var(--color-accent-700);
 }
 .kitchen-app .btn-secondary:hover {
   background: var(--color-hover);
+}
+
+/* Shared icon treatment for nav/section icons (see icons.tsx) — currentColor
+   so it always matches whatever text color the button/label already has. */
+.kitchen-app .icon {
+  flex: none;
+  display: inline-flex;
+}
+
+/* Generic tap feedback for anything interactive that isn't already a .btn —
+   nav tabs, card buttons, list rows. */
+.kitchen-app .tap {
+  transition: transform 0.1s ease-out, background-color 0.15s ease-out;
+}
+.kitchen-app .tap:active {
+  transform: scale(0.97);
+}
+
+/* Page-transition motion (item: "different transition when a page is
+   clicked"). A screen mounting fresh — a tab switch, EntryFlow/EntryDetail
+   opening, a Manager sub-screen pushing — plays one of these on entry.
+   Keep under 300ms: this is a tool used quickly and repeatedly through a
+   shift, so motion should read as responsive, never as a delay. */
+@keyframes kitchen-page-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes kitchen-page-slide {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes kitchen-page-scale {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.kitchen-app .page-transition-fade {
+  animation: kitchen-page-fade 200ms ease-out both;
+}
+.kitchen-app .page-transition-slide {
+  animation: kitchen-page-slide 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.kitchen-app .page-transition-scale {
+  animation: kitchen-page-scale 180ms ease-out both;
+}
+
+@keyframes kitchen-spin {
+  to { transform: rotate(360deg); }
+}
+.kitchen-app .spin {
+  animation: kitchen-spin 0.8s linear infinite;
 }

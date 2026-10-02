@@ -100,7 +100,28 @@ export default function RecordsTab({
             key={c.id}
             style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 62, borderBottom: "1px solid var(--color-divider)" }}
           >
-            <span style={{ width: 14, height: 14, flex: "none", background: c.ok ? "var(--color-accent)" : "var(--color-alert)" }} />
+            <span
+              style={{
+                width: 22,
+                height: 22,
+                flex: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: c.ok ? "var(--color-pass)" : "var(--color-alert)",
+                color: "#fff",
+              }}
+            >
+              {c.ok ? (
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8.5l3.2 3.2L13 4.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                </svg>
+              )}
+            </span>
             <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19, lineHeight: 1.2, flex: 1 }}>{c.name}</span>
             <span style={{ fontSize: 13.5, textAlign: "right", color: c.ok ? "var(--color-muted)" : "var(--color-alert)" }}>{c.status}</span>
           </div>
@@ -150,7 +171,7 @@ export default function RecordsTab({
             const over = entry?.readings.some((r) => r.outOfSpec);
             const bg = future || !entry ? "transparent" : over ? "var(--color-alert)" : "var(--color-accent)";
             const fg = future || !entry ? "rgba(29,31,32,.35)" : "#f2f2f3";
-            const border = day === selectedDay ? "#1d1f20" : future || !entry ? "rgba(29,31,32,.3)" : "transparent";
+            const border = day === selectedDay ? "var(--color-accent-900)" : future || !entry ? "rgba(29,31,32,.3)" : "transparent";
             return (
               <button
                 key={day}
@@ -203,7 +224,6 @@ export default function RecordsTab({
         </div>
 
         <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 14px" }}>
-          <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
           <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>
             {selectedDay} {monthLabel.split(" ")[0]}
           </span>

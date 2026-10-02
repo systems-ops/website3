@@ -5,12 +5,8 @@ import { createOpenItem, discardOpenItem, fetchOpenItems, fetchProducts, flagLow
 import type { OpenItemRecord, ProductRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
-
-function addDaysLabel(dateStr: string, days: number): string {
-  const dt = new Date(`${dateStr}T00:00:00Z`);
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
+import LoadingScreen from "./LoadingScreen";
+import { addDaysToBusinessDate } from "@/lib/business-date";
 
 export default function ProductsTab({
   locationId,
@@ -36,14 +32,13 @@ export default function ProductsTab({
   const [discardTarget, setDiscardTarget] = useState<OpenItemRecord | null>(null);
   const [discardReason, setDiscardReason] = useState("");
   const [discardBusy, setDiscardBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   function refresh() {
-    fetchProducts(locationId)
-      .then((r) => setProducts(r.products))
-      .catch(() => setProducts([]));
-    fetchOpenItems(locationId, true)
-      .then((r) => setOpenItems(r.items))
-      .catch(() => setOpenItems([]));
+    Promise.allSettled([
+      fetchProducts(locationId).then((r) => setProducts(r.products)),
+      fetchOpenItems(locationId, true).then((r) => setOpenItems(r.items)),
+    ]).finally(() => setLoading(false));
   }
 
   useEffect(refresh, [locationId]);
@@ -63,7 +58,7 @@ export default function ProductsTab({
 
   const categories = Array.from(new Set(products.map((p) => p.category ?? "")));
   const prepProduct = products.find((p) => p.id === prepProductId);
-  const autoUseBy = prepProduct?.shelfLifeDays != null ? addDaysLabel(businessDate, prepProduct.shelfLifeDays) : null;
+  const autoUseBy = prepProduct?.shelfLifeDays != null ? addDaysToBusinessDate(businessDate, prepProduct.shelfLifeDays) : null;
 
   function openPrep() {
     setPrepProductId(products[0]?.id ?? "");
@@ -113,6 +108,10 @@ export default function ProductsTab({
 
   const onHand = openItems.filter((i) => i.disposition === "ON_HAND");
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   if (products.length === 0) {
     return (
       <div style={{ paddingTop: 40, textAlign: "center", color: "var(--color-muted)", fontSize: 15 }}>
@@ -128,25 +127,28 @@ export default function ProductsTab({
       </button>
 
       {categories.map((category) => (
-        <div key={category} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div key={category} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {category && (
-            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 15, color: "var(--color-muted)" }}>
-              {category}
-            </span>
+            <div style={{ padding: "6px 10px", background: "var(--color-surface-sunken)", borderLeft: "3px solid var(--color-accent)" }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13.5, letterSpacing: ".08em", color: "var(--color-accent-900)" }}>
+                {category.toUpperCase()}
+              </span>
+            </div>
           )}
           {products
             .filter((p) => (p.category ?? "") === category)
             .map((product) => (
               <div
                 key={product.id}
+                className="card"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
                   minHeight: 58,
                   padding: "10px 14px",
-                  border: `1px solid ${product.lowStockFlag ? "var(--color-alert-border)" : "var(--color-divider)"}`,
-                  background: product.lowStockFlag ? "rgba(178,58,50,.06)" : "transparent",
+                  borderColor: product.lowStockFlag ? "var(--color-alert-border)" : "var(--color-divider)",
+                  background: product.lowStockFlag ? "var(--color-alert-fill)" : "var(--color-surface)",
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
@@ -176,17 +178,19 @@ export default function ProductsTab({
           <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.productsOnHand}</span>
           {onHand.map((item) => {
             const isToday = item.useByDate === businessDate;
-            const isTomorrow = item.useByDate === addDaysLabel(businessDate, 1);
+            const isTomorrow = item.useByDate === addDaysToBusinessDate(businessDate, 1);
             return (
               <div
                 key={item.id}
+                className="card"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
                   minHeight: 58,
                   padding: "10px 14px",
-                  border: `1px solid ${isToday ? "var(--color-alert-border)" : "var(--color-divider)"}`,
+                  borderColor: isToday ? "var(--color-alert-border)" : "var(--color-divider)",
+                  background: isToday ? "var(--color-alert-fill)" : "var(--color-surface)",
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 }}>
@@ -213,13 +217,13 @@ export default function ProductsTab({
       )}
 
       {prepOpen && (
-        <div onClick={() => setPrepOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.5)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div onClick={() => setPrepOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12, boxShadow: "var(--shadow-md)" }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.productsPrepLabel}</span>
             <select
               value={prepProductId}
               onChange={(e) => setPrepProductId(e.target.value)}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -232,7 +236,7 @@ export default function ProductsTab({
               value={prepStorage}
               onChange={(e) => setPrepStorage(e.target.value)}
               placeholder={t.productsPrepStorage}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             {autoUseBy ? (
               <span style={{ fontSize: 14, color: "var(--color-muted)" }}>{t.productsPrepUseByAuto(autoUseBy)}</span>
@@ -241,7 +245,7 @@ export default function ProductsTab({
                 type="date"
                 value={prepUseBy}
                 onChange={(e) => setPrepUseBy(e.target.value)}
-                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+                style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
               />
             )}
             {prepError && <span style={{ fontSize: 13, color: "var(--color-alert-text)" }}>{prepError}</span>}
@@ -258,15 +262,15 @@ export default function ProductsTab({
       )}
 
       {discardTarget && (
-        <div onClick={() => setDiscardTarget(null)} style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.5)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div onClick={() => setDiscardTarget(null)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12, boxShadow: "var(--shadow-md)" }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{discardTarget.productNameSnapshot}</span>
             <input
               type="text"
               value={discardReason}
               onChange={(e) => setDiscardReason(e.target.value)}
               placeholder={t.productsDiscardReason}
-              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "transparent" }}
+              style={{ minHeight: 48, padding: "0 10px", fontSize: 15, border: "1px solid var(--color-divider)", background: "var(--color-surface)" }}
             />
             <button
               onClick={confirmDiscard}

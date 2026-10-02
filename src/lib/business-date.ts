@@ -50,6 +50,15 @@ export function currentPacificHour(): number {
   return Number(new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "numeric", hourCycle: "h23" }).format(new Date()));
 }
 
+// Pure date-string arithmetic — "N days after this business date," as a
+// label, not a timezone computation. Used for things like "use by" and
+// "expiring tomorrow" labels derived from an already-known business date.
+export function addDaysToBusinessDate(businessDate: string, days: number): string {
+  const dt = new Date(`${businessDate}T00:00:00Z`);
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
 const BUSINESS_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isValidBusinessDate(value: string): boolean {

@@ -20,14 +20,14 @@ export default function EntryDetail({
   const unitLabel = log.unit ? `°${log.unit}` : "";
 
   return (
-    <div className="kitchen-app" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
-      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)" }}>
+    <div className="kitchen-app page-transition-slide" style={{ position: "absolute", inset: 0, background: "var(--color-bg)", display: "flex", flexDirection: "column", zIndex: 70 }}>
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 6, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
         <button
           onClick={onClose}
           style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginLeft: -6, padding: "0 6px", background: "transparent", border: 0, cursor: "pointer", fontSize: 15, color: "var(--color-accent-700)" }}
         >
           <svg width="10" height="17" viewBox="0 0 12 20">
-            <path d="M10 2L2 10l8 8" stroke="#3f5f80" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d="M10 2L2 10l8 8" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
           </svg>
           {t.back}
         </button>
@@ -53,7 +53,6 @@ export default function EntryDetail({
             if (!readings.length) return null;
             return (
               <div key={unit.id} className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
-                <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
                 <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>{unit.name}</span>
                 <div style={{ display: "flex", gap: 8 }}>
                   {readings.map((r) => (
@@ -130,7 +129,6 @@ export default function EntryDetail({
               className="blueprint"
               style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14, border: row.adjustmentRequired ? "1px solid var(--color-alert-border)" : undefined }}
             >
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>{row.testTermId}</span>
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -151,7 +149,6 @@ export default function EntryDetail({
         {log.kind === "receiving" && entry.receivingDetail && (
           <>
             <div className="blueprint" style={{ display: "flex", flexDirection: "column", gap: 8, padding: 14 }}>
-              <i className="corner tl" /><i className="corner tr" /><i className="corner bl" /><i className="corner br" />
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 19 }}>
                 {entry.receivingDetail.distributorName} — {t.invoiceNumber} {entry.receivingDetail.invoiceNumber}
               </span>
@@ -192,7 +189,7 @@ export default function EntryDetail({
           </>
         )}
 
-        <span style={{ fontSize: 12.5, color: "rgba(29,31,32,.4)", paddingTop: 4 }}>{log.formCode}</span>
+        <span style={{ fontSize: 12.5, color: "var(--color-muted)", paddingTop: 4 }}>{log.formCode}</span>
       </div>
     </div>
   );

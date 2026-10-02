@@ -27,6 +27,8 @@ import { emptyDraft } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 import LoginScreen from "./LoginScreen";
+import LoadingScreen from "./LoadingScreen";
+import { BatchesIcon, LocationIcon, ProductsIcon, RecordsIcon, SideworkIcon, TodayIcon, TrainingIcon } from "./icons";
 import TodayTab from "./TodayTab";
 import RecordsTab from "./RecordsTab";
 import EntryFlow from "./EntryFlow";
@@ -396,20 +398,28 @@ export default function KitchenApp() {
 
   return (
     <div className="kitchen-app" style={{ display: "flex", flexDirection: "column", height: "100dvh" }}>
-      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)" }}>
+      <div style={{ flex: "none", padding: "54px 20px 14px", display: "flex", flexDirection: "column", gap: 4, borderBottom: "1px solid var(--color-divider)", background: "var(--color-surface)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <button
             onClick={() => setSitesOpen(true)}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: 0, background: "transparent", border: 0, cursor: "pointer", textAlign: "left" }}
           >
+            <span style={{ display: "flex", color: "var(--color-accent)" }}>
+              <LocationIcon size={20} />
+            </span>
             <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 24, lineHeight: 1.1 }}>{currentLocation?.name}</span>
             <span style={{ fontSize: 13, color: "var(--color-accent-700)" }}>{t.change}</span>
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {!online && <span style={{ fontSize: 12, color: "var(--color-alert)" }}>{t.offline}</span>}
+            {!online && (
+              <span style={{ fontSize: 12, color: "var(--color-alert-text)", background: "var(--color-alert-fill)", border: "1px solid var(--color-alert-border)", padding: "3px 8px" }}>
+                {t.offline}
+              </span>
+            )}
             <button
               onClick={() => switchLang(lang === "en" ? "es" : "en")}
-              style={{ background: "transparent", border: "1px solid var(--color-divider)", fontSize: 12, padding: "4px 8px", cursor: "pointer" }}
+              className="btn btn-secondary"
+              style={{ fontSize: 12, padding: "4px 10px", minHeight: 30 }}
             >
               {lang === "en" ? "ES" : "EN"}
             </button>
@@ -419,6 +429,7 @@ export default function KitchenApp() {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 24px" }}>
+        <div key={tab} className="page-transition-fade">
         {tab === "today" && today && locationId && (
           <TodayTab
             today={today}
@@ -430,6 +441,7 @@ export default function KitchenApp() {
             lang={lang}
           />
         )}
+        {tab === "today" && !today && locationId && <LoadingScreen />}
         {tab === "sidework" && locationId && (
           <SideworkTab locationId={locationId} businessDate={businessDate} lang={lang} />
         )}
@@ -449,65 +461,87 @@ export default function KitchenApp() {
         {tab === "records" && locationId && (
           <RecordsTab locationId={locationId} logs={logs} certificates={certificates} lang={lang} />
         )}
+        </div>
       </div>
 
-      <div style={{ flex: "none", display: "flex", borderTop: "1px solid var(--color-divider)", padding: "0 0 26px" }}>
-        <button
-          onClick={() => setTab("today")}
-          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "today" ? "var(--color-accent)" : "var(--color-muted)" }}
-        >
-          {t.today}
-        </button>
-        <button
-          onClick={() => setTab("sidework")}
-          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "sidework" ? "var(--color-accent)" : "var(--color-muted)" }}
-        >
-          {t.sidework}
-        </button>
-        <button
-          onClick={() => setTab("products")}
-          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "products" ? "var(--color-accent)" : "var(--color-muted)" }}
-        >
-          {t.products}
-        </button>
-        <button
-          onClick={() => setTab("training")}
-          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "training" ? "var(--color-accent)" : "var(--color-muted)" }}
-        >
-          {t.training}
-        </button>
-        <button
-          onClick={() => setTab("batches")}
-          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "batches" ? "var(--color-accent)" : "var(--color-muted)" }}
-        >
-          {t.batches}
-        </button>
-        <button
-          onClick={() => setTab("records")}
-          style={{ flex: 1, minHeight: 60, background: "transparent", border: 0, borderLeft: "1px solid var(--color-divider)", cursor: "pointer", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 16, letterSpacing: ".04em", color: tab === "records" ? "var(--color-accent)" : "var(--color-muted)" }}
-        >
-          {t.records}
-        </button>
+      <div style={{ flex: "none", display: "flex", borderTop: "1px solid var(--color-divider)", padding: "6px 0 26px", background: "var(--color-surface)", boxShadow: "0 -2px 10px rgba(29,31,32,0.05)" }}>
+        {(
+          [
+            { key: "today", label: t.today, Icon: TodayIcon },
+            { key: "sidework", label: t.sidework, Icon: SideworkIcon },
+            { key: "products", label: t.products, Icon: ProductsIcon },
+            { key: "training", label: t.training, Icon: TrainingIcon },
+            { key: "batches", label: t.batches, Icon: BatchesIcon },
+            { key: "records", label: t.records, Icon: RecordsIcon },
+          ] as const
+        ).map(({ key, label, Icon }) => {
+          const active = tab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              style={{
+                flex: 1,
+                minHeight: 56,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 3,
+                background: "transparent",
+                border: 0,
+                cursor: "pointer",
+                fontFamily: "var(--font-heading)",
+                fontWeight: 600,
+                fontSize: 11.5,
+                letterSpacing: ".02em",
+                color: active ? "var(--color-accent)" : "var(--color-muted)",
+              }}
+            >
+              <Icon size={21} />
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {sitesOpen && (
-        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,43,45,.5)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div onClick={() => setSitesOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(29,31,32,.45)", display: "flex", flexDirection: "column", justifyContent: "flex-end", zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-bg)", padding: "20px 20px 42px", display: "flex", flexDirection: "column", gap: 12, boxShadow: "var(--shadow-md)" }}>
             <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.chooseKitchen}</span>
-            {scopedLocations.map((loc) => (
-              <button
-                key={loc.id}
-                onClick={() => {
-                  setLocationId(loc.id);
-                  setSitesOpen(false);
-                  closeFlow();
-                }}
-                style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 66, padding: "10px 14px", background: "transparent", border: "1px solid var(--color-divider)", cursor: "pointer", textAlign: "left" }}
-              >
-                <span style={{ width: 14, height: 14, flex: "none", background: loc.id === locationId ? "var(--color-accent)" : "transparent", border: "1px solid var(--color-accent)" }} />
-                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 20, flex: 1 }}>{loc.name}</span>
-              </button>
-            ))}
+            {scopedLocations.map((loc) => {
+              const active = loc.id === locationId;
+              return (
+                <button
+                  key={loc.id}
+                  className="card"
+                  onClick={() => {
+                    setLocationId(loc.id);
+                    setSitesOpen(false);
+                    closeFlow();
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    minHeight: 66,
+                    padding: "10px 16px",
+                    background: active ? "var(--color-accent-fill)" : "var(--color-surface)",
+                    borderColor: active ? "var(--color-accent)" : "var(--color-divider)",
+                    borderWidth: active ? 1.5 : 1,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ display: "flex", flex: "none", color: active ? "var(--color-accent)" : "var(--color-muted)" }}>
+                    <LocationIcon size={20} />
+                  </span>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 20, flex: 1, color: active ? "var(--color-accent-900)" : "var(--color-text)" }}>
+                    {loc.name}
+                  </span>
+                </button>
+              );
+            })}
             <button onClick={handleSignOut} style={{ background: "transparent", border: 0, color: "var(--color-accent-700)", fontSize: 14, cursor: "pointer", textAlign: "left", padding: "8px 0 0" }}>
               {t.signOut}
             </button>
@@ -532,7 +566,7 @@ export default function KitchenApp() {
       {detailEntry && <EntryDetail log={detailEntry.log} entry={detailEntry.entry} onClose={() => setDetailEntry(null)} lang={lang} />}
 
       {toast && (
-        <div style={{ position: "absolute", left: 20, right: 20, bottom: 104, padding: "14px 16px", background: "var(--color-accent-900)", color: "var(--color-bg)", zIndex: 90, fontSize: 14.5, lineHeight: 1.4 }}>
+        <div style={{ position: "absolute", left: 20, right: 20, bottom: 104, padding: "14px 16px", background: "var(--color-accent-900)", color: "#f2f2f3", zIndex: 90, fontSize: 14.5, lineHeight: 1.4, boxShadow: "var(--shadow-md)" }}>
           {toast}
         </div>
       )}
