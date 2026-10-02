@@ -6,6 +6,7 @@ import type { LogKind, OpenItemRecord, TodayResponse } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 import { CalibrationIcon, ChecklistIcon, ChevronRightIcon, TempsIcon, TruckIcon } from "./icons";
+import { addDaysToBusinessDate } from "@/lib/business-date";
 
 const KIND_ICON: Record<LogKind, (props: { size?: number }) => React.JSX.Element> = {
   temps: TempsIcon,
@@ -16,12 +17,6 @@ const KIND_ICON: Record<LogKind, (props: { size?: number }) => React.JSX.Element
 
 function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-
-function addDaysLabel(dateStr: string, days: number): string {
-  const dt = new Date(`${dateStr}T00:00:00Z`);
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
 }
 
 export default function TodayTab({
@@ -43,7 +38,7 @@ export default function TodayTab({
 }) {
   const t = strings[lang];
   const [expiring, setExpiring] = useState<OpenItemRecord[]>([]);
-  const tomorrow = addDaysLabel(businessDate, 1);
+  const tomorrow = addDaysToBusinessDate(businessDate, 1);
 
   useEffect(() => {
     fetchOpenItems(locationId, true)

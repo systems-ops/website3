@@ -6,12 +6,7 @@ import type { OpenItemRecord, ProductRecord } from "./types";
 import type { Lang } from "./strings";
 import { strings } from "./strings";
 import LoadingScreen from "./LoadingScreen";
-
-function addDaysLabel(dateStr: string, days: number): string {
-  const dt = new Date(`${dateStr}T00:00:00Z`);
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
+import { addDaysToBusinessDate } from "@/lib/business-date";
 
 export default function ProductsTab({
   locationId,
@@ -63,7 +58,7 @@ export default function ProductsTab({
 
   const categories = Array.from(new Set(products.map((p) => p.category ?? "")));
   const prepProduct = products.find((p) => p.id === prepProductId);
-  const autoUseBy = prepProduct?.shelfLifeDays != null ? addDaysLabel(businessDate, prepProduct.shelfLifeDays) : null;
+  const autoUseBy = prepProduct?.shelfLifeDays != null ? addDaysToBusinessDate(businessDate, prepProduct.shelfLifeDays) : null;
 
   function openPrep() {
     setPrepProductId(products[0]?.id ?? "");
@@ -183,7 +178,7 @@ export default function ProductsTab({
           <span style={{ fontSize: 13, letterSpacing: ".1em", color: "var(--color-muted)" }}>{t.productsOnHand}</span>
           {onHand.map((item) => {
             const isToday = item.useByDate === businessDate;
-            const isTomorrow = item.useByDate === addDaysLabel(businessDate, 1);
+            const isTomorrow = item.useByDate === addDaysToBusinessDate(businessDate, 1);
             return (
               <div
                 key={item.id}
